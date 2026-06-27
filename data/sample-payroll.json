@@ -1,0 +1,105 @@
+{
+  "company": "Eleftheria Foods AE",
+  "period": "2026-05",
+  "payment_date": "2026-05-31",
+  "documents": [
+    {
+      "doc_id": "doc-bank-001",
+      "doc_type": "bank_confirmation",
+      "source_filename": "alpha_bank_payroll_batch_2026-05.pdf",
+      "bank_net_total": 5956.67,
+      "_note": "Alpha Bank salary-batch confirmation. Shows ONLY the net cash transferred to employees. Naive bookkeeping treats this as 'the payroll cost'."
+    },
+    {
+      "doc_id": "doc-register-001",
+      "doc_type": "payroll_register",
+      "source_filename": "misthodosia_register_2026-05.xlsx",
+      "gross_total": 7450.0,
+      "employee_ika_total": 1033.33,
+      "tax_withheld_total": 460.0,
+      "employer_ika_total": 1660.62,
+      "employer_cost_total": 9110.62,
+      "_note": "Greek payroll register. Employer IKA 22.29% of gross; employee IKA 13.87%. employer_cost_total = gross + employer IKA = the TRUE cost to the company."
+    },
+    {
+      "doc_id": "doc-payslip-001",
+      "doc_type": "payslip",
+      "source_filename": "payslip_papadopoulos_2026-05.pdf",
+      "employee": {
+        "employee_id": "EMP-001",
+        "name": "Georgios Papadopoulos",
+        "role": "Senior Engineer",
+        "gross": 1900.0,
+        "employee_ika": 263.53,
+        "tax": 175.0,
+        "net": 1461.47,
+        "employer_ika": 423.51,
+        "employer_cost": 2323.51
+      }
+    },
+    {
+      "doc_id": "doc-payslip-002",
+      "doc_type": "payslip",
+      "source_filename": "payslip_nikolaou_2026-05.pdf",
+      "employee": {
+        "employee_id": "EMP-002",
+        "name": "Maria Nikolaou",
+        "role": "Accountant",
+        "gross": 1650.0,
+        "employee_ika": 228.86,
+        "tax": 120.0,
+        "net": 1301.14,
+        "employer_ika": 367.79,
+        "employer_cost": 2017.79
+      }
+    },
+    {
+      "doc_id": "doc-payslip-003",
+      "doc_type": "payslip",
+      "source_filename": "payslip_vlachos_2026-05.pdf",
+      "employee": {
+        "employee_id": "EMP-003",
+        "name": "Dimitrios Vlachos",
+        "role": "Sales Lead",
+        "gross": 1450.0,
+        "employee_ika": 201.12,
+        "tax": 80.0,
+        "net": 1168.88,
+        "employer_ika": 323.21,
+        "employer_cost": 1773.21
+      }
+    },
+    {
+      "doc_id": "doc-payslip-004",
+      "doc_type": "payslip",
+      "source_filename": "payslip_georgiou_2026-05.pdf",
+      "employee": {
+        "employee_id": "EMP-004",
+        "name": "Eleni Georgiou",
+        "role": "Operations",
+        "gross": 1300.0,
+        "employee_ika": 180.31,
+        "tax": 55.0,
+        "net": 1064.69,
+        "employer_ika": 289.77,
+        "employer_cost": 1589.77
+      }
+    },
+    {
+      "doc_id": "doc-payslip-005",
+      "doc_type": "payslip",
+      "source_filename": "payslip_ioannou_2026-05.pdf",
+      "employee": {
+        "employee_id": "EMP-005",
+        "name": "Sofia Ioannou",
+        "role": "Junior Analyst",
+        "gross": 1150.0,
+        "employee_ika": 159.51,
+        "tax": 30.0,
+        "net": 960.49,
+        "employer_ika": 256.34,
+        "employer_cost": 1406.34
+      }
+    }
+  ]
+}

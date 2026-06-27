@@ -1,0 +1,36 @@
+{
+  "name": "h0-archon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Archon-on-Vercel+AWS — agentic financial intelligence for SMBs. Fuses bank, payroll-register and payslip documents into one accurate payroll event, surfacing the ~28% employer-cost gap that bank data alone hides.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/db.test.ts",
+    "ci": "npm run typecheck && npm test && npm run build && npm run pipeline",
+    "pipeline": "tsx scripts/run-pipeline.ts",
+    "db:seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1075.0",
+    "@aws-sdk/lib-dynamodb": "^3.1075.0",
+    "next": "^16.2.9",
+    "pg": "8.12.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/pg": "8.11.6",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "tsx": "4.16.2",
+    "typescript": "5.5.3"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  }
+}

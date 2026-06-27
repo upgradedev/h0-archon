@@ -1,0 +1,54 @@
+name: H0 Archon Evidence CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    name: Typecheck, test, build, and capture evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CI: "true"
+      GEMINI_API_KEY: ""
+      GOOGLE_API_KEY: ""
+      DYNAMODB_TABLE: ""
+      AWS_DYNAMODB_TABLE: ""
+      DATABASE_URL: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Generate judge evidence report
+        run: |
+          mkdir -p evidence
+          npm run --silent pipeline > evidence/payroll-report.json
+          node -e "const r=require('./evidence/payroll-report.json'); if (r.event.employer_cost_total !== 9110.62 || r.event.cost_gap_pct !== 27.88 || r.db_mode !== 'embedded-demo') process.exit(1);"
+
+      - name: Upload evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: h0-archon-payroll-report
+          path: evidence/payroll-report.json
