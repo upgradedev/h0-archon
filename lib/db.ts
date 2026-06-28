@@ -135,7 +135,10 @@ export async function persistReport(report: AnalysisReport): Promise<void> {
         TableName: tableName,
         Item: {
           pk: REPORT_PK,
-          sk: stored.generated_at,
+          // sk includes event_id so two reports generated in the same millisecond
+          // do not silently overwrite each other (ACTIVITY already guards this).
+          // The ISO timestamp prefix keeps descending-sk ordering correct.
+          sk: `${stored.generated_at}#${stored.event.event_id}`,
           event_id: stored.event.event_id,
           created_at: stored.generated_at,
           report: stored,
