@@ -1,4 +1,5 @@
 import type { AnalysisReport } from "./types";
+import { round2 } from "./format";
 
 export interface PnlLine {
   label: string;
@@ -67,9 +68,20 @@ export interface BusinessIntelligence {
   alerts: Array<{ title: string; detail: string; severity: "good" | "watch" | "risk" }>;
 }
 
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+// buildBusinessIntelligence is pure; memoize by report identity so the several
+// callers per request (citations, workflow steps, judge evidence, Q&A, UI rows)
+// do not each recompute the full intelligence object.
+const biCache = new WeakMap<AnalysisReport, BusinessIntelligence>();
 
 export function buildBusinessIntelligence(report: AnalysisReport): BusinessIntelligence {
+  const cached = biCache.get(report);
+  if (cached) return cached;
+  const result = computeBusinessIntelligence(report);
+  biCache.set(report, result);
+  return result;
+}
+
+function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligence {
   const salesPerformance: SalesPerformance[] = [
     { owner: "Eleni", segment: "Wholesale", actual: 42500, goal: 40000, marginPct: 32.4 },
     { owner: "Nikos", segment: "Retail", actual: 28300, goal: 32000, marginPct: 38.1 },

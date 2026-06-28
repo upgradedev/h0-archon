@@ -10,19 +10,13 @@ import {
   buildJudgeEvidence,
   buildWorkflowSteps,
 } from "@/lib/insights";
-import type { AuditActivity } from "@/lib/db";
 import type { IntakeResponse } from "@/lib/intake";
 import type { FinanceAnswer } from "@/lib/qa";
-import type { AnalysisReport } from "@/lib/types";
+import type { AnalysisReport, AuditActivity } from "@/lib/types";
+import { eur } from "@/lib/format";
 
 type PersistedIntakeResponse = IntakeResponse & { activity_id?: string; persisted_via?: string };
 type PersistedFinanceAnswer = FinanceAnswer & { activity_id?: string; persisted_via?: string };
-
-const eur = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 function formatDate(value: string) {
   const d = new Date(value);

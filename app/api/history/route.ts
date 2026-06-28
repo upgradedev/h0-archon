@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { dbMode, getActivityHistory, getReportHistory, persistReport } from "@/lib/db";
+import { getActivityHistory, getReportHistory } from "@/lib/db";
 import { buildReportResponse } from "@/lib/insights";
-import { runPipeline } from "@/lib/pipeline";
+import { getOrCreateLatestReport } from "@/lib/report-service";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +11,7 @@ export async function GET(request: Request) {
   const activityLimit = Number(url.searchParams.get("activity_limit") || 10);
   let reports = await getReportHistory(limit);
   if (!reports.length) {
-    const report = await runPipeline(undefined, dbMode());
-    await persistReport(report);
-    reports = [report];
+    reports = [await getOrCreateLatestReport()];
   }
   const activity = await getActivityHistory(activityLimit);
   return NextResponse.json({

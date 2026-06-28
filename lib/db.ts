@@ -9,7 +9,6 @@ import { activityId, normalizeActivity } from "./normalize";
 import { currentDbMode, getStore } from "./store";
 
 export type DbMode = AnalysisReport["db_mode"];
-export type { AuditActivity, AuditActivityKind } from "./types";
 
 export function dbMode(): DbMode {
   return currentDbMode();

@@ -1,5 +1,7 @@
 import type { AnalysisReport } from "./types";
 import { buildBusinessIntelligence, type BusinessIntelligence } from "./business";
+import { eur } from "./format";
+import { resolveAnalysisEngine } from "./normalize";
 
 export interface DocumentSourceInsight {
   id: string;
@@ -48,12 +50,7 @@ export interface FinanceReportResponse extends AnalysisReport {
 }
 
 export function analysisEngineLabel(report: AnalysisReport): string {
-  const legacyEngine = (report as AnalysisReport & { narrator_model?: string }).narrator_model;
-  const engine = report.analysis_engine || legacyEngine || "deterministic-finance-engine";
-  if (engine.toLowerCase().startsWith("fallback")) {
-    return "deterministic-finance-engine";
-  }
-  return engine;
+  return resolveAnalysisEngine(report);
 }
 
 export function buildReportResponse(report: AnalysisReport): FinanceReportResponse {
@@ -67,12 +64,6 @@ export function buildReportResponse(report: AnalysisReport): FinanceReportRespon
     citations: buildAccountingCitations(normalizedReport),
   };
 }
-
-const eur = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export function buildDocumentSources(report: AnalysisReport): DocumentSourceInsight[] {
   const payslipCount = report.event.employees.length;

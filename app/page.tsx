@@ -1,26 +1,18 @@
 import { ArchonDashboard } from "./components/ArchonDashboard";
-import { dbMode, getLatestReport, persistReport } from "@/lib/db";
+import { dbMode } from "@/lib/db";
 import { runPipeline } from "@/lib/pipeline";
+import { getOrCreateLatestReport } from "@/lib/report-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let report = null;
+  let report;
   try {
-    report = await getLatestReport();
+    report = await getOrCreateLatestReport();
   } catch {
-    // A transient database read error must never white-screen the judge demo.
-    // Fall through to a fresh deterministic pipeline run below.
-    report = null;
-  }
-  if (!report) {
+    // A transient database error must never white-screen the judge demo:
+    // fall back to a fresh, unpersisted deterministic run.
     report = await runPipeline(undefined, dbMode());
-    // Persistence is best-effort: if the write fails we still render the report.
-    try {
-      await persistReport(report);
-    } catch {
-      /* best-effort persistence; the report is already computed */
-    }
   }
   return <ArchonDashboard initialReport={report} />;
 }

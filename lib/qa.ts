@@ -1,5 +1,6 @@
 import { buildBusinessIntelligence } from "./business";
 import { buildAccountingCitations } from "./insights";
+import { eur } from "./format";
 import type { AnalysisReport } from "./types";
 
 export interface FinanceAnswer {
@@ -8,12 +9,6 @@ export interface FinanceAnswer {
   sources: Array<{ id: string; title: string; evidence: string }>;
   generated_at: string;
 }
-
-const eur = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export function buildFinanceAnswer(report: AnalysisReport, question: string): FinanceAnswer {
   const q = question.trim() || "What changed in this finance close?";

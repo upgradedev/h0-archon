@@ -14,8 +14,7 @@ import {
   ValidationResult,
 } from "./types";
 import sampleData from "../data/sample-payroll.json";
-
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+import { round2 } from "./format";
 
 // ---------------------------------------------------------------------------
 // 1. EXTRACTOR
