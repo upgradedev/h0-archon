@@ -4,13 +4,16 @@ import { describe, it } from "node:test";
 import samplePayroll from "../data/sample-payroll.json";
 import { buildBusinessIntelligence } from "../lib/business";
 import {
+  buildAccountingCitations,
   buildCashPlanningInsight,
   buildDocumentSources,
   buildJudgeEvidence,
   buildReportResponse,
   buildWorkflowSteps,
 } from "../lib/insights";
+import { buildIntakeResponse } from "../lib/intake";
 import { extract, linkEvent, validate } from "../lib/pipeline";
+import { buildFinanceAnswer } from "../lib/qa";
 import type { AnalysisReport } from "../lib/types";
 
 function fixtureReport(dbMode: AnalysisReport["db_mode"] = "aws-dynamodb"): AnalysisReport {
@@ -41,7 +44,7 @@ describe("judge insight model", () => {
   it("builds an auditable workflow ledger", () => {
     const workflow = buildWorkflowSteps(fixtureReport());
 
-    assert.deepEqual(workflow.map((step) => step.id), ["extract", "link", "validate", "persist", "analyze"]);
+    assert.deepEqual(workflow.map((step) => step.id), ["intake", "classify", "extract", "link", "validate", "persist", "analyze"]);
     assert.equal(workflow.find((step) => step.id === "persist")?.status, "stored");
   });
 
@@ -77,5 +80,32 @@ describe("judge insight model", () => {
     assert.equal(response.analysis_engine, "deterministic-finance-engine");
     assert.equal(response.business_intelligence.pnl.revenue, 96800);
     assert.equal(response.business_intelligence.cash.closingBalance, 58789.38);
+    assert.equal(response.citations.length, 4);
+  });
+
+  it("builds source-backed accounting citations", () => {
+    const citations = buildAccountingCitations(fixtureReport());
+
+    assert.deepEqual(citations.map((citation) => citation.id), ["SRC-REV", "SRC-COGS", "SRC-CASH", "SRC-PAY"]);
+    assert.match(citations[3].evidence, /true cost/);
+  });
+
+  it("classifies uploaded finance documents by role", () => {
+    const intake = buildIntakeResponse([
+      { name: "alpha_bank_statement_2026-05.pdf", size: 1 },
+      { name: "sales_targets_by_owner_2026-05.xlsx", size: 1 },
+      { name: "supplier_purchases_2026-05.xlsx", size: 1 },
+      { name: "misthodosia_register_2026-05.xlsx", size: 1 },
+    ]);
+
+    assert.equal(intake.ready_for_close, true);
+    assert.deepEqual(intake.coverage, ["bank", "sales", "purchases", "payroll"]);
+  });
+
+  it("answers finance questions with source evidence", () => {
+    const answer = buildFinanceAnswer(fixtureReport(), "What is our true payroll cost compared to the bank?");
+
+    assert.match(answer.answer, /True payroll cost/);
+    assert.equal(answer.sources.length, 4);
   });
 });

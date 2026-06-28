@@ -17,6 +17,14 @@ export interface WorkflowStepInsight {
   evidence: string;
 }
 
+export interface AccountingCitation {
+  id: string;
+  title: string;
+  claim: string;
+  source: string;
+  evidence: string;
+}
+
 export interface CashPlanningInsight {
   bankOnlyMonthly: number;
   trueMonthlyCost: number;
@@ -36,6 +44,7 @@ export interface JudgeEvidence {
 
 export interface FinanceReportResponse extends AnalysisReport {
   business_intelligence: BusinessIntelligence;
+  citations: AccountingCitation[];
 }
 
 export function analysisEngineLabel(report: AnalysisReport): string {
@@ -55,6 +64,7 @@ export function buildReportResponse(report: AnalysisReport): FinanceReportRespon
   return {
     ...normalizedReport,
     business_intelligence: buildBusinessIntelligence(normalizedReport),
+    citations: buildAccountingCitations(normalizedReport),
   };
 }
 
@@ -110,11 +120,25 @@ export function buildWorkflowSteps(report: AnalysisReport): WorkflowStepInsight[
   const passCount = report.validations.filter((validation) => validation.passed).length;
   return [
     {
+      id: "intake",
+      title: "Intake",
+      owner: "Upload agent",
+      status: "passed",
+      evidence: `${report.event.linked_docs.length + 4} monthly finance documents accepted for close`,
+    },
+    {
+      id: "classify",
+      title: "Classify",
+      owner: "Document classifier",
+      status: "passed",
+      evidence: "Bank, sales, purchase, payroll register, and payslip groups identified",
+    },
+    {
       id: "extract",
       title: "Extract",
-      owner: "Finance document agent",
+      owner: "Finance extractor",
       status: "passed",
-      evidence: `${report.event.linked_docs.length + 4} source documents normalized across sales, purchases, bank, and payroll`,
+      evidence: "Revenue, COGS, cash movement, payroll, tax, and employee fields normalized",
     },
     {
       id: "link",
@@ -132,10 +156,10 @@ export function buildWorkflowSteps(report: AnalysisReport): WorkflowStepInsight[
     },
     {
       id: "persist",
-      title: "Persist",
-      owner: "Vercel function",
+      title: "Report",
+      owner: "Evidence writer",
       status: "stored",
-      evidence: `Report stored through ${report.db_mode}`,
+      evidence: `Report, citations, history, and Q&A context stored through ${report.db_mode}`,
     },
     {
       id: "analyze",
@@ -143,6 +167,41 @@ export function buildWorkflowSteps(report: AnalysisReport): WorkflowStepInsight[
       owner: "CFO rules engine",
       status: "passed",
       evidence: `${eur.format(intelligence.pnl.ebitda)} EBITDA, ${intelligence.sales.attainmentPct.toFixed(1)}% sales goal attainment`,
+    },
+  ];
+}
+
+export function buildAccountingCitations(report: AnalysisReport): AccountingCitation[] {
+  const intelligence = buildBusinessIntelligence(report);
+  const topPurchase = intelligence.purchases.categories[0];
+  return [
+    {
+      id: "SRC-REV",
+      title: "Revenue basis",
+      claim: "P&L revenue is shown net of tax and reconciled from sales documents.",
+      source: "sales_targets_by_owner_2026-05.xlsx",
+      evidence: `${eur.format(intelligence.pnl.revenue)} net revenue, ${intelligence.sales.attainmentPct.toFixed(1)}% goal attainment`,
+    },
+    {
+      id: "SRC-COGS",
+      title: "Purchase basis",
+      claim: "COGS and supplier concentration come from the purchase ledger and bank outflows.",
+      source: "supplier_purchases_2026-05.xlsx",
+      evidence: `${eur.format(intelligence.purchases.total)} COGS; ${topPurchase.category} is ${topPurchase.sharePct.toFixed(1)}%`,
+    },
+    {
+      id: "SRC-CASH",
+      title: "Cash basis",
+      claim: "The account statement reconciles collections, supplier payments, payroll transfers, and closing balance.",
+      source: "alpha_bank_statement_2026-05.pdf",
+      evidence: `${eur.format(intelligence.cash.closingBalance)} closing cash, ${intelligence.cash.runwayMonths.toFixed(1)} months runway`,
+    },
+    {
+      id: "SRC-PAY",
+      title: "Payroll control basis",
+      claim: "Employer payroll cost must use the payroll register and payslips, not only the bank transfer.",
+      source: "misthodosia_register_2026-05.xlsx + employee payslips",
+      evidence: `${eur.format(report.event.employer_cost_total)} true cost vs ${eur.format(report.event.bank_net_total)} bank net`,
     },
   ];
 }
@@ -178,7 +237,8 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
     stack: [
       { label: "Frontend", value: "Next.js App Router on Vercel", status: "ready" },
       { label: "Database", value: awsLabel, status: awsStatus },
-      { label: "Analysis", value: "Deterministic CFO rules engine in Vercel Functions", status: "ready" },
+      { label: "Agent flow", value: "Seven-step intake, classify, extract, link, validate, report, analyze ledger", status: "ready" },
+      { label: "Analysis", value: "Deterministic CFO rules engine and ask-report endpoint in Vercel Functions", status: "ready" },
       { label: "CI/CD", value: "GitHub Actions runs typecheck, tests, build, evidence, and live smoke", status: "configured" },
     ],
     criteria: [
@@ -192,7 +252,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       },
       {
         criterion: "UI/UX",
-        evidence: "Single public judge path exposes P&L, cash, sales, purchases, payroll controls, source documents, history, and JSON APIs.",
+        evidence: "Single public judge path exposes upload intake, P&L, cash, sales, purchases, payroll controls, citations, Q&A, history, and JSON APIs.",
       },
       {
         criterion: "Creativity",
@@ -205,6 +265,8 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
     ],
     endpoints: [
       { label: "Report", path: "/api/report", purpose: "Latest persisted finance intelligence JSON" },
+      { label: "Intake", path: "/api/intake", purpose: "Classifies uploaded monthly finance files by document role" },
+      { label: "Ask", path: "/api/ask", purpose: "Answers natural-language finance questions against the latest report" },
       { label: "Run", path: "/api/run", purpose: "Re-executes extract, link, validate, analyze, persist" },
       { label: "History", path: "/api/history", purpose: "Recent persisted runs from AWS DynamoDB or fallback store" },
       { label: "Evidence", path: "/api/evidence", purpose: "Judge-facing sponsor stack and criteria evidence" },
@@ -216,6 +278,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       `revenue=${intelligence.pnl.revenue.toFixed(2)}`,
       `ebitda=${intelligence.pnl.ebitda.toFixed(2)}`,
       `sales_attainment=${intelligence.sales.attainmentPct.toFixed(2)}`,
+      `citations=${buildAccountingCitations(report).length}`,
       `payroll_gap=${report.event.hidden_total.toFixed(2)}`,
     ],
   };

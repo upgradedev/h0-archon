@@ -28,6 +28,9 @@ Polled from `GET /api/report` on 2026-06-28 Europe/Athens.
 - sales goal attainment: `96.8%`
 - closing cash: `58789.38`
 - fresh-produce purchase concentration: `42.68%`
+- citations: `4`
+- `/api/intake`: classifies the sample monthly close bundle as close-ready.
+- `/api/ask`: answers true payroll cost versus bank statement with four sources.
 - `event.company`: `Eleftheria Foods AE`
 - `event.period`: `2026-05`
 - `event.employee_count`: `5`
@@ -52,4 +55,5 @@ AWS DynamoDB persistence, deterministic finance analysis, API evidence, and a
 CI gate covering install, typecheck, unit tests, production build, pipeline
 execution, and live production smoke against the public DynamoDB-backed API.
 The judge-visible surface now covers P&L, account statement movement, sales
-performance versus goals, purchase concentration, and payroll controls.
+performance versus goals, purchase concentration, payroll controls, document
+intake, source-backed citations, and ask-report Q&A.

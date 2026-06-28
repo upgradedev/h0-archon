@@ -5,7 +5,13 @@ const delayMs = Number(process.env.H0_LIVE_DELAY_MS || 10000);
 
 type LiveReport = {
   db_mode?: string;
+  analysis_engine?: string;
   generated_at?: string;
+  business_intelligence?: {
+    pnl?: { revenue?: number; ebitda?: number };
+    sales?: { attainmentPct?: number };
+  };
+  citations?: Array<{ id?: string }>;
   event?: {
     employer_cost_total?: number;
     hidden_total?: number;
@@ -25,6 +31,21 @@ function assertLiveReport(report: LiveReport) {
   }
   if (!report.generated_at || Number.isNaN(Date.parse(report.generated_at))) {
     throw new Error("generated_at is missing or invalid");
+  }
+  if (report.analysis_engine !== "deterministic-finance-engine") {
+    throw new Error(`unexpected analysis_engine: ${report.analysis_engine}`);
+  }
+  if (report.business_intelligence?.pnl?.revenue !== 96800) {
+    throw new Error(`unexpected revenue: ${report.business_intelligence?.pnl?.revenue}`);
+  }
+  if (report.business_intelligence?.pnl?.ebitda !== 20889.38) {
+    throw new Error(`unexpected ebitda: ${report.business_intelligence?.pnl?.ebitda}`);
+  }
+  if (report.business_intelligence?.sales?.attainmentPct !== 96.8) {
+    throw new Error(`unexpected sales attainment: ${report.business_intelligence?.sales?.attainmentPct}`);
+  }
+  if ((report.citations || []).length !== 4) {
+    throw new Error(`expected 4 citations, got ${(report.citations || []).length}`);
   }
   if (report.event?.employer_cost_total !== 9110.62) {
     throw new Error(`unexpected employer_cost_total: ${report.event?.employer_cost_total}`);
@@ -69,7 +90,10 @@ async function main() {
             ok: true,
             url: liveUrl,
             db_mode: report.db_mode,
+            analysis_engine: report.analysis_engine,
             generated_at: report.generated_at,
+            revenue: report.business_intelligence?.pnl?.revenue,
+            citations: report.citations?.length,
             employer_cost_total: report.event?.employer_cost_total,
             hidden_total: report.event?.hidden_total,
             validations: report.validations?.map((result) => `${result.rule}:${result.passed ? "PASS" : "FAIL"}`),

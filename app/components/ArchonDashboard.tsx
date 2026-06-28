@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { buildBusinessIntelligence } from "@/lib/business";
 import {
   analysisEngineLabel,
+  buildAccountingCitations,
   buildCashPlanningInsight,
   buildDocumentSources,
   buildJudgeEvidence,
   buildWorkflowSteps,
 } from "@/lib/insights";
+import type { IntakeResponse } from "@/lib/intake";
+import type { FinanceAnswer } from "@/lib/qa";
 import type { AnalysisReport } from "@/lib/types";
 
 const eur = new Intl.NumberFormat("en-GB", {
@@ -28,30 +31,37 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
   const [status, setStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [salesLift, setSalesLift] = useState(5);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [intake, setIntake] = useState<IntakeResponse | null>(null);
+  const [intakeBusy, setIntakeBusy] = useState(false);
+  const [question, setQuestion] = useState("What is our true payroll cost, and how does it compare to the bank statement?");
+  const [answer, setAnswer] = useState<FinanceAnswer | null>(null);
+  const [askBusy, setAskBusy] = useState(false);
 
+  const business = useMemo(() => buildBusinessIntelligence(report), [report]);
   const chartData = useMemo(
     () => [
       {
         name: "Revenue",
-        amount: buildBusinessIntelligence(report).pnl.revenue,
+        amount: business.pnl.revenue,
       },
       {
         name: "Gross profit",
-        amount: buildBusinessIntelligence(report).pnl.grossProfit,
+        amount: business.pnl.grossProfit,
       },
       {
         name: "EBITDA",
-        amount: buildBusinessIntelligence(report).pnl.ebitda,
+        amount: business.pnl.ebitda,
       },
     ],
-    [report]
+    [business]
   );
   const chartMax = Math.max(...chartData.map((item) => item.amount), 1);
-  const business = useMemo(() => buildBusinessIntelligence(report), [report]);
   const documents = useMemo(() => buildDocumentSources(report), [report]);
   const workflow = useMemo(() => buildWorkflowSteps(report), [report]);
   const cashPlan = useMemo(() => buildCashPlanningInsight(report), [report]);
   const evidence = useMemo(() => buildJudgeEvidence(report), [report]);
+  const citations = useMemo(() => buildAccountingCitations(report), [report]);
   const engineLabel = analysisEngineLabel(report);
   const passCount = report.validations.filter((check) => check.passed).length;
   const projectedRevenue = business.pnl.revenue * (1 + salesLift / 100);
@@ -87,6 +97,46 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
       setStatus(`Run failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function queueDocuments() {
+    setIntakeBusy(true);
+    setStatus("Classifying uploaded finance documents");
+    try {
+      const form = new FormData();
+      selectedFiles.forEach((file) => form.append("files", file));
+      const res = await fetch("/api/intake", { method: "POST", body: form });
+      if (!res.ok) throw new Error(await res.text());
+      const next = (await res.json()) as IntakeResponse;
+      setIntake(next);
+      setStatus(`${next.accepted}/${next.received} documents classified; coverage: ${next.coverage.join(", ") || "manual review"}`);
+    } catch (err) {
+      setStatus(`Intake failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIntakeBusy(false);
+    }
+  }
+
+  async function askReport() {
+    setAskBusy(true);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setAnswer((await res.json()) as FinanceAnswer);
+    } catch (err) {
+      setAnswer({
+        question,
+        answer: `Question failed: ${err instanceof Error ? err.message : String(err)}`,
+        sources: [],
+        generated_at: new Date().toISOString(),
+      });
+    } finally {
+      setAskBusy(false);
     }
   }
 
@@ -170,7 +220,7 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
           <section className="panel">
             <div className="section-title">
               <h3>Agent Run Ledger</h3>
-              <span className="tag">Typed Handoff</span>
+              <span className="tag">Seven Agents</span>
             </div>
             <div className="timeline">
               {workflow.map((step, index) => (
@@ -208,6 +258,74 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
                 <code key={item}>{item}</code>
               ))}
             </div>
+          </section>
+        </div>
+
+        <div className="grid two-col" style={{ marginTop: 16 }}>
+          <section className="panel">
+            <div className="section-title">
+              <h3>Document Intake</h3>
+              <span className="tag">{intake?.ready_for_close ? "Close Ready" : "Upload Queue"}</span>
+            </div>
+            <div className="intake-box">
+              <input
+                type="file"
+                multiple
+                onChange={(event) => setSelectedFiles(Array.from(event.currentTarget.files || []))}
+              />
+              <button className="secondary" onClick={queueDocuments} disabled={intakeBusy || selectedFiles.length === 0}>
+                {intakeBusy ? "Classifying..." : "Classify Files"}
+              </button>
+            </div>
+            <div className="intake-list">
+              {(intake?.files || selectedFiles.map((file) => ({ name: file.name, size: file.size, kind: "queued", role: "Ready to classify", confidence: 0 }))).map((file) => (
+                <div className="intake-row" key={`${file.name}-${file.size}`}>
+                  <div>
+                    <strong>{file.name}</strong>
+                    <span>{file.role}</span>
+                  </div>
+                  <code>{file.kind}{file.confidence ? ` ${(file.confidence * 100).toFixed(0)}%` : ""}</code>
+                </div>
+              ))}
+              {!selectedFiles.length && !intake && (
+                <div className="intake-row muted-row">
+                  <div>
+                    <strong>Demo bundle ready</strong>
+                    <span>Bank, sales, purchases, payroll register, and payslips are represented in the current close.</span>
+                  </div>
+                  <code>sample</code>
+                </div>
+              )}
+            </div>
+          </section>
+          <section className="panel">
+            <div className="section-title">
+              <h3>Ask Archon</h3>
+              <span className="tag">Source Backed</span>
+            </div>
+            <div className="ask-box">
+              <textarea
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                rows={3}
+              />
+              <button className="primary" onClick={askReport} disabled={askBusy}>
+                {askBusy ? "Answering..." : "Ask Report"}
+              </button>
+            </div>
+            {answer && (
+              <div className="answer-box">
+                <p>{answer.answer}</p>
+                <div className="citation-list compact">
+                  {answer.sources.slice(0, 4).map((source) => (
+                    <div className="citation-row" key={source.id}>
+                      <strong>{source.id}</strong>
+                      <span>{source.evidence}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </div>
 
@@ -252,6 +370,14 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
                 <div className={`alert-row ${alert.severity}`} key={alert.title}>
                   <strong>{alert.title}</strong>
                   <span>{alert.detail}</span>
+                </div>
+              ))}
+            </div>
+            <div className="citation-list">
+              {citations.map((citation) => (
+                <div className="citation-row" key={citation.id}>
+                  <strong>{citation.id}</strong>
+                  <span>{citation.claim}</span>
                 </div>
               ))}
             </div>

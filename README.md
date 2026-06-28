@@ -11,8 +11,8 @@ finance close.
 
 The current build is intentionally public and ungated for judges. Instead of
 adding authentication friction, it adds judge-visible product depth: an agent
-run ledger, source-document evidence, scenario planning, recent persisted run
-history, and a dedicated evidence API.
+run ledger, document intake, source-backed citations, ask-report Q&A, scenario
+planning, recent persisted run history, and dedicated evidence APIs.
 
 ## Stack
 
@@ -20,6 +20,7 @@ history, and a dedicated evidence API.
 - AWS DynamoDB via `DYNAMODB_TABLE` for the fast serverless deployment path
 - Optional AWS Aurora PostgreSQL fallback via `DATABASE_URL`
 - Deterministic CFO rules engine running in Vercel Functions
+- Document-intake and ask-report Vercel Functions
 - Embedded demo mode when no AWS database is configured
 
 ## Run
@@ -66,6 +67,8 @@ The schema lives in `db/schema.sql`.
 1. Open `https://h0-archon.vercel.app`.
 2. Press **Run Finance Close**.
 3. Confirm the dashboard shows:
+   - document intake with bank/sales/purchases/payroll coverage
+   - seven-agent run ledger
    - P&L revenue: EUR 96,800
    - EBITDA: EUR 20,889
    - sales goal attainment: 96.8%
@@ -75,11 +78,12 @@ The schema lives in `db/schema.sql`.
    - true employer cost: EUR 9,111
    - hidden wedge: EUR 3,154
    - employer IKA gap: 27.9%
+   - source-backed citations and Ask Archon answer panel
 4. Open `https://h0-archon.vercel.app/api/report` to verify the JSON API and
    persistence mode. The live deployment should report `db_mode:
    "aws-dynamodb"`.
-5. Open `https://h0-archon.vercel.app/api/history` and
-   `https://h0-archon.vercel.app/api/evidence` for persisted run history and
+5. Open `/api/intake`, `/api/ask`, `/api/history`, and `/api/evidence` for
+   intake classification, conversational answers, persisted run history, and
    sponsor-stack evidence.
 
 ## Evidence
@@ -87,6 +91,8 @@ The schema lives in `db/schema.sql`.
 - Public repo: https://github.com/upgradedev/h0-archon
 - Public app: https://h0-archon.vercel.app
 - Live API: https://h0-archon.vercel.app/api/report
+- Intake API: https://h0-archon.vercel.app/api/intake
+- Ask API: https://h0-archon.vercel.app/api/ask
 - Run history API: https://h0-archon.vercel.app/api/history
 - Judge evidence API: https://h0-archon.vercel.app/api/evidence
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
@@ -99,3 +105,4 @@ The schema lives in `db/schema.sql`.
   - prior push run `28302687767`
   - manual run `28302687749`
 - Latest evidence note: `docs/LIVE_EVIDENCE_2026-06-28.md`
+- Video gap review: `docs/V0_VIDEO_GAP_REVIEW.md`
