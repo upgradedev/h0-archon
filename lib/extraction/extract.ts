@@ -57,6 +57,7 @@ Choose doc_type from EXACTLY one of: bank_confirmation, payroll_register, paysli
   "tax_withheld_total": null,
   "employer_ika_total": null,
   "employer_cost_total": null,
+  "register_employee_count": null,
   "employee": {
     "employee_id": "string or null",
     "name": "string or null",
@@ -73,7 +74,7 @@ Choose doc_type from EXACTLY one of: bank_confirmation, payroll_register, paysli
 
 Rules:
   - For a bank_confirmation: fill bank_net_total only; leave the register totals and "employee" as null.
-  - For a payroll_register: fill the company totals; leave "employee" as null.
+  - For a payroll_register: fill the company totals and register_employee_count (the headcount the register itself reports); leave "employee" as null.
   - For a payslip: fill the "employee" object; leave the company totals and bank_net_total as null.
 
 IMPORTANT: Return ONLY the raw JSON object. No markdown fences, no extra text.`;
@@ -117,6 +118,12 @@ export function safeFloat(value: unknown): number | null {
     return Number.isFinite(f) ? f : null;
   }
   return null;
+}
+
+// Integer count parse (register headcount) — null-safe, rounds a numeric string.
+function safeInt(value: unknown): number | null {
+  const f = safeFloat(value);
+  return f === null ? null : Math.round(f);
 }
 
 function safeStr(value: unknown): string | null {
@@ -307,6 +314,7 @@ function emptyDocument(input: ExtractInput): ExtractedDocument {
     employer_ika_total: null,
     employee_ika_total: null,
     tax_withheld_total: null,
+    register_employee_count: null,
     employee: null,
     payment_date: null,
   };
@@ -369,6 +377,7 @@ export async function extractDocument(
     employer_ika_total: parsed.employer_ika_total,
     employee_ika_total: safeFloat(data.employee_ika_total),
     tax_withheld_total: safeFloat(data.tax_withheld_total),
+    register_employee_count: safeInt(data.register_employee_count),
     employee,
     payment_date: safeStr(data.payment_date),
   };

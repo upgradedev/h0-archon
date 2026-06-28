@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { loadCorpus } from "../lib/corpus";
 import { degradedExtractor, perfectExtractor } from "../lib/extractor";
+import { linkEvent, validate } from "../../lib/pipeline";
 import {
   naiveFloor,
   numMatch,
@@ -49,29 +50,38 @@ describe("perfect-extraction ceiling on the committed sample", () => {
   });
 });
 
-describe("the diverse corpus exposes the validation generalization bugs", () => {
+describe("the diverse corpus: the validation generalization bugs are now fixed", () => {
   const cases = loadCorpus(SAMPLE);
   const byId = new Map(cases.map((c) => [c.caseId, c]));
 
-  it("R4 is tautological: a missing payslip passes R4 when domain truth fails it", () => {
-    const c = byId.get("case-0002")!; // missing_payslip
+  it("R4 is now a genuine register-vs-payslip check that FAILS on a real disagreement", () => {
+    const c = byId.get("case-0002")!; // missing_payslip: register=7 vs payslips=6
     assert.ok(c.gt.edge_cases.includes("missing_payslip"));
-    const fus = scoreFusion(perfectExtractor.run(c.caseDir), c.gt);
-    // domain truth says R4 should fail; the pipeline wrongly passes it
+    const docs = perfectExtractor.run(c.caseDir);
+    const fus = scoreFusion(docs, c.gt);
+    // domain truth says R4 should fail; the pipeline now AGREES (was: wrongly passed)
     assert.equal(fus.validations.R4.expected, false);
-    assert.equal(fus.validations.R4.actual, true);
-    assert.ok(fus.validationDivergences.includes("R4"));
-    // R1 (which does compare bank vs payslips) correctly catches the break
+    assert.equal(fus.validations.R4.actual, false);
+    assert.ok(!fus.validationDivergences.includes("R4"));
+    // and it fails for the RIGHT reason: the register count != the payslip count.
+    const r4 = validate(linkEvent(docs), docs).find((r) => r.rule === "R4")!;
+    assert.match(r4.detail, /register=7 vs payslips=6/);
+    // R1 (bank vs payslips) also correctly catches the break on this edge.
     assert.equal(fus.validations.R1.expected, false);
     assert.equal(fus.validations.R1.actual, false);
   });
 
-  it("R2 is brittle: a legitimate non-standard contribution rate trips the hardcoded band", () => {
+  it("R2 now accepts a legitimate non-standard rate that the register confirms", () => {
     const c = byId.get("case-0003")!; // non_standard_ika
-    const fus = scoreFusion(perfectExtractor.run(c.caseDir), c.gt);
+    const docs = perfectExtractor.run(c.caseDir);
+    const fus = scoreFusion(docs, c.gt);
+    // domain truth says this consistent payroll should pass; the pipeline now AGREES.
     assert.equal(fus.validations.R2.expected, true);
-    assert.equal(fus.validations.R2.actual, false);
-    assert.ok(fus.validationDivergences.includes("R2"));
+    assert.equal(fus.validations.R2.actual, true);
+    assert.ok(!fus.validationDivergences.includes("R2"));
+    // it passed via a register cross-check, not a hardcoded national band.
+    const r2 = validate(linkEvent(docs), docs).find((r) => r.rule === "R2")!;
+    assert.match(r2.detail, /vs register/);
   });
 
   it("standard cases pass all four rules", () => {

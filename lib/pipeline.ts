@@ -39,6 +39,7 @@ export function extract(raw?: any): ExtractedDocument[] {
       employer_ika_total: d.employer_ika_total ?? null,
       employee_ika_total: d.employee_ika_total ?? null,
       tax_withheld_total: d.tax_withheld_total ?? null,
+      register_employee_count: d.register_employee_count ?? null,
       employee: d.employee
         ? {
             employee_id: d.employee.employee_id,
@@ -69,6 +70,11 @@ export function linkEvent(docs: ExtractedDocument[]): PayrollEvent {
   const period = docs[0]?.period || "Unknown";
 
   const bankDoc = docs.find((d) => d.doc_type === "bank_confirmation");
+  // The register is an independent source of truth (its own headcount + totals).
+  // We surface it onto the event so the validator can cross-check it against the
+  // payslips — the fused totals themselves stay payslip-derived (the granular
+  // truth), so this is additive and does not move any reported figure.
+  const registerDoc = docs.find((d) => d.doc_type === "payroll_register");
   const payslips: EmployeePayslip[] = docs
     .filter((d) => d.doc_type === "payslip" && d.employee)
     .map((d) => d.employee as EmployeePayslip);
@@ -106,6 +112,10 @@ export function linkEvent(docs: ExtractedDocument[]): PayrollEvent {
     cost_gap_amount,
     cost_gap_pct,
     hidden_total,
+    register_employee_count: registerDoc?.register_employee_count ?? null,
+    register_gross_total: registerDoc?.gross_total ?? null,
+    register_employer_ika_total: registerDoc?.employer_ika_total ?? null,
+    register_employer_cost_total: registerDoc?.employer_cost_total ?? null,
     employees: payslips,
     linked_docs: docs.map((d) => d.doc_id),
   };
@@ -129,13 +139,36 @@ export function validate(event: PayrollEvent, docs: ExtractedDocument[]): Valida
     detail: `bank=${event.bank_net_total} vs payslips=${payslipNet} (Δ ${(r1Delta * 100).toFixed(2)}%)`,
   });
 
-  // R2 — employer IKA ratio is in the expected Greek band (22.29% of gross, ±1pt)
+  // R2 — employer-IKA ratio consistency (generalized: not a single hardcoded rate)
+  // When a register is present we infer the EXPECTED employer-contribution rate
+  // from the register itself and cross-check the payslip-derived rate against it
+  // — this catches a real payslip/register disagreement at any legitimate rate.
+  // When no register is present we fall back to a reference band and merely FLAG
+  // (never hard-fail) anything outside it, so a legitimately non-standard rate is
+  // not false-failed. The reference is used only to phrase a flag, never asserted
+  // as the one correct statutory number.
   const ikaRatio = event.gross_total === 0 ? 0 : (event.employer_ika_total / event.gross_total) * 100;
+  const REFERENCE_IKA_PCT = 22.29; // reference for flagging only — never a hard-fail threshold
+  const RATE_TOL_PCT = 1.0;
+  let r2Passed: boolean;
+  let r2Detail: string;
+  if (event.register_gross_total && event.register_employer_ika_total != null) {
+    const registerRate = (event.register_employer_ika_total / event.register_gross_total) * 100;
+    const delta = Math.abs(ikaRatio - registerRate);
+    r2Passed = delta <= RATE_TOL_PCT;
+    r2Detail = `payslip-derived ${ikaRatio.toFixed(2)}% vs register ${registerRate.toFixed(2)}% (Δ ${delta.toFixed(2)}pt)`;
+  } else {
+    const withinReference = Math.abs(ikaRatio - REFERENCE_IKA_PCT) <= RATE_TOL_PCT;
+    r2Passed = true; // flag-for-review, never false-fail with no register to cross-check
+    r2Detail = withinReference
+      ? `employer_ika/gross = ${ikaRatio.toFixed(2)}% (within ~${REFERENCE_IKA_PCT}% reference band)`
+      : `employer_ika/gross = ${ikaRatio.toFixed(2)}% — outside ~${REFERENCE_IKA_PCT}% reference band; FLAGGED for review (no register to cross-check)`;
+  }
   results.push({
     rule: "R2",
-    description: "Employer IKA ratio within Greek statutory band (~22.29% of gross, ±1pt)",
-    passed: Math.abs(ikaRatio - 22.29) <= 1.0,
-    detail: `employer_ika/gross = ${ikaRatio.toFixed(2)}% (expected ~22.29%)`,
+    description: "Employer-IKA ratio consistent with the register (flagged, not failed, when no register is present)",
+    passed: r2Passed,
+    detail: r2Detail,
   });
 
   // R3 — payment date present on the extracted event payload
@@ -148,13 +181,28 @@ export function validate(event: PayrollEvent, docs: ExtractedDocument[]): Valida
     detail: hasDate ? `payment_date=${paymentDate}` : "no payment date found",
   });
 
-  // R4 — employee count matches across register and payslips
+  // R4 — register-reported headcount vs the payslips actually present.
+  // A GENUINE cross-document check: the register carries its own employee count,
+  // which is compared against the number of payslip documents. It FAILS when they
+  // disagree (a payslip is missing, or the register lists a different headcount).
+  // Both sides no longer derive from the same payslip set. When the register
+  // carries no explicit count the check cannot run and passes.
   const payslipCount = docs.filter((d) => d.doc_type === "payslip").length;
+  const registerCount = event.register_employee_count;
+  let r4Passed: boolean;
+  let r4Detail: string;
+  if (registerCount == null) {
+    r4Passed = true;
+    r4Detail = `payslips=${payslipCount}; no register headcount to cross-check`;
+  } else {
+    r4Passed = registerCount === payslipCount;
+    r4Detail = `register=${registerCount} vs payslips=${payslipCount}`;
+  }
   results.push({
     rule: "R4",
-    description: "Employee count consistent (register vs payslips)",
-    passed: payslipCount === event.employee_count,
-    detail: `payslips=${payslipCount}, event=${event.employee_count}`,
+    description: "Register-reported employee count matches the payslips present",
+    passed: r4Passed,
+    detail: r4Detail,
   });
 
   return results;

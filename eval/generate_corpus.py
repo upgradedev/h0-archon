@@ -274,6 +274,12 @@ def build_case(case_id, out_root, rng, edge):
     has_register = edge != "missing_register"
     has_bank = edge != "missing_bank"
 
+    # register_mismatch: all payslips present and the bank reconciles (R1 passes),
+    # but the register declares a DIFFERENT headcount than the payslips on file.
+    # This isolates the R4 register-vs-payslip cross-check (R4 fails, R1 passes),
+    # unconfounded by the reconciliation break that missing_payslip also triggers.
+    register_headcount = n_true + 1 if edge == "register_mismatch" else n_true
+
     case_dir = out_root / case_id
     docs_dir = case_dir / "docs"
     docs_dir.mkdir(parents=True, exist_ok=True)
@@ -307,7 +313,7 @@ def build_case(case_id, out_root, rng, edge):
     if has_register:
         fn = f"payroll_register_{period}.pdf"
         render_register(docs_dir / fn, company, period, payment_date,
-                        reg_totals, n_true, alt_layout=alt_layout)
+                        reg_totals, register_headcount, alt_layout=alt_layout)
         did = "doc-register-001"
         documents.append({
             "doc_id": did, "doc_type": "payroll_register",
@@ -317,7 +323,7 @@ def build_case(case_id, out_root, rng, edge):
             "tax_withheld_total": reg_totals["tax_withheld_total"],
             "employer_ika_total": reg_totals["employer_ika_total"],
             "employer_cost_total": reg_totals["employer_cost_total"],
-            "register_employee_count": n_true,  # authoritative headcount (pipeline never reads it)
+            "register_employee_count": register_headcount,  # register's own reported headcount
             "payment_date": payment_date,
         })
         classification[did] = "payroll_register"
@@ -349,7 +355,7 @@ def build_case(case_id, out_root, rng, edge):
 
     # ---- DOMAIN truth for the four cross-document rules -------------------
     payslip_count = len(emitted_emps)
-    register_count = n_true if has_register else payslip_count
+    register_count = register_headcount if has_register else payslip_count
     has_date = any(d.get("payment_date") for d in documents)
 
     if edge in ("bank_mismatch", "missing_payslip"):
@@ -408,6 +414,7 @@ SAMPLE_EDGES = [
 ]
 EXTRA_EDGES = [
     "missing_register", "multi_page", "alt_layout", "missing_fields",
+    "register_mismatch",
 ]
 
 

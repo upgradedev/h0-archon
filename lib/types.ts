@@ -24,6 +24,7 @@ export interface ExtractedDocument {
   employer_ika_total?: number | null; // payroll_register
   employee_ika_total?: number | null; // payroll_register
   tax_withheld_total?: number | null; // payroll_register
+  register_employee_count?: number | null; // payroll_register: headcount the register itself reports
   employee?: EmployeePayslip | null; // payslip
   payment_date?: string | null;
   source_filename: string;
@@ -58,6 +59,13 @@ export interface PayrollEvent {
   cost_gap_pct: number; // cost_gap_amount / bank_net_total * 100  (~28%)
   // Full reconciliation: everything the bank salary confirmation misses vs true cost.
   hidden_total: number; // employer_cost_total - bank_net_total
+  // Register-reported figures, surfaced from the payroll_register document so the
+  // validator can cross-check the payslips against the register (not derive both
+  // sides from the same payslip set). Null when no register is present.
+  register_employee_count?: number | null;
+  register_gross_total?: number | null;
+  register_employer_ika_total?: number | null;
+  register_employer_cost_total?: number | null;
   employees: EmployeePayslip[];
   linked_docs: string[]; // doc_ids fused into this event
 }
