@@ -66,6 +66,11 @@ The schema lives in `db/schema.sql`.
 1. Open `https://h0-archon.vercel.app`.
 2. Press **Run Finance Close**.
 3. Confirm the dashboard shows:
+   - P&L revenue: EUR 96,800
+   - EBITDA: EUR 20,889
+   - sales goal attainment: 96.8%
+   - closing cash: EUR 58,789
+   - purchase concentration risk: fresh produce at 42.7% of COGS
    - bank confirmation: EUR 5,957
    - true employer cost: EUR 9,111
    - hidden wedge: EUR 3,154
@@ -87,6 +92,7 @@ The schema lives in `db/schema.sql`.
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
   evidence artifact, and live Vercel + AWS DynamoDB smoke.
 - Confirmed green CI runs include:
+  - finance scope push run `28314932395`
   - live-smoke push run `28312638726`
   - evidence-doc push run `28312523535`
   - prior push run `28311936518`

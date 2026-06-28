@@ -9,6 +9,7 @@
 
 ## Confirmed Green CI
 
+- Push run `28314932395`: success, includes finance scope expansion and live Vercel + AWS DynamoDB smoke.
 - Push run `28312638726`: success, includes live Vercel + AWS DynamoDB smoke.
 - Push run `28312523535`: success.
 - Push run `28311936518`: success.
@@ -20,10 +21,13 @@
 Polled from `GET /api/report` on 2026-06-28 Europe/Athens.
 
 - `db_mode`: `aws-dynamodb`
-- `generated_at`: `2026-06-27T21:17:05.859Z`
+- `generated_at`: `2026-06-28T07:20:28.982Z`
 - `analysis_engine`: deterministic-finance-engine
 - P&L revenue: `96800`
+- EBITDA: `20889.38`
 - sales goal attainment: `96.8%`
+- closing cash: `58789.38`
+- fresh-produce purchase concentration: `42.68%`
 - `event.company`: `Eleftheria Foods AE`
 - `event.period`: `2026-05`
 - `event.employee_count`: `5`
@@ -44,6 +48,8 @@ Polled from `GET /api/report` on 2026-06-28 Europe/Athens.
 ## Judge Read
 
 The deployed app demonstrates the H0 requirement with a live Vercel frontend,
-AWS DynamoDB persistence, deterministic reconciliation rules, API evidence, and
-a CI gate covering install, typecheck, unit tests, production build, pipeline
+AWS DynamoDB persistence, deterministic finance analysis, API evidence, and a
+CI gate covering install, typecheck, unit tests, production build, pipeline
 execution, and live production smoke against the public DynamoDB-backed API.
+The judge-visible surface now covers P&L, account statement movement, sales
+performance versus goals, purchase concentration, and payroll controls.
