@@ -239,6 +239,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       { label: "Database", value: awsLabel, status: awsStatus },
       { label: "Agent flow", value: "Seven-step intake, classify, extract, link, validate, report, analyze ledger", status: "ready" },
       { label: "Analysis", value: "Deterministic CFO rules engine and ask-report endpoint in Vercel Functions", status: "ready" },
+      { label: "Audit trail", value: "Single-table REPORT and ACTIVITY records for close runs, intake events, and Q&A", status: "ready" },
       { label: "CI/CD", value: "GitHub Actions runs typecheck, tests, build, evidence, and live smoke", status: "configured" },
     ],
     criteria: [
@@ -268,7 +269,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       { label: "Intake", path: "/api/intake", purpose: "Classifies uploaded monthly finance files by document role" },
       { label: "Ask", path: "/api/ask", purpose: "Answers natural-language finance questions against the latest report" },
       { label: "Run", path: "/api/run", purpose: "Re-executes extract, link, validate, analyze, persist" },
-      { label: "History", path: "/api/history", purpose: "Recent persisted runs from AWS DynamoDB or fallback store" },
+      { label: "History", path: "/api/history", purpose: "Recent persisted runs and interaction activity from AWS DynamoDB or fallback store" },
       { label: "Evidence", path: "/api/evidence", purpose: "Judge-facing sponsor stack and criteria evidence" },
     ],
     proof: [
@@ -280,6 +281,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       `sales_attainment=${intelligence.sales.attainmentPct.toFixed(2)}`,
       `citations=${buildAccountingCitations(report).length}`,
       `payroll_gap=${report.event.hidden_total.toFixed(2)}`,
+      "records=REPORT+ACTIVITY",
     ],
   };
 }

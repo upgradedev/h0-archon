@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+  <title id="title">Archon H0 Vercel and AWS Architecture</title>
+  <desc id="desc">Architecture diagram showing a Vercel Next.js dashboard, API routes, deterministic finance agents, and AWS DynamoDB single-table persistence.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f7f9; }
+      .box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 12; }
+      .boxDark { fill: #111827; stroke: #111827; stroke-width: 2; rx: 12; }
+      .aws { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; rx: 12; }
+      .api { fill: #ecfeff; stroke: #0f766e; stroke-width: 2; rx: 12; }
+      .agent { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 12; }
+      .text { font: 700 22px Arial, sans-serif; fill: #111827; }
+      .small { font: 500 16px Arial, sans-serif; fill: #475569; }
+      .white { fill: #ffffff; }
+      .muted { fill: #94a3b8; font: 500 15px Arial, sans-serif; }
+      .arrow { stroke: #64748b; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .arrow2 { stroke: #0f766e; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#64748b" />
+    </marker>
+  </defs>
+  <rect class="bg" width="1400" height="820" />
+
+  <rect x="56" y="60" width="260" height="128" class="boxDark" />
+  <text x="86" y="112" class="text white">Judge / SMB owner</text>
+  <text x="86" y="146" class="muted">Public ungated demo path</text>
+
+  <rect x="410" y="54" width="360" height="140" class="box" />
+  <text x="444" y="105" class="text">Vercel Next.js Dashboard</text>
+  <text x="444" y="139" class="small">P&amp;L, cash, sales, purchases, payroll</text>
+  <text x="444" y="166" class="small">Visible links to APIs and evidence</text>
+
+  <path d="M316 124 H410" class="arrow" />
+
+  <rect x="875" y="36" width="190" height="70" class="api" />
+  <text x="910" y="79" class="small">/api/run</text>
+  <rect x="1095" y="36" width="190" height="70" class="api" />
+  <text x="1126" y="79" class="small">/api/report</text>
+  <rect x="875" y="126" width="190" height="70" class="api" />
+  <text x="904" y="169" class="small">/api/intake</text>
+  <rect x="1095" y="126" width="190" height="70" class="api" />
+  <text x="1131" y="169" class="small">/api/ask</text>
+  <rect x="875" y="216" width="190" height="70" class="api" />
+  <text x="899" y="259" class="small">/api/history</text>
+  <rect x="1095" y="216" width="190" height="70" class="api" />
+  <text x="1116" y="259" class="small">/api/evidence</text>
+
+  <path d="M770 91 H875" class="arrow2" />
+  <path d="M770 116 C825 116 825 161 875 161" class="arrow2" />
+  <path d="M770 141 C825 141 825 251 875 251" class="arrow2" />
+  <path d="M770 96 C885 96 960 71 1095 71" class="arrow2" />
+  <path d="M770 151 C880 151 965 161 1095 161" class="arrow2" />
+  <path d="M770 176 C880 176 965 251 1095 251" class="arrow2" />
+
+  <rect x="100" y="340" width="206" height="82" class="agent" />
+  <text x="134" y="374" class="small">Intake</text>
+  <text x="134" y="399" class="small">file roles</text>
+  <rect x="354" y="340" width="206" height="82" class="agent" />
+  <text x="388" y="374" class="small">Extract</text>
+  <text x="388" y="399" class="small">finance fields</text>
+  <rect x="608" y="340" width="206" height="82" class="agent" />
+  <text x="642" y="374" class="small">Link</text>
+  <text x="642" y="399" class="small">monthly event</text>
+  <rect x="862" y="340" width="206" height="82" class="agent" />
+  <text x="896" y="374" class="small">Validate</text>
+  <text x="896" y="399" class="small">controls</text>
+  <rect x="1116" y="340" width="206" height="82" class="agent" />
+  <text x="1150" y="374" class="small">Analyze</text>
+  <text x="1150" y="399" class="small">CFO rules</text>
+
+  <path d="M306 381 H354" class="arrow" />
+  <path d="M560 381 H608" class="arrow" />
+  <path d="M814 381 H862" class="arrow" />
+  <path d="M1068 381 H1116" class="arrow" />
+  <path d="M970 286 C970 314 203 312 203 340" class="arrow" />
+  <path d="M970 106 C970 300 457 300 457 340" class="arrow" />
+  <path d="M1190 196 C1190 260 1219 282 1219 340" class="arrow" />
+
+  <rect x="438" y="540" width="320" height="122" class="box" />
+  <text x="476" y="588" class="text">Evidence Writer</text>
+  <text x="476" y="622" class="small">Normalizes report and activity records</text>
+
+  <rect x="870" y="510" width="370" height="178" class="aws" />
+  <text x="914" y="560" class="text">AWS DynamoDB</text>
+  <text x="914" y="596" class="small">Single table selected by DYNAMODB_TABLE</text>
+  <text x="914" y="628" class="small">pk=REPORT stores finance closes</text>
+  <text x="914" y="658" class="small">pk=ACTIVITY stores intake and Q&amp;A</text>
+
+  <path d="M1219 422 C1219 494 598 474 598 540" class="arrow" />
+  <path d="M758 601 H870" class="arrow" />
+  <path d="M1190 286 C1280 366 1280 560 1240 600" class="arrow" />
+
+  <rect x="80" y="585" width="260" height="92" class="box" />
+  <text x="112" y="624" class="small">CI/CD Evidence</text>
+  <text x="112" y="651" class="small">typecheck, tests, build, live smoke</text>
+  <path d="M340 631 H438" class="arrow" />
+
+  <text x="80" y="760" class="small">Public proof: /api/report shows db_mode=aws-dynamodb; /api/history shows REPORT + ACTIVITY records.</text>
+</svg>

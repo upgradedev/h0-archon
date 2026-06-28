@@ -10,9 +10,13 @@ import {
   buildJudgeEvidence,
   buildWorkflowSteps,
 } from "@/lib/insights";
+import type { AuditActivity } from "@/lib/db";
 import type { IntakeResponse } from "@/lib/intake";
 import type { FinanceAnswer } from "@/lib/qa";
 import type { AnalysisReport } from "@/lib/types";
+
+type PersistedIntakeResponse = IntakeResponse & { activity_id?: string; persisted_via?: string };
+type PersistedFinanceAnswer = FinanceAnswer & { activity_id?: string; persisted_via?: string };
 
 const eur = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -28,6 +32,7 @@ function formatDate(value: string) {
 export function ArchonDashboard({ initialReport }: { initialReport: AnalysisReport }) {
   const [report, setReport] = useState(initialReport);
   const [history, setHistory] = useState<AnalysisReport[]>([]);
+  const [activity, setActivity] = useState<AuditActivity[]>([]);
   const [status, setStatus] = useState("Ready");
   const [busy, setBusy] = useState(false);
   const [salesLift, setSalesLift] = useState(5);
@@ -70,12 +75,14 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
 
   async function refreshHistory() {
     try {
-      const res = await fetch("/api/history?limit=5", { headers: { accept: "application/json" } });
+      const res = await fetch("/api/history?limit=5&activity_limit=8", { headers: { accept: "application/json" } });
       if (!res.ok) throw new Error(await res.text());
-      const body = (await res.json()) as { reports?: AnalysisReport[] };
+      const body = (await res.json()) as { reports?: AnalysisReport[]; activity?: AuditActivity[] };
       setHistory(body.reports || []);
+      setActivity(body.activity || []);
     } catch {
       setHistory([]);
+      setActivity([]);
     }
   }
 
@@ -108,9 +115,10 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
       selectedFiles.forEach((file) => form.append("files", file));
       const res = await fetch("/api/intake", { method: "POST", body: form });
       if (!res.ok) throw new Error(await res.text());
-      const next = (await res.json()) as IntakeResponse;
+      const next = (await res.json()) as PersistedIntakeResponse;
       setIntake(next);
-      setStatus(`${next.accepted}/${next.received} documents classified; coverage: ${next.coverage.join(", ") || "manual review"}`);
+      setStatus(`${next.accepted}/${next.received} documents classified; coverage: ${next.coverage.join(", ") || "manual review"}; persisted via ${next.persisted_via || "runtime"}`);
+      await refreshHistory();
     } catch (err) {
       setStatus(`Intake failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -127,7 +135,8 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
         body: JSON.stringify({ question }),
       });
       if (!res.ok) throw new Error(await res.text());
-      setAnswer((await res.json()) as FinanceAnswer);
+      setAnswer((await res.json()) as PersistedFinanceAnswer);
+      await refreshHistory();
     } catch (err) {
       setAnswer({
         question,
@@ -579,6 +588,29 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
                 <code>{item.generated_at}</code>
                 <span>{item.event.company} {item.event.period}</span>
                 <strong>{eur.format(buildBusinessIntelligence(item).pnl.revenue)}</strong>
+                <span>{item.db_mode}</span>
+              </div>
+            ))}
+          </div>
+          <div className="activity-title">
+            <h4>Persisted Activity</h4>
+            <span>{activity.length ? `${activity.length} records` : "no interaction records yet"}</span>
+          </div>
+          <div className="activity-list">
+            {(activity.length ? activity : [
+              {
+                activity_id: "pending-demo",
+                kind: "intake" as const,
+                summary: "Run intake or Ask Archon to create an ACTIVITY record.",
+                details: {},
+                created_at: report.generated_at,
+                db_mode: report.db_mode,
+              },
+            ]).map((item) => (
+              <div className="activity-row" key={item.activity_id}>
+                <code>{item.kind}</code>
+                <span>{formatDate(item.created_at)}</span>
+                <strong>{item.summary}</strong>
                 <span>{item.db_mode}</span>
               </div>
             ))}

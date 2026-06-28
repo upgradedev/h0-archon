@@ -12,7 +12,8 @@ finance close.
 The current build is intentionally public and ungated for judges. Instead of
 adding authentication friction, it adds judge-visible product depth: an agent
 run ledger, document intake, source-backed citations, ask-report Q&A, scenario
-planning, recent persisted run history, and dedicated evidence APIs.
+planning, recent persisted run history, persisted intake/Q&A activity, and
+dedicated evidence APIs.
 
 ## Stack
 
@@ -21,6 +22,7 @@ planning, recent persisted run history, and dedicated evidence APIs.
 - Optional AWS Aurora PostgreSQL fallback via `DATABASE_URL`
 - Deterministic CFO rules engine running in Vercel Functions
 - Document-intake and ask-report Vercel Functions
+- Single-table `REPORT` and `ACTIVITY` records for reports, intake, and Q&A
 - Embedded demo mode when no AWS database is configured
 
 ## Run
@@ -83,8 +85,8 @@ The schema lives in `db/schema.sql`.
    persistence mode. The live deployment should report `db_mode:
    "aws-dynamodb"`.
 5. Open `/api/intake`, `/api/ask`, `/api/history`, and `/api/evidence` for
-   intake classification, conversational answers, persisted run history, and
-   sponsor-stack evidence.
+   intake classification, conversational answers, persisted run and activity
+   history, and sponsor-stack evidence.
 
 ## Evidence
 
@@ -95,14 +97,15 @@ The schema lives in `db/schema.sql`.
 - Ask API: https://h0-archon.vercel.app/api/ask
 - Run history API: https://h0-archon.vercel.app/api/history
 - Judge evidence API: https://h0-archon.vercel.app/api/evidence
+- Submission package: `SUBMISSION.md`
+- AWS DynamoDB proof: `docs/DYNAMODB_PROOF.md`
+- v0 provenance checklist: `docs/V0_USAGE.md`
+- Architecture figure: `docs/figures/h0-architecture.svg`
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
-  evidence artifact, and live Vercel + AWS DynamoDB smoke.
-- Confirmed green CI runs include:
-  - finance scope push run `28314932395`
-  - live-smoke push run `28312638726`
-  - evidence-doc push run `28312523535`
-  - prior push run `28311936518`
-  - prior push run `28302687767`
-  - manual run `28302687749`
+  evidence artifact, and live Vercel + AWS DynamoDB smoke covering report,
+  intake activity, ask activity, and history.
+- Check the Actions link above for the latest final-run status. Prior green
+  examples include push runs `28314932395`, `28312638726`, `28312523535`,
+  `28311936518`, `28302687767`, and manual run `28302687749`.
 - Latest evidence note: `docs/LIVE_EVIDENCE_2026-06-28.md`
 - Video gap review: `docs/V0_VIDEO_GAP_REVIEW.md`

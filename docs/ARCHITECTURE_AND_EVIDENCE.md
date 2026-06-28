@@ -35,6 +35,16 @@ flowchart LR
 - `DATABASE_URL`: Aurora PostgreSQL fallback using `db/schema.sql`.
 - No database env vars: embedded demo mode, used by local tests and CI so judges
   can reproduce results without cloud credentials.
+- DynamoDB uses a single-table shape:
+  - `pk=REPORT`, `sk=<generated_at>` for finance-close reports.
+  - `pk=ACTIVITY`, `sk=<created_at>#<activity_id>` for document-intake and
+    ask-report activity.
+
+See also:
+
+- `docs/DYNAMODB_PROOF.md`
+- `docs/ARCHITECTURE.mmd`
+- `docs/figures/h0-architecture.svg`
 
 ## Evidence Checks
 
@@ -51,6 +61,8 @@ npm run pipeline
 Expected finance-close invariants:
 
 - `analysis_engine`: `deterministic-finance-engine`
+- `/api/history`: returns persisted `reports` and `activity`
+- `/api/evidence`: includes `records=REPORT+ACTIVITY`
 - P&L revenue: `96800`
 - sales goal attainment: `96.8%`
 - source citations: `4`

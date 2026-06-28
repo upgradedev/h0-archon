@@ -14,6 +14,16 @@ import type { Pool } from "pg";
 import { AnalysisReport, PayrollEvent, ValidationResult } from "./types";
 
 export type DbMode = AnalysisReport["db_mode"];
+export type AuditActivityKind = "intake" | "ask";
+
+export interface AuditActivity {
+  activity_id: string;
+  kind: AuditActivityKind;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+  db_mode: DbMode;
+}
 
 let pool: Pool | null = null;
 let poolInit = false;
@@ -21,6 +31,7 @@ let dynamo: DynamoDBDocumentClient | null = null;
 let dynamoInit = false;
 
 const REPORT_PK = "REPORT";
+const ACTIVITY_PK = "ACTIVITY";
 
 function normalizeReport(report: AnalysisReport): AnalysisReport {
   const legacyReport = report as AnalysisReport & { narrator_model?: string };
@@ -80,7 +91,39 @@ export function dbMode(): DbMode {
 }
 
 // In-memory store for demo mode.
-const memory: { reports: AnalysisReport[] } = { reports: [] };
+const memory: { reports: AnalysisReport[]; activities: AuditActivity[] } = {
+  reports: [],
+  activities: [],
+};
+
+function activityId(kind: AuditActivityKind, createdAt: string): string {
+  const suffix = Math.random().toString(36).slice(2, 10);
+  return `${kind}-${createdAt.replace(/[^0-9]/g, "").slice(0, 14)}-${suffix}`;
+}
+
+function normalizeActivity(activity: AuditActivity): AuditActivity {
+  return {
+    ...activity,
+    summary: activity.summary.slice(0, 240),
+  };
+}
+
+async function ensureActivityTable(p: Pool): Promise<void> {
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS audit_activity (
+      activity_id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      details JSONB NOT NULL,
+      db_mode TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+  await p.query(`
+    CREATE INDEX IF NOT EXISTS idx_audit_activity_created_at
+    ON audit_activity (created_at DESC)
+  `);
+}
 
 export async function persistReport(report: AnalysisReport): Promise<void> {
   const ddb = getDynamoClient();
@@ -264,4 +307,120 @@ export async function getReportHistory(limit = 5): Promise<AnalysisReport[]> {
 
   const latest = await getLatestReport();
   return latest ? [latest] : [];
+}
+
+export async function persistActivity(input: {
+  kind: AuditActivityKind;
+  summary: string;
+  details: Record<string, unknown>;
+  activity_id?: string;
+  created_at?: string;
+}): Promise<AuditActivity> {
+  const createdAt = input.created_at || new Date().toISOString();
+  const record = normalizeActivity({
+    activity_id: input.activity_id || activityId(input.kind, createdAt),
+    kind: input.kind,
+    summary: input.summary,
+    details: input.details,
+    created_at: createdAt,
+    db_mode: dbMode(),
+  });
+
+  const ddb = getDynamoClient();
+  const tableName = dynamoTableName();
+  if (ddb && tableName) {
+    const stored: AuditActivity = { ...record, db_mode: "aws-dynamodb" };
+    await ddb.send(
+      new PutCommand({
+        TableName: tableName,
+        Item: {
+          pk: ACTIVITY_PK,
+          sk: `${stored.created_at}#${stored.activity_id}`,
+          activity_id: stored.activity_id,
+          kind: stored.kind,
+          created_at: stored.created_at,
+          summary: stored.summary,
+          activity: stored,
+        },
+      })
+    );
+    return stored;
+  }
+
+  const p = getPool();
+  if (!p) {
+    memory.activities.push(record);
+    if (memory.activities.length > 50) {
+      memory.activities.shift();
+    }
+    return record;
+  }
+
+  const stored: AuditActivity = { ...record, db_mode: "aurora-postgres" };
+  await ensureActivityTable(p);
+  await p.query(
+    `INSERT INTO audit_activity (activity_id, kind, summary, details, db_mode, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (activity_id) DO UPDATE SET
+       kind=EXCLUDED.kind,
+       summary=EXCLUDED.summary,
+       details=EXCLUDED.details,
+       db_mode=EXCLUDED.db_mode,
+       created_at=EXCLUDED.created_at`,
+    [
+      stored.activity_id,
+      stored.kind,
+      stored.summary,
+      JSON.stringify(stored.details),
+      stored.db_mode,
+      stored.created_at,
+    ]
+  );
+  return stored;
+}
+
+export async function getActivityHistory(limit = 10): Promise<AuditActivity[]> {
+  const safeLimit = Math.max(1, Math.min(limit, 50));
+  const ddb = getDynamoClient();
+  const tableName = dynamoTableName();
+  if (ddb && tableName) {
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "#pk = :pk",
+        ExpressionAttributeNames: { "#pk": "pk" },
+        ExpressionAttributeValues: { ":pk": ACTIVITY_PK },
+        ScanIndexForward: false,
+        Limit: safeLimit,
+      })
+    );
+    return (result.Items || [])
+      .map((item) => item.activity as AuditActivity | undefined)
+      .filter((activity): activity is AuditActivity => Boolean(activity))
+      .map((activity) => normalizeActivity({ ...activity, db_mode: "aws-dynamodb" }));
+  }
+
+  const p = getPool();
+  if (!p) {
+    return memory.activities.slice(-safeLimit).reverse().map(normalizeActivity);
+  }
+
+  await ensureActivityTable(p);
+  const rows = await p.query(
+    `SELECT activity_id, kind, summary, details, db_mode, created_at
+     FROM audit_activity
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [safeLimit]
+  );
+  return rows.rows.map((row) =>
+    normalizeActivity({
+      activity_id: row.activity_id,
+      kind: row.kind,
+      summary: row.summary,
+      details: row.details,
+      db_mode: row.db_mode,
+      created_at: row.created_at?.toISOString?.() || String(row.created_at),
+    })
+  );
 }

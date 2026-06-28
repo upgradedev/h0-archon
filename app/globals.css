@@ -262,9 +262,10 @@ button {
 
 .timeline,
 .evidence-list,
-.source-list,
-.history-list,
-.checks,
+  .source-list,
+  .history-list,
+  .activity-list,
+  .checks,
 .pnl-list,
 .statement-list,
 .purchase-list,
@@ -276,9 +277,10 @@ button {
 
 .timeline-row,
 .evidence-row,
-.source-row,
-.history-row,
-.check,
+  .source-row,
+  .history-row,
+  .activity-row,
+  .check,
 .pnl-row,
 .statement-row,
 .intake-row,
@@ -289,9 +291,10 @@ button {
 
 .timeline-row:first-child,
 .evidence-row:first-child,
-.source-row:first-child,
-.history-row:first-child,
-.check:first-child,
+  .source-row:first-child,
+  .history-row:first-child,
+  .activity-row:first-child,
+  .check:first-child,
 .pnl-row:first-child,
 .statement-row:first-child,
 .intake-row:first-child,
@@ -301,9 +304,10 @@ button {
 
 .timeline-row:last-child,
 .evidence-row:last-child,
-.source-row:last-child,
-.history-row:last-child,
-.check:last-child,
+  .source-row:last-child,
+  .history-row:last-child,
+  .activity-row:last-child,
+  .check:last-child,
 .pnl-row:last-child,
 .statement-row:last-child,
 .intake-row:last-child,
@@ -745,10 +749,46 @@ code {
   margin-top: 16px;
 }
 
+.activity-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.activity-title h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.activity-title span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .history-row {
   display: grid;
   grid-template-columns: minmax(210px, 0.9fr) minmax(0, 1.2fr) 130px 130px;
   align-items: center;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 86px 190px minmax(0, 1fr) 130px;
+  align-items: center;
+  gap: 12px;
+}
+
+.activity-row strong {
+  font-weight: 600;
+}
+
+.activity-row span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .history-row strong {
@@ -791,6 +831,7 @@ code {
   .row-head,
   .source-row,
   .history-row,
+  .activity-row,
   .pnl-row,
   .statement-row,
   .purchase-row,
@@ -810,6 +851,7 @@ code {
 
   .scenario-grid,
   .history-row,
+  .activity-row,
   .working-capital {
     grid-template-columns: 1fr;
   }

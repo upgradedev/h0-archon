@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 
-import { dbMode, getLatestReport, persistReport } from "../lib/db";
+import { dbMode, getActivityHistory, getLatestReport, persistActivity, persistReport } from "../lib/db";
 import { extract, linkEvent, validate } from "../lib/pipeline";
 import samplePayroll from "../data/sample-payroll.json";
 import type { AnalysisReport } from "../lib/types";
@@ -77,5 +77,24 @@ describe("embedded demo persistence", () => {
     assert.equal(latest?.event.event_id, "evt-eleftheria-foods-ae-2026-05");
     assert.equal(latest?.event.employer_cost_total, 9110.62);
     assert.equal(latest?.db_mode, "embedded-demo");
+  });
+
+  it("stores intake and ask activity without AWS credentials", async () => {
+    const activity = await persistActivity({
+      kind: "ask",
+      summary: "Answered finance question in unit test",
+      details: {
+        question: "What is the payroll gap?",
+        source_ids: ["SRC-PAY"],
+      },
+      activity_id: "ask-unit-test",
+      created_at: "2026-06-28T08:00:00.000Z",
+    });
+
+    const history = await getActivityHistory(10);
+
+    assert.equal(activity.db_mode, "embedded-demo");
+    assert.ok(history.some((item) => item.activity_id === "ask-unit-test"));
+    assert.equal(history.find((item) => item.activity_id === "ask-unit-test")?.kind, "ask");
   });
 });

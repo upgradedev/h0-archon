@@ -61,7 +61,9 @@ describe("judge insight model", () => {
     const evidence = buildJudgeEvidence(fixtureReport("aws-dynamodb"));
 
     assert.equal(evidence.stack.find((item) => item.label === "Database")?.status, "ready");
+    assert.equal(evidence.stack.find((item) => item.label === "Audit trail")?.status, "ready");
     assert.match(evidence.proof.join(" "), /db_mode=aws-dynamodb/);
+    assert.match(evidence.proof.join(" "), /records=REPORT\+ACTIVITY/);
     assert.ok(evidence.endpoints.some((endpoint) => endpoint.path === "/api/history"));
   });
 

@@ -1,0 +1,25 @@
+flowchart LR
+  Judge["Judge / SMB owner"] --> UI["Vercel Next.js dashboard"]
+  UI --> Run["/api/run"]
+  UI --> Report["/api/report"]
+  UI --> Intake["/api/intake"]
+  UI --> Ask["/api/ask"]
+  UI --> History["/api/history"]
+  UI --> Evidence["/api/evidence"]
+
+  Intake --> Classify["Classify uploaded finance files"]
+  Run --> Extract["Extract sample finance documents"]
+  Classify --> Link["Link bank, sales, purchases, payroll"]
+  Extract --> Link
+  Link --> Validate["Validate controls"]
+  Validate --> Analyze["Deterministic CFO rules engine"]
+  Ask --> Analyze
+  Analyze --> Persist["Evidence writer"]
+
+  Persist --> Dynamo["AWS DynamoDB single table"]
+  Dynamo --> ReportRecords["pk=REPORT finance reports"]
+  Dynamo --> ActivityRecords["pk=ACTIVITY intake and Q&A"]
+
+  Report --> Dynamo
+  History --> Dynamo
+  Evidence --> Dynamo

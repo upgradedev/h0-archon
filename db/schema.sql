@@ -65,3 +65,15 @@ CREATE TABLE IF NOT EXISTS validation_results (
 );
 
 CREATE INDEX IF NOT EXISTS idx_validation_event ON validation_results (event_id);
+
+CREATE TABLE IF NOT EXISTS audit_activity (
+    activity_id TEXT PRIMARY KEY,
+    kind        TEXT        NOT NULL,         -- intake | ask
+    summary     TEXT        NOT NULL,
+    details     JSONB       NOT NULL,
+    db_mode     TEXT        NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_activity_created_at
+    ON audit_activity (created_at DESC);
