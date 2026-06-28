@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/db.test.ts tests/insights.test.ts",
+    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/store.test.ts tests/db.test.ts tests/insights.test.ts",
     "ci": "npm run typecheck && npm test && npm run build && npm run pipeline",
     "pipeline": "tsx scripts/run-pipeline.ts",
     "smoke:live": "tsx scripts/live-smoke.ts",

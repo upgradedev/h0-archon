@@ -77,3 +77,16 @@ export interface AnalysisReport {
   generated_at: string;
   db_mode: "aws-dynamodb" | "aurora-postgres" | "embedded-demo";
 }
+
+// Audit trail of user-facing product interactions (document intake, Q&A).
+// Persisted alongside reports so the app exposes a real activity history.
+export type AuditActivityKind = "intake" | "ask";
+
+export interface AuditActivity {
+  activity_id: string;
+  kind: AuditActivityKind;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+  db_mode: AnalysisReport["db_mode"];
+}
