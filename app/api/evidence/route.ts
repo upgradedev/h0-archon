@@ -1,14 +1,15 @@
-import { ArchonDashboard } from "./components/ArchonDashboard";
+import { NextResponse } from "next/server";
 import { dbMode, getLatestReport, persistReport } from "@/lib/db";
+import { buildJudgeEvidence } from "@/lib/insights";
 import { runPipeline } from "@/lib/pipeline";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export async function GET() {
   let report = await getLatestReport();
   if (!report) {
     report = await runPipeline(undefined, dbMode());
     await persistReport(report);
   }
-  return <ArchonDashboard initialReport={report} />;
+  return NextResponse.json(buildJudgeEvidence(report));
 }

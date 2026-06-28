@@ -9,6 +9,11 @@ cost because employer IKA contributions are invisible. The app fuses bank,
 payroll-register, and payslip documents into one validated payroll event and
 surfaces the hidden employer-cost gap.
 
+The current build is intentionally public and ungated for judges. Instead of
+adding authentication friction, it adds judge-visible product depth: an agent
+run ledger, source-document evidence, scenario planning, recent persisted run
+history, and a dedicated evidence API.
+
 ## Stack
 
 - Next.js app for Vercel
@@ -68,12 +73,17 @@ The schema lives in `db/schema.sql`.
 4. Open `https://h0-archon.vercel.app/api/report` to verify the JSON API and
    persistence mode. The live deployment should report `db_mode:
    "aws-dynamodb"`.
+5. Open `https://h0-archon.vercel.app/api/history` and
+   `https://h0-archon.vercel.app/api/evidence` for persisted run history and
+   sponsor-stack evidence.
 
 ## Evidence
 
 - Public repo: https://github.com/upgradedev/h0-archon
 - Public app: https://h0-archon.vercel.app
 - Live API: https://h0-archon.vercel.app/api/report
+- Run history API: https://h0-archon.vercel.app/api/history
+- Judge evidence API: https://h0-archon.vercel.app/api/evidence
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
   evidence artifact, and live Vercel + AWS DynamoDB smoke.
 - Confirmed green CI runs include:

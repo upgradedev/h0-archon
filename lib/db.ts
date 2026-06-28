@@ -65,7 +65,7 @@ export function dbMode(): DbMode {
 }
 
 // In-memory store for demo mode.
-const memory: { events: Record<string, AnalysisReport> } = { events: {} };
+const memory: { reports: AnalysisReport[] } = { reports: [] };
 
 export async function persistReport(report: AnalysisReport): Promise<void> {
   const ddb = getDynamoClient();
@@ -89,7 +89,10 @@ export async function persistReport(report: AnalysisReport): Promise<void> {
 
   const p = getPool();
   if (!p) {
-    memory.events[report.event.event_id] = report;
+    memory.reports.push(report);
+    if (memory.reports.length > 25) {
+      memory.reports.shift();
+    }
     return;
   }
   const client = await p.connect();
@@ -113,7 +116,8 @@ export async function persistReport(report: AnalysisReport): Promise<void> {
          cost_gap_amount=EXCLUDED.cost_gap_amount,
          cost_gap_pct=EXCLUDED.cost_gap_pct,
          hidden_total=EXCLUDED.hidden_total,
-         linked_docs=EXCLUDED.linked_docs`,
+         linked_docs=EXCLUDED.linked_docs,
+         created_at=now()`,
       [
         e.event_id, e.company, e.period, e.employee_count, e.bank_net_total, e.gross_total,
         e.employee_ika_total, e.tax_withheld_total, e.employer_ika_total, e.employer_cost_total,
@@ -168,8 +172,7 @@ export async function getLatestReport(): Promise<AnalysisReport | null> {
 
   const p = getPool();
   if (!p) {
-    const keys = Object.keys(memory.events);
-    return keys.length ? memory.events[keys[keys.length - 1]] : null;
+    return memory.reports.length ? memory.reports[memory.reports.length - 1] : null;
   }
   const ev = await p.query(`SELECT * FROM payroll_events ORDER BY created_at DESC LIMIT 1`);
   if (ev.rowCount === 0) return null;
@@ -216,4 +219,34 @@ export async function getLatestReport(): Promise<AnalysisReport | null> {
     generated_at: e.created_at?.toISOString?.() || new Date().toISOString(),
     db_mode: "aurora-postgres",
   };
+}
+
+export async function getReportHistory(limit = 5): Promise<AnalysisReport[]> {
+  const safeLimit = Math.max(1, Math.min(limit, 25));
+  const ddb = getDynamoClient();
+  const tableName = dynamoTableName();
+  if (ddb && tableName) {
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "#pk = :pk",
+        ExpressionAttributeNames: { "#pk": "pk" },
+        ExpressionAttributeValues: { ":pk": REPORT_PK },
+        ScanIndexForward: false,
+        Limit: safeLimit,
+      })
+    );
+    return (result.Items || [])
+      .map((item) => item.report as AnalysisReport | undefined)
+      .filter((report): report is AnalysisReport => Boolean(report))
+      .map((report) => ({ ...report, db_mode: "aws-dynamodb" }));
+  }
+
+  const p = getPool();
+  if (!p) {
+    return memory.reports.slice(-safeLimit).reverse();
+  }
+
+  const latest = await getLatestReport();
+  return latest ? [latest] : [];
 }
