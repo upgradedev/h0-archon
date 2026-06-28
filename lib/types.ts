@@ -1,9 +1,9 @@
-// Domain types for the Archon payroll-fusion pipeline.
-// A single payroll event is told by three different documents, each of which
-// only reveals part of the truth:
-//   - bank_confirmation : the net cash that actually left the company account
-//   - payroll_register  : the full employer cost (gross + employer IKA)
-//   - payslip           : the per-employee breakdown
+// Domain types for the Archon finance-close pipeline.
+// The current H0 demo exposes full SMB finance intelligence, while the typed
+// payroll event remains the evidence-backed control finding inside that close:
+//   - bank_confirmation : the net salary cash that left the company account
+//   - payroll_register  : the full employer payroll cost (gross + employer IKA)
+//   - payslip           : the per-employee payroll breakdown
 //
 // The bank confirmation alone *understates* the true employer payroll cost,
 // because it never sees employer social-security (IKA) contributions or the
@@ -73,7 +73,7 @@ export interface AnalysisReport {
   event: PayrollEvent;
   validations: ValidationResult[];
   executive_summary: string;
-  narrator_model: string;
+  analysis_engine: string;
   generated_at: string;
   db_mode: "aws-dynamodb" | "aurora-postgres" | "embedded-demo";
 }

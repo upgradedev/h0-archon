@@ -2,21 +2,22 @@
 
 ## Purpose
 
-H0 Archon proves the core Archon payroll-intelligence loop on Vercel + AWS:
-fuse a bank salary-transfer confirmation, payroll register, and employee
-payslips into one reconciled payroll event. The headline evidence is that the
-bank-visible salary transfer is EUR 5,956.67, while the true employer cost is
-EUR 9,110.62, exposing a EUR 3,153.95 monthly understatement.
+H0 Archon proves a compact SMB finance intelligence loop on Vercel + AWS:
+fuse account-statement movement, sales goals, purchase categories, and payroll
+controls into one auditable monthly close. The payroll control remains the
+headline evidence-backed anomaly: the bank-visible salary transfer is EUR
+5,956.67, while the true employer cost is EUR 9,110.62, exposing a EUR 3,153.95
+monthly understatement.
 
 ## Runtime Architecture
 
 ```mermaid
 flowchart LR
-  DemoData["sample payroll documents"] --> Extractor["Extractor"]
+  DemoData["sample finance documents"] --> Extractor["Extractor"]
   Extractor --> Linker["Event linker"]
   Linker --> Validator["Cross-document validator"]
-  Validator --> Narrator["Gemini narrator or deterministic fallback"]
-  Narrator --> Api["Next.js API routes"]
+  Validator --> Analysis["Deterministic CFO analysis engine"]
+  Analysis --> Api["Next.js API routes"]
   Api --> Ui["Vercel dashboard"]
   Api --> Store{"Persistence mode"}
   Store --> Dynamo["AWS DynamoDB"]
@@ -43,8 +44,11 @@ npm run build
 npm run pipeline
 ```
 
-Expected pipeline invariants:
+Expected finance-close invariants:
 
+- `analysis_engine`: `deterministic-finance-engine`
+- P&L revenue: `96800`
+- sales goal attainment: `96.8%`
 - `event.bank_net_total`: `5956.67`
 - `event.employer_cost_total`: `9110.62`
 - `event.hidden_total`: `3153.95`
@@ -55,13 +59,13 @@ Expected pipeline invariants:
 
 `.github/workflows/h0-archon-ci.yml` performs a non-deploying evidence gate:
 `npm ci`, TypeScript checking, unit tests, production build, and pipeline JSON
-artifact upload. The workflow blanks Gemini and database environment variables
+artifact upload. The workflow blanks database environment variables
 so it always exercises the deterministic embedded-demo path.
 
 ## Judge Path
 
 1. Start the app with `npm run dev`.
 2. Open `http://localhost:3000`.
-3. Click **Run Pipeline**.
-4. Verify the dashboard and `/api/report` show the employer-cost gap and the
-   active persistence mode.
+3. Click **Run Finance Close**.
+4. Verify the dashboard and `/api/report` show P&L, cash, sales performance,
+   purchase concentration, payroll control gap, and the active persistence mode.

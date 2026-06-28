@@ -2,7 +2,7 @@
   "name": "h0-archon",
   "version": "1.0.0",
   "private": true,
-  "description": "Archon-on-Vercel+AWS — agentic financial intelligence for SMBs. Fuses bank, payroll-register and payslip documents into one accurate payroll event, surfacing the ~28% employer-cost gap that bank data alone hides.",
+  "description": "Archon-on-Vercel+AWS — agentic finance intelligence for SMBs. Fuses bank movement, sales goals, purchases, and payroll controls into an auditable monthly close.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

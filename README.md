@@ -3,11 +3,11 @@
 Live app: https://h0-archon.vercel.app  
 Evidence CI: https://github.com/upgradedev/h0-archon/actions/workflows/h0-archon-ci.yml
 
-Archon H0 is the fast Vercel + AWS challenge build of Archon. It keeps the core
-business insight: a bank salary-transfer confirmation understates Greek payroll
-cost because employer IKA contributions are invisible. The app fuses bank,
-payroll-register, and payslip documents into one validated payroll event and
-surfaces the hidden employer-cost gap.
+Archon H0 is the fast Vercel + AWS challenge build of Archon. It presents an
+SMB finance intelligence command center: P&L, account-statement movement, sales
+performance versus goals, purchase concentration, and payroll controls. Payroll
+is still an important finding, but it is one control inside the full monthly
+finance close.
 
 The current build is intentionally public and ungated for judges. Instead of
 adding authentication friction, it adds judge-visible product depth: an agent
@@ -19,7 +19,7 @@ history, and a dedicated evidence API.
 - Next.js app for Vercel
 - AWS DynamoDB via `DYNAMODB_TABLE` for the fast serverless deployment path
 - Optional AWS Aurora PostgreSQL fallback via `DATABASE_URL`
-- Gemini narrator via REST, with deterministic fallback
+- Deterministic CFO rules engine running in Vercel Functions
 - Embedded demo mode when no AWS database is configured
 
 ## Run
@@ -64,7 +64,7 @@ The schema lives in `db/schema.sql`.
 ## Judge Path
 
 1. Open `https://h0-archon.vercel.app`.
-2. Press **Run Pipeline**.
+2. Press **Run Finance Close**.
 3. Confirm the dashboard shows:
    - bank confirmation: EUR 5,957
    - true employer cost: EUR 9,111

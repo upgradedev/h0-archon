@@ -21,7 +21,9 @@ Polled from `GET /api/report` on 2026-06-28 Europe/Athens.
 
 - `db_mode`: `aws-dynamodb`
 - `generated_at`: `2026-06-27T21:17:05.859Z`
-- `narrator_model`: deterministic fallback because no Gemini key is configured
+- `analysis_engine`: deterministic-finance-engine
+- P&L revenue: `96800`
+- sales goal attainment: `96.8%`
 - `event.company`: `Eleftheria Foods AE`
 - `event.period`: `2026-05`
 - `event.employee_count`: `5`

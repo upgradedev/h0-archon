@@ -1,10 +1,10 @@
 // The Archon document-fusion pipeline.
 //
-//   Extractor  -> EventLinker -> Validator -> Narrator
+//   Extractor  -> EventLinker -> Validator -> CFO Analysis
 //
-// Each payroll event is told by three documents. The pipeline fuses them into a
-// single accurate PayrollEvent and surfaces the ~28% employer-cost gap that the
-// bank confirmation alone hides.
+// The H0 demo fuses SMB finance documents into one auditable monthly close:
+// P&L, account statement, sales goals, purchase concentration, and payroll
+// controls. Payroll remains the evidence-backed anomaly inside the wider close.
 
 import {
   AnalysisReport,
@@ -13,7 +13,6 @@ import {
   PayrollEvent,
   ValidationResult,
 } from "./types";
-import { generateText } from "./gemini";
 import sampleData from "../data/sample-payroll.json";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -163,50 +162,26 @@ export function validate(event: PayrollEvent, docs: ExtractedDocument[]): Valida
 }
 
 // ---------------------------------------------------------------------------
-// 4. NARRATOR
-// Calls Gemini to write a CFO-level executive summary grounded in the fused
-// numbers. Falls back to a deterministic template if the LLM is unavailable, so
-// the pipeline never hard-fails in a demo.
+// 4. CFO ANALYSIS
+// Deterministic, sponsor-neutral analysis text grounded in the fused numbers.
+// The H0 submission story is Vercel + AWS, so the public product does not depend
+// on a third-party model being configured.
 // ---------------------------------------------------------------------------
-export async function narrate(
+export async function analyzeFinance(
   event: PayrollEvent,
   validations: ValidationResult[]
 ): Promise<{ summary: string; model: string }> {
-  const prompt = buildNarratorPrompt(event, validations);
-  const result = await generateText(prompt);
-  if (result.ok) {
-    return { summary: result.text, model: result.model };
-  }
+  void validations;
   return {
     summary: fallbackSummary(event),
-    model: `fallback-template (Gemini unavailable: ${result.error})`,
+    model: "deterministic-finance-engine",
   };
-}
-
-function buildNarratorPrompt(event: PayrollEvent, validations: ValidationResult[]): string {
-  const v = validations.map((r) => `${r.rule} ${r.passed ? "PASS" : "FAIL"}: ${r.detail}`).join("; ");
-  return [
-    "You are a CFO-grade financial analyst writing for the owner of a Greek SMB.",
-    "Write a concise executive summary (max 140 words, 3 short paragraphs) of this fused payroll event.",
-    "Lead with the headline risk: the bank salary-transfer confirmation hides the employer's true payroll cost.",
-    "Be specific with the euro figures. Do not invent numbers beyond those given. Plain business English.",
-    "",
-    `Company: ${event.company}  Period: ${event.period}  Employees: ${event.employee_count}`,
-    `Bank confirmation (net salaries paid): EUR ${event.bank_net_total.toFixed(2)}`,
-    `Gross payroll: EUR ${event.gross_total.toFixed(2)}`,
-    `Employee IKA withheld: EUR ${event.employee_ika_total.toFixed(2)}`,
-    `Income tax withheld: EUR ${event.tax_withheld_total.toFixed(2)}`,
-    `Employer IKA contributions (INVISIBLE on the bank confirmation): EUR ${event.employer_ika_total.toFixed(2)}`,
-    `True employer cost (gross + employer IKA): EUR ${event.employer_cost_total.toFixed(2)}`,
-    `Hidden employer-contribution wedge: EUR ${event.cost_gap_amount.toFixed(2)} = ${event.cost_gap_pct.toFixed(1)}% of the net figure the bank shows.`,
-    `Total understatement vs bank confirmation: EUR ${event.hidden_total.toFixed(2)}.`,
-    `Cross-document validations: ${v}`,
-  ].join("\n");
 }
 
 function fallbackSummary(event: PayrollEvent): string {
   return [
-    `For ${event.period}, ${event.company}'s bank confirmation shows EUR ${event.bank_net_total.toFixed(2)} in net salary transfers to ${event.employee_count} employees — the figure most owners treat as "payroll cost."`,
+    `For ${event.period}, ${event.company}'s finance close links sales, purchases, bank movement, and payroll controls into one reviewable run.`,
+    `The evidence-backed payroll control is material: the bank confirmation shows EUR ${event.bank_net_total.toFixed(2)} in net salary transfers to ${event.employee_count} employees — the figure most owners treat as "payroll cost."`,
     `That figure is misleading. The true employer cost for the month is EUR ${event.employer_cost_total.toFixed(2)}. Employer social-security (IKA) contributions of EUR ${event.cost_gap_amount.toFixed(2)} — about ${event.cost_gap_pct.toFixed(1)}% on top of the net salaries — never appear on the bank confirmation.`,
     `Including withheld employee IKA and income tax, the bank confirmation understates real payroll cash commitment by EUR ${event.hidden_total.toFixed(2)}. Budget against the fused figure, not the bank transfer.`,
   ].join("\n\n");
@@ -219,12 +194,12 @@ export async function runPipeline(raw?: any, dbMode: AnalysisReport["db_mode"] =
   const docs = extract(raw);
   const event = linkEvent(docs);
   const validations = validate(event, docs);
-  const { summary, model } = await narrate(event, validations);
+  const { summary, model } = await analyzeFinance(event, validations);
   return {
     event,
     validations,
     executive_summary: summary,
-    narrator_model: model,
+    analysis_engine: model,
     generated_at: new Date().toISOString(),
     db_mode: dbMode,
   };

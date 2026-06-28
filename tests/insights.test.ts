@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import samplePayroll from "../data/sample-payroll.json";
+import { buildBusinessIntelligence } from "../lib/business";
 import {
   buildCashPlanningInsight,
   buildDocumentSources,
   buildJudgeEvidence,
+  buildReportResponse,
   buildWorkflowSteps,
 } from "../lib/insights";
 import { extract, linkEvent, validate } from "../lib/pipeline";
@@ -18,26 +20,28 @@ function fixtureReport(dbMode: AnalysisReport["db_mode"] = "aws-dynamodb"): Anal
     event,
     validations: validate(event, docs),
     executive_summary: "Fixture.",
-    narrator_model: "fallback-template",
+    analysis_engine: "deterministic-finance-engine",
     generated_at: "2026-06-28T06:00:00.000Z",
     db_mode: dbMode,
   };
 }
 
 describe("judge insight model", () => {
-  it("builds source document evidence from a payroll report", () => {
+  it("builds source document evidence from a finance report", () => {
     const docs = buildDocumentSources(fixtureReport());
 
-    assert.equal(docs.length, 3);
+    assert.equal(docs.length, 5);
     assert.equal(docs[0].id, "bank");
-    assert.match(docs[1].captured, /true employer cost/);
-    assert.match(docs[2].filename, /5 payslip/);
+    assert.equal(docs[1].id, "sales");
+    assert.equal(docs[2].id, "purchases");
+    assert.match(docs[3].captured, /true employer cost/);
+    assert.match(docs[4].filename, /5 payslip/);
   });
 
   it("builds an auditable workflow ledger", () => {
     const workflow = buildWorkflowSteps(fixtureReport());
 
-    assert.deepEqual(workflow.map((step) => step.id), ["extract", "link", "validate", "persist", "narrate"]);
+    assert.deepEqual(workflow.map((step) => step.id), ["extract", "link", "validate", "persist", "analyze"]);
     assert.equal(workflow.find((step) => step.id === "persist")?.status, "stored");
   });
 
@@ -56,5 +60,22 @@ describe("judge insight model", () => {
     assert.equal(evidence.stack.find((item) => item.label === "Database")?.status, "ready");
     assert.match(evidence.proof.join(" "), /db_mode=aws-dynamodb/);
     assert.ok(evidence.endpoints.some((endpoint) => endpoint.path === "/api/history"));
+  });
+
+  it("builds full SMB finance intelligence beyond payroll", () => {
+    const intelligence = buildBusinessIntelligence(fixtureReport());
+
+    assert.equal(intelligence.pnl.revenue, 96800);
+    assert.equal(intelligence.sales.attainmentPct, 96.8);
+    assert.equal(intelligence.purchases.categories[0].risk, "high");
+    assert.ok(intelligence.brief.includes("EBITDA"));
+  });
+
+  it("enriches the API report with business intelligence", () => {
+    const response = buildReportResponse(fixtureReport());
+
+    assert.equal(response.analysis_engine, "deterministic-finance-engine");
+    assert.equal(response.business_intelligence.pnl.revenue, 96800);
+    assert.equal(response.business_intelligence.cash.closingBalance, 58789.38);
   });
 });

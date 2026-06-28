@@ -2,7 +2,7 @@
 //
 // Production: AWS DynamoDB or Amazon Aurora PostgreSQL. Set DYNAMODB_TABLE for
 // the fast serverless AWS path, or DATABASE_URL for Aurora PostgreSQL. In both
-// modes, the app persists every fused payroll event and validation result.
+// modes, the app persists every fused finance-close report and validation result.
 //
 // Demo: if neither cloud database variable is set, the app runs in
 // "embedded-demo" mode — an in-process store — so the full pipeline + dashboard
@@ -21,6 +21,21 @@ let dynamo: DynamoDBDocumentClient | null = null;
 let dynamoInit = false;
 
 const REPORT_PK = "REPORT";
+
+function normalizeReport(report: AnalysisReport): AnalysisReport {
+  const legacyReport = report as AnalysisReport & { narrator_model?: string };
+  const legacyEngine = legacyReport.narrator_model;
+  const existingEngine = report.analysis_engine || legacyEngine || "deterministic-finance-engine";
+  const analysisEngine = existingEngine.toLowerCase().startsWith("fallback")
+    ? "deterministic-finance-engine"
+    : existingEngine;
+  const { narrator_model: _legacy, ...cleanReport } = legacyReport;
+  void _legacy;
+  return {
+    ...cleanReport,
+    analysis_engine: analysisEngine,
+  };
+}
 
 function dynamoTableName(): string | null {
   return process.env.DYNAMODB_TABLE || process.env.AWS_DYNAMODB_TABLE || null;
@@ -71,7 +86,7 @@ export async function persistReport(report: AnalysisReport): Promise<void> {
   const ddb = getDynamoClient();
   const tableName = dynamoTableName();
   if (ddb && tableName) {
-    const stored: AnalysisReport = { ...report, db_mode: "aws-dynamodb" };
+    const stored: AnalysisReport = normalizeReport({ ...report, db_mode: "aws-dynamodb" });
     await ddb.send(
       new PutCommand({
         TableName: tableName,
@@ -89,7 +104,7 @@ export async function persistReport(report: AnalysisReport): Promise<void> {
 
   const p = getPool();
   if (!p) {
-    memory.reports.push(report);
+    memory.reports.push(normalizeReport(report));
     if (memory.reports.length > 25) {
       memory.reports.shift();
     }
@@ -167,12 +182,12 @@ export async function getLatestReport(): Promise<AnalysisReport | null> {
       })
     );
     const latest = result.Items?.[0]?.report as AnalysisReport | undefined;
-    return latest ? { ...latest, db_mode: "aws-dynamodb" } : null;
+    return latest ? normalizeReport({ ...latest, db_mode: "aws-dynamodb" }) : null;
   }
 
   const p = getPool();
   if (!p) {
-    return memory.reports.length ? memory.reports[memory.reports.length - 1] : null;
+    return memory.reports.length ? normalizeReport(memory.reports[memory.reports.length - 1]) : null;
   }
   const ev = await p.query(`SELECT * FROM payroll_events ORDER BY created_at DESC LIMIT 1`);
   if (ev.rowCount === 0) return null;
@@ -211,14 +226,14 @@ export async function getLatestReport(): Promise<AnalysisReport | null> {
     passed: r.passed,
     detail: r.detail,
   }));
-  return {
+  return normalizeReport({
     event,
     validations,
     executive_summary: "(stored event — re-run analysis to regenerate the narrative)",
-    narrator_model: "n/a (loaded from Aurora)",
+    analysis_engine: "deterministic-finance-engine",
     generated_at: e.created_at?.toISOString?.() || new Date().toISOString(),
     db_mode: "aurora-postgres",
-  };
+  });
 }
 
 export async function getReportHistory(limit = 5): Promise<AnalysisReport[]> {
@@ -239,12 +254,12 @@ export async function getReportHistory(limit = 5): Promise<AnalysisReport[]> {
     return (result.Items || [])
       .map((item) => item.report as AnalysisReport | undefined)
       .filter((report): report is AnalysisReport => Boolean(report))
-      .map((report) => ({ ...report, db_mode: "aws-dynamodb" }));
+      .map((report) => normalizeReport({ ...report, db_mode: "aws-dynamodb" }));
   }
 
   const p = getPool();
   if (!p) {
-    return memory.reports.slice(-safeLimit).reverse();
+    return memory.reports.slice(-safeLimit).reverse().map(normalizeReport);
   }
 
   const latest = await getLatestReport();

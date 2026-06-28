@@ -59,14 +59,14 @@ describe("db mode selection", () => {
 });
 
 describe("embedded demo persistence", () => {
-  it("stores and returns the latest payroll report without AWS credentials", async () => {
+  it("stores and returns the latest finance report without AWS credentials", async () => {
     const docs = extract(samplePayroll);
     const event = linkEvent(docs);
     const report: AnalysisReport = {
       event,
       validations: validate(event, docs),
       executive_summary: "Unit-test report.",
-      narrator_model: "test-fixture",
+      analysis_engine: "test-fixture",
       generated_at: "2026-05-31T12:00:00.000Z",
       db_mode: "embedded-demo",
     };

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbMode, getReportHistory, persistReport } from "@/lib/db";
+import { buildReportResponse } from "@/lib/insights";
 import { runPipeline } from "@/lib/pipeline";
 
 export const dynamic = "force-dynamic";
@@ -13,5 +14,5 @@ export async function GET(request: Request) {
     await persistReport(report);
     reports = [report];
   }
-  return NextResponse.json({ count: reports.length, reports });
+  return NextResponse.json({ count: reports.length, reports: reports.map(buildReportResponse) });
 }

@@ -4,7 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Archon on Vercel + AWS",
   description:
-    "Agentic financial intelligence for SMB payroll reconciliation, deployed on Vercel with AWS Aurora persistence.",
+    "Agentic SMB finance intelligence for P&L, cash, sales, purchases, and payroll controls on Vercel with AWS persistence.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

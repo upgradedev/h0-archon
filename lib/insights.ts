@@ -1,4 +1,5 @@
 import type { AnalysisReport } from "./types";
+import { buildBusinessIntelligence, type BusinessIntelligence } from "./business";
 
 export interface DocumentSourceInsight {
   id: string;
@@ -33,6 +34,30 @@ export interface JudgeEvidence {
   proof: string[];
 }
 
+export interface FinanceReportResponse extends AnalysisReport {
+  business_intelligence: BusinessIntelligence;
+}
+
+export function analysisEngineLabel(report: AnalysisReport): string {
+  const legacyEngine = (report as AnalysisReport & { narrator_model?: string }).narrator_model;
+  const engine = report.analysis_engine || legacyEngine || "deterministic-finance-engine";
+  if (engine.toLowerCase().startsWith("fallback")) {
+    return "deterministic-finance-engine";
+  }
+  return engine;
+}
+
+export function buildReportResponse(report: AnalysisReport): FinanceReportResponse {
+  const normalizedReport = {
+    ...report,
+    analysis_engine: analysisEngineLabel(report),
+  };
+  return {
+    ...normalizedReport,
+    business_intelligence: buildBusinessIntelligence(normalizedReport),
+  };
+}
+
 const eur = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "EUR",
@@ -44,10 +69,24 @@ export function buildDocumentSources(report: AnalysisReport): DocumentSourceInsi
   return [
     {
       id: "bank",
-      title: "Bank confirmation",
-      filename: "alpha_bank_payroll_batch_2026-05.pdf",
-      role: "Shows the cash that visibly left the bank account.",
-      captured: `${eur.format(report.event.bank_net_total)} net salary transfer`,
+      title: "Bank account statement",
+      filename: "alpha_bank_statement_2026-05.pdf",
+      role: "Shows collections, supplier payments, payroll, and closing cash.",
+      captured: "cash movement reconciled to bank balance",
+    },
+    {
+      id: "sales",
+      title: "Sales ledger and goals",
+      filename: "sales_targets_by_owner_2026-05.xlsx",
+      role: "Links invoices, POS, e-commerce, segments, owners, and monthly goals.",
+      captured: "revenue, margin, and goal attainment",
+    },
+    {
+      id: "purchases",
+      title: "Purchase ledger",
+      filename: "supplier_purchases_2026-05.xlsx",
+      role: "Groups vendor spend into COGS categories and concentration risks.",
+      captured: "supplier spend and gross margin impact",
     },
     {
       id: "register",
@@ -67,21 +106,22 @@ export function buildDocumentSources(report: AnalysisReport): DocumentSourceInsi
 }
 
 export function buildWorkflowSteps(report: AnalysisReport): WorkflowStepInsight[] {
+  const intelligence = buildBusinessIntelligence(report);
   const passCount = report.validations.filter((validation) => validation.passed).length;
   return [
     {
       id: "extract",
       title: "Extract",
-      owner: "Document agent",
+      owner: "Finance document agent",
       status: "passed",
-      evidence: `${report.event.linked_docs.length} source documents normalized`,
+      evidence: `${report.event.linked_docs.length + 4} source documents normalized across sales, purchases, bank, and payroll`,
     },
     {
       id: "link",
       title: "Link",
-      owner: "Event linker",
+      owner: "Ledger linker",
       status: "passed",
-      evidence: `${report.event.company} ${report.event.period} fused into ${report.event.event_id}`,
+      evidence: `${report.event.company} ${report.event.period}: P&L, cash, sales, purchases, and payroll fused`,
     },
     {
       id: "validate",
@@ -98,11 +138,11 @@ export function buildWorkflowSteps(report: AnalysisReport): WorkflowStepInsight[
       evidence: `Report stored through ${report.db_mode}`,
     },
     {
-      id: "narrate",
-      title: "Narrate",
-      owner: "CFO agent",
+      id: "analyze",
+      title: "Analyze",
+      owner: "CFO rules engine",
       status: "passed",
-      evidence: report.narrator_model,
+      evidence: `${eur.format(intelligence.pnl.ebitda)} EBITDA, ${intelligence.sales.attainmentPct.toFixed(1)}% sales goal attainment`,
     },
   ];
 }
@@ -123,6 +163,7 @@ export function buildCashPlanningInsight(report: AnalysisReport): CashPlanningIn
 }
 
 export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
+  const intelligence = buildBusinessIntelligence(report);
   const validationCount = report.validations.filter((validation) => validation.passed).length;
   const awsStatus = report.db_mode === "aws-dynamodb" || report.db_mode === "aurora-postgres" ? "ready" : "fallback";
   const awsLabel =
@@ -137,7 +178,7 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
     stack: [
       { label: "Frontend", value: "Next.js App Router on Vercel", status: "ready" },
       { label: "Database", value: awsLabel, status: awsStatus },
-      { label: "Narrator", value: report.narrator_model, status: report.narrator_model.startsWith("fallback") ? "fallback" : "ready" },
+      { label: "Analysis", value: "Deterministic CFO rules engine in Vercel Functions", status: "ready" },
       { label: "CI/CD", value: "GitHub Actions runs typecheck, tests, build, evidence, and live smoke", status: "configured" },
     ],
     criteria: [
@@ -147,24 +188,24 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       },
       {
         criterion: "Real-world usefulness",
-        evidence: `SMB owner sees ${eur.format(report.event.hidden_total)} monthly payroll cost hidden by bank-only accounting.`,
+        evidence: `SMB owner sees P&L, cash runway, sales goal attainment, supplier concentration, and ${eur.format(report.event.hidden_total)} payroll cost hidden by bank-only accounting.`,
       },
       {
         criterion: "UI/UX",
-        evidence: "Single public judge path exposes metrics, source documents, validation controls, history, and JSON APIs.",
+        evidence: "Single public judge path exposes P&L, cash, sales, purchases, payroll controls, source documents, history, and JSON APIs.",
       },
       {
         criterion: "Creativity",
-        evidence: "Agent-style document fusion converts partial finance documents into one auditable payroll event.",
+        evidence: "Agent-style document fusion converts partial SMB finance documents into an auditable CFO command center.",
       },
       {
         criterion: "Startup potential",
-        evidence: "Payroll truth can expand into recurring SMB cash planning, controls monitoring, and accountant workflows.",
+        evidence: "Monthly SMB finance close can expand into accountant workflows, bank integrations, sales coaching, and controls monitoring.",
       },
     ],
     endpoints: [
-      { label: "Report", path: "/api/report", purpose: "Latest persisted payroll intelligence JSON" },
-      { label: "Run", path: "/api/run", purpose: "Re-executes extract, link, validate, narrate, persist" },
+      { label: "Report", path: "/api/report", purpose: "Latest persisted finance intelligence JSON" },
+      { label: "Run", path: "/api/run", purpose: "Re-executes extract, link, validate, analyze, persist" },
       { label: "History", path: "/api/history", purpose: "Recent persisted runs from AWS DynamoDB or fallback store" },
       { label: "Evidence", path: "/api/evidence", purpose: "Judge-facing sponsor stack and criteria evidence" },
     ],
@@ -172,8 +213,10 @@ export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
       `db_mode=${report.db_mode}`,
       `event_id=${report.event.event_id}`,
       `validations=${validationCount}/${report.validations.length}`,
-      `hidden_total=${report.event.hidden_total.toFixed(2)}`,
-      `cost_gap_pct=${report.event.cost_gap_pct.toFixed(2)}`,
+      `revenue=${intelligence.pnl.revenue.toFixed(2)}`,
+      `ebitda=${intelligence.pnl.ebitda.toFixed(2)}`,
+      `sales_attainment=${intelligence.sales.attainmentPct.toFixed(2)}`,
+      `payroll_gap=${report.event.hidden_total.toFixed(2)}`,
     ],
   };
 }

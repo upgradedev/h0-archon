@@ -16,8 +16,6 @@ jobs:
       contents: read
     env:
       CI: "true"
-      GEMINI_API_KEY: ""
-      GOOGLE_API_KEY: ""
       DYNAMODB_TABLE: ""
       AWS_DYNAMODB_TABLE: ""
       DATABASE_URL: ""
@@ -46,8 +44,8 @@ jobs:
       - name: Generate judge evidence report
         run: |
           mkdir -p evidence
-          npm run --silent pipeline > evidence/payroll-report.json
-          node -e "const r=require('./evidence/payroll-report.json'); if (r.event.employer_cost_total !== 9110.62 || r.event.cost_gap_pct !== 27.88 || r.db_mode !== 'embedded-demo') process.exit(1);"
+          npm run --silent pipeline > evidence/finance-report.json
+          node -e "const r=require('./evidence/finance-report.json'); if (r.event.employer_cost_total !== 9110.62 || r.event.cost_gap_pct !== 27.88 || r.db_mode !== 'embedded-demo' || r.analysis_engine !== 'deterministic-finance-engine') process.exit(1);"
 
       - name: Live Vercel + AWS DynamoDB smoke
         run: npm run smoke:live
@@ -55,5 +53,5 @@ jobs:
       - name: Upload evidence artifact
         uses: actions/upload-artifact@v4
         with:
-          name: h0-archon-payroll-report
-          path: evidence/payroll-report.json
+          name: h0-archon-finance-report
+          path: evidence/finance-report.json
