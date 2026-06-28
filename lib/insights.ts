@@ -224,13 +224,11 @@ export function buildCashPlanningInsight(report: AnalysisReport): CashPlanningIn
 export function buildJudgeEvidence(report: AnalysisReport): JudgeEvidence {
   const intelligence = buildBusinessIntelligence(report);
   const validationCount = report.validations.filter((validation) => validation.passed).length;
-  const awsStatus = report.db_mode === "aws-dynamodb" || report.db_mode === "aurora-postgres" ? "ready" : "fallback";
+  const awsStatus = report.db_mode === "aws-dynamodb" ? "ready" : "fallback";
   const awsLabel =
     report.db_mode === "aws-dynamodb"
       ? "AWS DynamoDB table selected by DYNAMODB_TABLE"
-      : report.db_mode === "aurora-postgres"
-        ? "Amazon Aurora PostgreSQL selected by DATABASE_URL"
-        : "Embedded demo store because AWS database env vars are absent";
+      : "Embedded demo store because the AWS database env var is absent";
 
   return {
     generated_at: report.generated_at,

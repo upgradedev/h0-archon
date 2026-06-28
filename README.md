@@ -18,8 +18,7 @@ dedicated evidence APIs.
 ## Stack
 
 - Next.js app for Vercel
-- AWS DynamoDB via `DYNAMODB_TABLE` for the fast serverless deployment path
-- Optional AWS Aurora PostgreSQL fallback via `DATABASE_URL`
+- AWS DynamoDB via `DYNAMODB_TABLE` for the serverless deployment path
 - Deterministic CFO rules engine running in Vercel Functions
 - Document-intake and ask-report Vercel Functions
 - Single-table `REPORT` and `ACTIVITY` records for reports, intake, and Q&A
@@ -38,7 +37,8 @@ Open `http://localhost:3000`.
 
 ## AWS Database
 
-Fast H0 path:
+Set the DynamoDB table and AWS credentials, then the app persists every
+finance-close report and audit-activity record to AWS DynamoDB:
 
 ```bash
 DYNAMODB_TABLE=h0-archon-reports
@@ -47,22 +47,14 @@ AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 ```
 
-Aurora fallback:
-
-Create an Aurora PostgreSQL database and set:
-
-```bash
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB
-PGSSLMODE=require
-```
-
-Then run:
+Seed one report into the active store:
 
 ```bash
 npm run db:seed
 ```
 
-The schema lives in `db/schema.sql`.
+With no AWS env vars set, the app runs in an in-process demo store so the full
+pipeline and dashboard work locally with no database.
 
 ## Judge Path
 

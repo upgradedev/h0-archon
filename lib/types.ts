@@ -75,7 +75,7 @@ export interface AnalysisReport {
   executive_summary: string;
   analysis_engine: string;
   generated_at: string;
-  db_mode: "aws-dynamodb" | "aurora-postgres" | "embedded-demo";
+  db_mode: "aws-dynamodb" | "embedded-demo";
 }
 
 // Audit trail of user-facing product interactions (document intake, Q&A).

@@ -176,7 +176,6 @@ export function ArchonDashboard({ initialReport }: { initialReport: AnalysisRepo
         <div className="side-stack">
           <div className="pill">Next.js on Vercel</div>
           <div className="pill">AWS DynamoDB via DYNAMODB_TABLE</div>
-          <div className="pill">Aurora PostgreSQL fallback via DATABASE_URL</div>
           <div className="pill">Deterministic CFO analysis engine</div>
           <div className="pill">Sales, purchases, cash, P&L, payroll controls</div>
         </div>

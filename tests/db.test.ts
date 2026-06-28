@@ -9,7 +9,6 @@ import type { AnalysisReport } from "../lib/types";
 const managedEnvKeys = [
   "DYNAMODB_TABLE",
   "AWS_DYNAMODB_TABLE",
-  "DATABASE_URL",
 ] as const;
 
 const originalEnv = new Map<string, string | undefined>();
@@ -38,14 +37,7 @@ describe("db mode selection", () => {
     assert.equal(dbMode(), "embedded-demo");
   });
 
-  it("uses Aurora PostgreSQL when only DATABASE_URL is configured", () => {
-    process.env.DATABASE_URL = "postgresql://user:pass@example.invalid:5432/h0";
-
-    assert.equal(dbMode(), "aurora-postgres");
-  });
-
-  it("prefers DynamoDB over Aurora when both are configured", () => {
-    process.env.DATABASE_URL = "postgresql://user:pass@example.invalid:5432/h0";
+  it("uses DynamoDB when DYNAMODB_TABLE is configured", () => {
     process.env.DYNAMODB_TABLE = "h0-archon-reports";
 
     assert.equal(dbMode(), "aws-dynamodb");
