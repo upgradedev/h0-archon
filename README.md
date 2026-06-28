@@ -74,10 +74,11 @@ The schema lives in `db/schema.sql`.
 - Public repo: https://github.com/upgradedev/h0-archon
 - Public app: https://h0-archon.vercel.app
 - Live API: https://h0-archon.vercel.app/api/report
-- CI gate: `npm ci`, TypeScript, unit tests, production build, and pipeline JSON
-  evidence artifact.
-- Latest known green CI runs:
-  - latest push run `28312523535`
+- CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
+  evidence artifact, and live Vercel + AWS DynamoDB smoke.
+- Confirmed green CI runs include:
+  - live-smoke push run `28312638726`
+  - evidence-doc push run `28312523535`
   - prior push run `28311936518`
   - prior push run `28302687767`
   - manual run `28302687749`

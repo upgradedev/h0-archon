@@ -7,8 +7,10 @@
 - Repo: https://github.com/upgradedev/h0-archon
 - CI workflow: https://github.com/upgradedev/h0-archon/actions/workflows/h0-archon-ci.yml
 
-## Latest Green CI
+## Confirmed Green CI
 
+- Push run `28312638726`: success, includes live Vercel + AWS DynamoDB smoke.
+- Push run `28312523535`: success.
 - Push run `28311936518`: success.
 - Prior push run `28302687767`: success.
 - Manual run `28302687749`: success.
@@ -41,5 +43,5 @@ Polled from `GET /api/report` on 2026-06-28 Europe/Athens.
 
 The deployed app demonstrates the H0 requirement with a live Vercel frontend,
 AWS DynamoDB persistence, deterministic reconciliation rules, API evidence, and
-a CI gate covering install, typecheck, unit tests, production build, and pipeline
-execution.
+a CI gate covering install, typecheck, unit tests, production build, pipeline
+execution, and live production smoke against the public DynamoDB-backed API.
