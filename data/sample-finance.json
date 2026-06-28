@@ -1,0 +1,33 @@
+{
+  "_note": "Extracted monthly finance figures for the demo close. These are the non-payroll inputs the CFO engine reads; payroll is fused separately from sample-payroll.json. Source filenames match the citations surfaced in /api/report.",
+  "sources": {
+    "sales": "sales_targets_by_owner_2026-05.xlsx",
+    "purchases": "supplier_purchases_2026-05.xlsx",
+    "bank": "alpha_bank_statement_2026-05.pdf"
+  },
+  "sales": [
+    { "owner": "Eleni", "segment": "Wholesale", "actual": 42500, "goal": 40000, "marginPct": 32.4 },
+    { "owner": "Nikos", "segment": "Retail", "actual": 28300, "goal": 32000, "marginPct": 38.1 },
+    { "owner": "Dimitra", "segment": "Catering", "actual": 18400, "goal": 22000, "marginPct": 29.6 },
+    { "owner": "Sofia", "segment": "Online", "actual": 7600, "goal": 6000, "marginPct": 44.3 }
+  ],
+  "purchases": [
+    { "category": "Fresh produce", "vendor": "Attica Growers Coop", "amount": 24200 },
+    { "category": "Dairy", "vendor": "Aegean Dairy SA", "amount": 13100 },
+    { "category": "Packaging", "vendor": "PackLine Hellas", "amount": 6200 },
+    { "category": "Logistics", "vendor": "Metro Freight", "amount": 5100 },
+    { "category": "Utilities", "vendor": "Energy and water", "amount": 3300 },
+    { "category": "Other purchases", "vendor": "Long tail vendors", "amount": 4800 }
+  ],
+  "cash": {
+    "openingBalance": 38400,
+    "collections": 94200,
+    "supplierPaymentReductionVsCogs": 2100,
+    "fixedOpex": 10100
+  },
+  "workingCapital": {
+    "receivables": 18600,
+    "payables": 14200,
+    "vatPayable": 5400
+  }
+}

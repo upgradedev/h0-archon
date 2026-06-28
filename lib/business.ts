@@ -1,5 +1,6 @@
 import type { AnalysisReport } from "./types";
 import { round2 } from "./format";
+import financeData from "../data/sample-finance.json";
 
 export interface PnlLine {
   label: string;
@@ -82,26 +83,14 @@ export function buildBusinessIntelligence(report: AnalysisReport): BusinessIntel
 }
 
 function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligence {
-  const salesPerformance: SalesPerformance[] = [
-    { owner: "Eleni", segment: "Wholesale", actual: 42500, goal: 40000, marginPct: 32.4 },
-    { owner: "Nikos", segment: "Retail", actual: 28300, goal: 32000, marginPct: 38.1 },
-    { owner: "Dimitra", segment: "Catering", actual: 18400, goal: 22000, marginPct: 29.6 },
-    { owner: "Sofia", segment: "Online", actual: 7600, goal: 6000, marginPct: 44.3 },
-  ];
+  const salesPerformance: SalesPerformance[] = financeData.sales;
   const revenue = round2(salesPerformance.reduce((sum, item) => sum + item.actual, 0));
   const goal = round2(salesPerformance.reduce((sum, item) => sum + item.goal, 0));
   const weightedMarginPct = round2(
     salesPerformance.reduce((sum, item) => sum + item.actual * item.marginPct, 0) / revenue
   );
 
-  const purchaseRaw = [
-    { category: "Fresh produce", vendor: "Attica Growers Coop", amount: 24200 },
-    { category: "Dairy", vendor: "Aegean Dairy SA", amount: 13100 },
-    { category: "Packaging", vendor: "PackLine Hellas", amount: 6200 },
-    { category: "Logistics", vendor: "Metro Freight", amount: 5100 },
-    { category: "Utilities", vendor: "Energy and water", amount: 3300 },
-    { category: "Other purchases", vendor: "Long tail vendors", amount: 4800 },
-  ];
+  const purchaseRaw = financeData.purchases;
   const cogs = round2(purchaseRaw.reduce((sum, item) => sum + item.amount, 0));
   const purchaseCategories: PurchaseCategory[] = purchaseRaw.map((item) => {
     const sharePct = round2((item.amount / cogs) * 100);
@@ -114,14 +103,14 @@ function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligen
 
   const grossProfit = round2(revenue - cogs);
   const grossMarginPct = round2((grossProfit / revenue) * 100);
-  const fixedOpex = 4500 + 2800 + 2100 + 700;
+  const fixedOpex = financeData.cash.fixedOpex;
   const operatingExpenses = round2(report.event.employer_cost_total + fixedOpex);
   const ebitda = round2(grossProfit - operatingExpenses);
   const ebitdaMarginPct = round2((ebitda / revenue) * 100);
 
-  const openingBalance = 38400;
-  const collections = 94200;
-  const supplierPayments = cogs - 2100;
+  const openingBalance = financeData.cash.openingBalance;
+  const collections = financeData.cash.collections;
+  const supplierPayments = cogs - financeData.cash.supplierPaymentReductionVsCogs;
   const payrollNet = report.event.bank_net_total;
   const payrollHidden = report.event.hidden_total;
   const rentMarketingAdmin = fixedOpex;
@@ -129,9 +118,9 @@ function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligen
   const netMovement = round2(closingBalance - openingBalance);
   const runwayMonths = round2(closingBalance / operatingExpenses);
 
-  const receivables = 18600;
-  const payables = 14200;
-  const vatPayable = 5400;
+  const receivables = financeData.workingCapital.receivables;
+  const payables = financeData.workingCapital.payables;
+  const vatPayable = financeData.workingCapital.vatPayable;
   const cashConversionGap = round2(receivables - payables + vatPayable);
 
   return {
