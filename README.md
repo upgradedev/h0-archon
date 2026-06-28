@@ -1,5 +1,8 @@
 # Archon H0: Vercel + AWS
 
+Live app: https://h0-archon.vercel.app  
+Evidence CI: https://github.com/upgradedev/h0-archon/actions/workflows/h0-archon-ci.yml
+
 Archon H0 is the fast Vercel + AWS challenge build of Archon. It keeps the core
 business insight: a bank salary-transfer confirmation understates Greek payroll
 cost because employer IKA contributions are invisible. The app fuses bank,
@@ -55,11 +58,24 @@ The schema lives in `db/schema.sql`.
 
 ## Judge Path
 
-1. Open the Vercel URL.
+1. Open `https://h0-archon.vercel.app`.
 2. Press **Run Pipeline**.
 3. Confirm the dashboard shows:
    - bank confirmation: EUR 5,957
    - true employer cost: EUR 9,111
    - hidden wedge: EUR 3,154
    - employer IKA gap: 27.9%
-4. Open `/api/report` to verify the JSON API and persistence mode.
+4. Open `https://h0-archon.vercel.app/api/report` to verify the JSON API and
+   persistence mode. The live deployment should report `db_mode:
+   "aws-dynamodb"`.
+
+## Evidence
+
+- Public repo: https://github.com/upgradedev/h0-archon
+- Public app: https://h0-archon.vercel.app
+- Live API: https://h0-archon.vercel.app/api/report
+- CI gate: `npm ci`, TypeScript, unit tests, production build, and pipeline JSON
+  evidence artifact.
+- Latest known green CI runs:
+  - push run `28302687767`
+  - manual run `28302687749`
