@@ -49,6 +49,9 @@ jobs:
           npm run --silent pipeline > evidence/payroll-report.json
           node -e "const r=require('./evidence/payroll-report.json'); if (r.event.employer_cost_total !== 9110.62 || r.event.cost_gap_pct !== 27.88 || r.db_mode !== 'embedded-demo') process.exit(1);"
 
+      - name: Live Vercel + AWS DynamoDB smoke
+        run: npm run smoke:live
+
       - name: Upload evidence artifact
         uses: actions/upload-artifact@v4
         with:

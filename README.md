@@ -77,6 +77,8 @@ The schema lives in `db/schema.sql`.
 - CI gate: `npm ci`, TypeScript, unit tests, production build, and pipeline JSON
   evidence artifact.
 - Latest known green CI runs:
-  - latest push run `28311936518`
+  - latest push run `28312523535`
+  - prior push run `28311936518`
   - prior push run `28302687767`
   - manual run `28302687749`
+- Latest evidence note: `docs/LIVE_EVIDENCE_2026-06-28.md`
