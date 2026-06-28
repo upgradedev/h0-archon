@@ -1,0 +1,22 @@
+# gitleaks config for h0-archon (public repo).
+# Extends gitleaks' default ruleset, with a tight allowlist for documented
+# environment-variable NAMES and example placeholders that are not real secrets.
+title = "h0-archon gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow example placeholders and documented env-var names (no real secrets)"
+paths = [
+  '''\.env\.example$''',
+  '''docs/.*\.md$''',
+  '''README\.md$''',
+]
+regexes = [
+  # Empty / placeholder env values in the committed example file.
+  '''AWS_SECRET_ACCESS_KEY=(\.\.\.)?$''',
+  '''AWS_ACCESS_KEY_ID=(\.\.\.)?$''',
+  # Documented env-var names referenced in prose/checklists, never values.
+  '''(GEMINI|GOOGLE)_API_KEY''',
+]

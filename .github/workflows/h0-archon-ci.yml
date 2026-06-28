@@ -9,6 +9,36 @@ on:
       - master
 
 jobs:
+  security:
+    name: Security scan (secrets + dependencies)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (full history for secret scan)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks secret scan (tracked files + full git history)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --config .gitleaks.toml --redact --verbose --exit-code 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dependency audit (advisory)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
   verify:
     name: Typecheck, test, build, and capture evidence
     runs-on: ubuntu-latest
@@ -35,7 +65,7 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
-      - name: Unit tests
+      - name: Unit tests (pipeline, store, db, insights)
         run: npm test
 
       - name: Production build
@@ -55,3 +85,68 @@ jobs:
         with:
           name: h0-archon-finance-report
           path: evidence/finance-report.json
+
+  deploy:
+    name: Deploy to Vercel (production)
+    needs: [security, verify]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Detect Vercel credentials
+        id: detect
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::VERCEL_TOKEN not set — skipping auto-deploy. Add repo secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID to enable continuous deployment to production."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Vercel CLI
+        if: steps.detect.outputs.ready == 'true'
+        run: npm i -g vercel@latest
+
+      - name: Install project dependencies (for smoke)
+        if: steps.detect.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Pull Vercel production env
+        if: steps.detect.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+
+      - name: Build (Vercel prebuilt)
+        if: steps.detect.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token "$VERCEL_TOKEN"
+
+      - name: Deploy to production
+        if: steps.detect.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+
+      - name: Post-deploy live smoke
+        if: steps.detect.outputs.ready == 'true'
+        run: npm run smoke:live
