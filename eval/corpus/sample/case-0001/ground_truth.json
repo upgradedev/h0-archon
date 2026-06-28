@@ -1,0 +1,123 @@
+{
+  "case_id": "case-0001",
+  "company": "Kyklades Retail OE",
+  "period": "2026-07",
+  "payment_date": "2026-07-28",
+  "edge_cases": [],
+  "document_mix": {
+    "bank": true,
+    "register": true,
+    "payslips_emitted": 2,
+    "employees_true": 2
+  },
+  "extracted": {
+    "company": "Kyklades Retail OE",
+    "period": "2026-07",
+    "payment_date": "2026-07-28",
+    "documents": [
+      {
+        "doc_id": "doc-bank-001",
+        "doc_type": "bank_confirmation",
+        "source_filename": "bank_confirmation_2026-07.pdf",
+        "bank_net_total": 4018.44,
+        "payment_date": "2026-07-28"
+      },
+      {
+        "doc_id": "doc-register-001",
+        "doc_type": "payroll_register",
+        "source_filename": "payroll_register_2026-07.pdf",
+        "gross_total": 5420.0,
+        "employee_ika_total": 751.76,
+        "tax_withheld_total": 649.8,
+        "employer_ika_total": 1208.12,
+        "employer_cost_total": 6628.12,
+        "register_employee_count": 2,
+        "payment_date": "2026-07-28"
+      },
+      {
+        "doc_id": "doc-payslip-001",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-001_2026-07.pdf",
+        "employee": {
+          "employee_id": "EMP-001",
+          "name": "Eleni Manos",
+          "gross": 2155.0,
+          "employee_ika": 298.9,
+          "tax": 219.45,
+          "net": 1636.65,
+          "employer_ika": 480.35,
+          "employer_cost": 2635.35
+        },
+        "payment_date": "2026-07-28"
+      },
+      {
+        "doc_id": "doc-payslip-002",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-002_2026-07.pdf",
+        "employee": {
+          "employee_id": "EMP-002",
+          "name": "Vasiliki Dimou",
+          "gross": 3265.0,
+          "employee_ika": 452.86,
+          "tax": 430.35,
+          "net": 2381.79,
+          "employer_ika": 727.77,
+          "employer_cost": 3992.77
+        },
+        "payment_date": "2026-07-28"
+      }
+    ]
+  },
+  "expected_event": {
+    "employee_count": 2,
+    "bank_net_total": 4018.44,
+    "gross_total": 5420.0,
+    "employer_ika_total": 1208.12,
+    "employee_ika_total": 751.76,
+    "tax_withheld_total": 649.8,
+    "employer_cost_total": 6628.12,
+    "cost_gap_amount": 1208.12,
+    "cost_gap_pct": 30.06,
+    "hidden_total": 2609.68,
+    "payslip_net_total": 4018.44
+  },
+  "expected_validations": {
+    "R1": true,
+    "R2": true,
+    "R3": true,
+    "R4": true
+  },
+  "register_totals": {
+    "employee_count": 2,
+    "bank_net_total": 4018.44,
+    "gross_total": 5420.0,
+    "employer_ika_total": 1208.12,
+    "employee_ika_total": 751.76,
+    "tax_withheld_total": 649.8,
+    "employer_cost_total": 6628.12,
+    "cost_gap_amount": 1208.12,
+    "cost_gap_pct": 30.06,
+    "hidden_total": 2609.68,
+    "payslip_net_total": 4018.44
+  },
+  "naive": {
+    "bank_only_payroll_cost": 4018.44,
+    "true_employer_cost": 6628.12,
+    "understatement_amount": 2609.68,
+    "understatement_pct_of_true": 39.37,
+    "understatement_pct_of_bank": 64.94,
+    "employer_ika_wedge_pct_of_bank": 30.06
+  },
+  "classification": {
+    "doc-bank-001": "bank_confirmation",
+    "doc-register-001": "payroll_register",
+    "doc-payslip-001": "payslip",
+    "doc-payslip-002": "payslip"
+  },
+  "artifacts": {
+    "doc-bank-001": "docs/bank_confirmation_2026-07.pdf",
+    "doc-register-001": "docs/payroll_register_2026-07.pdf",
+    "doc-payslip-001": "docs/payslip_EMP-001_2026-07.pdf",
+    "doc-payslip-002": "docs/payslip_EMP-002_2026-07.pdf"
+  }
+}

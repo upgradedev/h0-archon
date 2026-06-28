@@ -1,0 +1,287 @@
+{
+  "case_id": "case-0003",
+  "company": "Attica Bakeries OE",
+  "period": "2026-06",
+  "payment_date": "2026-06-28",
+  "edge_cases": [
+    "non_standard_ika"
+  ],
+  "document_mix": {
+    "bank": true,
+    "register": true,
+    "payslips_emitted": 11,
+    "employees_true": 11
+  },
+  "extracted": {
+    "company": "Attica Bakeries OE",
+    "period": "2026-06",
+    "payment_date": "2026-06-28",
+    "documents": [
+      {
+        "doc_id": "doc-bank-001",
+        "doc_type": "bank_confirmation",
+        "source_filename": "bank_confirmation_2026-06.pdf",
+        "bank_net_total": 21242.18,
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-register-001",
+        "doc_type": "payroll_register",
+        "source_filename": "payroll_register_2026-06.pdf",
+        "gross_total": 28530.0,
+        "employee_ika_total": 3957.12,
+        "tax_withheld_total": 3330.7,
+        "employer_ika_total": 6864.33,
+        "employer_cost_total": 35394.33,
+        "register_employee_count": 11,
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-001",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-001_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-001",
+          "name": "Nikolaos Samaras",
+          "gross": 1360.0,
+          "employee_ika": 188.63,
+          "tax": 68.4,
+          "net": 1102.97,
+          "employer_ika": 327.22,
+          "employer_cost": 1687.22
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-002",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-002_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-002",
+          "name": "Andreas Dimou",
+          "gross": 2550.0,
+          "employee_ika": 353.69,
+          "tax": 294.5,
+          "net": 1901.81,
+          "employer_ika": 613.53,
+          "employer_cost": 3163.53
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-003",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-003_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-003",
+          "name": "Stavros Spanou",
+          "gross": 2300.0,
+          "employee_ika": 319.01,
+          "tax": 247.0,
+          "net": 1733.99,
+          "employer_ika": 553.38,
+          "employer_cost": 2853.38
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-004",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-004_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-004",
+          "name": "Stavros Antoniou",
+          "gross": 1025.0,
+          "employee_ika": 142.17,
+          "tax": 4.75,
+          "net": 878.08,
+          "employer_ika": 246.62,
+          "employer_cost": 1271.62
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-005",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-005_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-005",
+          "name": "Andreas Makris",
+          "gross": 2915.0,
+          "employee_ika": 404.31,
+          "tax": 363.85,
+          "net": 2146.84,
+          "employer_ika": 701.35,
+          "employer_cost": 3616.35
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-006",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-006_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-006",
+          "name": "Petros Vlachos",
+          "gross": 3655.0,
+          "employee_ika": 506.95,
+          "tax": 504.45,
+          "net": 2643.6,
+          "employer_ika": 879.39,
+          "employer_cost": 4534.39
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-007",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-007_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-007",
+          "name": "Eleni Makris",
+          "gross": 3450.0,
+          "employee_ika": 478.52,
+          "tax": 465.5,
+          "net": 2505.98,
+          "employer_ika": 830.07,
+          "employer_cost": 4280.07
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-008",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-008_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-008",
+          "name": "Petros Manos",
+          "gross": 2860.0,
+          "employee_ika": 396.68,
+          "tax": 353.4,
+          "net": 2109.92,
+          "employer_ika": 688.12,
+          "employer_cost": 3548.12
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-009",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-009_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-009",
+          "name": "Stavros Nikolaou",
+          "gross": 1000.0,
+          "employee_ika": 138.7,
+          "tax": 0.0,
+          "net": 861.3,
+          "employer_ika": 240.6,
+          "employer_cost": 1240.6
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-010",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-010_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-010",
+          "name": "Vasiliki Makris",
+          "gross": 3995.0,
+          "employee_ika": 554.11,
+          "tax": 569.05,
+          "net": 2871.84,
+          "employer_ika": 961.2,
+          "employer_cost": 4956.2
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-011",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-011_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-011",
+          "name": "Ioannis Papadopoulos",
+          "gross": 3420.0,
+          "employee_ika": 474.35,
+          "tax": 459.8,
+          "net": 2485.85,
+          "employer_ika": 822.85,
+          "employer_cost": 4242.85
+        },
+        "payment_date": "2026-06-28"
+      }
+    ]
+  },
+  "expected_event": {
+    "employee_count": 11,
+    "bank_net_total": 21242.18,
+    "gross_total": 28530.0,
+    "employer_ika_total": 6864.33,
+    "employee_ika_total": 3957.12,
+    "tax_withheld_total": 3330.7,
+    "employer_cost_total": 35394.33,
+    "cost_gap_amount": 6864.33,
+    "cost_gap_pct": 32.31,
+    "hidden_total": 14152.15,
+    "payslip_net_total": 21242.18
+  },
+  "expected_validations": {
+    "R1": true,
+    "R2": true,
+    "R3": true,
+    "R4": true
+  },
+  "register_totals": {
+    "employee_count": 11,
+    "bank_net_total": 21242.18,
+    "gross_total": 28530.0,
+    "employer_ika_total": 6864.33,
+    "employee_ika_total": 3957.12,
+    "tax_withheld_total": 3330.7,
+    "employer_cost_total": 35394.33,
+    "cost_gap_amount": 6864.33,
+    "cost_gap_pct": 32.31,
+    "hidden_total": 14152.15,
+    "payslip_net_total": 21242.18
+  },
+  "naive": {
+    "bank_only_payroll_cost": 21242.18,
+    "true_employer_cost": 35394.33,
+    "understatement_amount": 14152.15,
+    "understatement_pct_of_true": 39.98,
+    "understatement_pct_of_bank": 66.62,
+    "employer_ika_wedge_pct_of_bank": 32.31
+  },
+  "classification": {
+    "doc-bank-001": "bank_confirmation",
+    "doc-register-001": "payroll_register",
+    "doc-payslip-001": "payslip",
+    "doc-payslip-002": "payslip",
+    "doc-payslip-003": "payslip",
+    "doc-payslip-004": "payslip",
+    "doc-payslip-005": "payslip",
+    "doc-payslip-006": "payslip",
+    "doc-payslip-007": "payslip",
+    "doc-payslip-008": "payslip",
+    "doc-payslip-009": "payslip",
+    "doc-payslip-010": "payslip",
+    "doc-payslip-011": "payslip"
+  },
+  "artifacts": {
+    "doc-bank-001": "docs/bank_confirmation_2026-06.pdf",
+    "doc-register-001": "docs/payroll_register_2026-06.pdf",
+    "doc-payslip-001": "docs/payslip_EMP-001_2026-06.pdf",
+    "doc-payslip-002": "docs/payslip_EMP-002_2026-06.pdf",
+    "doc-payslip-003": "docs/payslip_EMP-003_2026-06.pdf",
+    "doc-payslip-004": "docs/payslip_EMP-004_2026-06.pdf",
+    "doc-payslip-005": "docs/payslip_EMP-005_2026-06.pdf",
+    "doc-payslip-006": "docs/payslip_EMP-006_2026-06.pdf",
+    "doc-payslip-007": "docs/payslip_EMP-007_2026-06.pdf",
+    "doc-payslip-008": "docs/payslip_EMP-008_2026-06.pdf",
+    "doc-payslip-009": "docs/payslip_EMP-009_2026-06.pdf",
+    "doc-payslip-010": "docs/payslip_EMP-010_2026-06.pdf",
+    "doc-payslip-011": "docs/payslip_EMP-011_2026-06.pdf"
+  }
+}

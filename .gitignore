@@ -25,3 +25,7 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 /.vercel/
+
+# eval — commit the small sample, ignore the large generated corpus + results
+/eval/corpus/full/
+/eval/RESULTS.json

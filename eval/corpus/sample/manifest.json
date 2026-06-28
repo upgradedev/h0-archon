@@ -1,0 +1,59 @@
+{
+  "kind": "sample",
+  "seed": 1,
+  "count": 6,
+  "cases": [
+    {
+      "case_id": "case-0001",
+      "company": "Kyklades Retail OE",
+      "period": "2026-07",
+      "edge_cases": [],
+      "documents": 4
+    },
+    {
+      "case_id": "case-0002",
+      "company": "Kriti Marine IKE",
+      "period": "2025-01",
+      "edge_cases": [
+        "missing_payslip"
+      ],
+      "documents": 8
+    },
+    {
+      "case_id": "case-0003",
+      "company": "Attica Bakeries OE",
+      "period": "2026-06",
+      "edge_cases": [
+        "non_standard_ika"
+      ],
+      "documents": 13
+    },
+    {
+      "case_id": "case-0004",
+      "company": "Epirus Textiles AE",
+      "period": "2026-06",
+      "edge_cases": [
+        "missing_bank"
+      ],
+      "documents": 5
+    },
+    {
+      "case_id": "case-0005",
+      "company": "Epirus Textiles AE",
+      "period": "2025-07",
+      "edge_cases": [
+        "bank_mismatch"
+      ],
+      "documents": 11
+    },
+    {
+      "case_id": "case-0006",
+      "company": "Kyklades Retail OE",
+      "period": "2026-10",
+      "edge_cases": [
+        "noisy_values"
+      ],
+      "documents": 7
+    }
+  ]
+}

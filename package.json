@@ -9,15 +9,19 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/store.test.ts tests/db.test.ts tests/insights.test.ts",
+    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/store.test.ts tests/db.test.ts tests/insights.test.ts tests/extraction.test.ts eval/tests/metrics.test.ts",
     "ci": "npm run typecheck && npm test && npm run build && npm run pipeline",
     "pipeline": "tsx scripts/run-pipeline.ts",
+    "eval": "tsx eval/evaluate.ts",
+    "eval:gen": "python eval/generate_corpus.py --n 6 --out eval/corpus/sample --seed 1 --kind sample && python eval/generate_corpus.py --n 40 --out eval/corpus/full --seed 7 --kind full",
     "smoke:live": "tsx scripts/live-smoke.ts",
     "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1075.0",
     "@aws-sdk/client-dynamodb": "^3.1075.0",
     "@aws-sdk/lib-dynamodb": "^3.1075.0",
+    "mupdf": "^1.27.0",
     "next": "^16.2.9",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

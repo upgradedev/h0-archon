@@ -1,0 +1,145 @@
+{
+  "case_id": "case-0004",
+  "company": "Epirus Textiles AE",
+  "period": "2026-06",
+  "payment_date": "2026-06-28",
+  "edge_cases": [
+    "missing_bank"
+  ],
+  "document_mix": {
+    "bank": false,
+    "register": true,
+    "payslips_emitted": 4,
+    "employees_true": 4
+  },
+  "extracted": {
+    "company": "Epirus Textiles AE",
+    "period": "2026-06",
+    "payment_date": "2026-06-28",
+    "documents": [
+      {
+        "doc_id": "doc-register-001",
+        "doc_type": "payroll_register",
+        "source_filename": "payroll_register_2026-06.pdf",
+        "gross_total": 9750.0,
+        "employee_ika_total": 1352.32,
+        "tax_withheld_total": 1092.5,
+        "employer_ika_total": 2173.27,
+        "employer_cost_total": 11923.27,
+        "register_employee_count": 4,
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-001",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-001_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-001",
+          "name": "Petros Karras",
+          "gross": 2920.0,
+          "employee_ika": 405.0,
+          "tax": 364.8,
+          "net": 2150.2,
+          "employer_ika": 650.87,
+          "employer_cost": 3570.87
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-002",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-002_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-002",
+          "name": "Georgios Spanou",
+          "gross": 2225.0,
+          "employee_ika": 308.61,
+          "tax": 232.75,
+          "net": 1683.64,
+          "employer_ika": 495.95,
+          "employer_cost": 2720.95
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-003",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-003_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-003",
+          "name": "Sofia Dimou",
+          "gross": 3470.0,
+          "employee_ika": 481.29,
+          "tax": 469.3,
+          "net": 2519.41,
+          "employer_ika": 773.46,
+          "employer_cost": 4243.46
+        },
+        "payment_date": "2026-06-28"
+      },
+      {
+        "doc_id": "doc-payslip-004",
+        "doc_type": "payslip",
+        "source_filename": "payslip_EMP-004_2026-06.pdf",
+        "employee": {
+          "employee_id": "EMP-004",
+          "name": "Stavros Karras",
+          "gross": 1135.0,
+          "employee_ika": 157.42,
+          "tax": 25.65,
+          "net": 951.93,
+          "employer_ika": 252.99,
+          "employer_cost": 1387.99
+        },
+        "payment_date": "2026-06-28"
+      }
+    ]
+  },
+  "expected_event": {
+    "employee_count": 4,
+    "bank_net_total": 7305.18,
+    "gross_total": 9750.0,
+    "employer_ika_total": 2173.27,
+    "employee_ika_total": 1352.32,
+    "tax_withheld_total": 1092.5,
+    "employer_cost_total": 11923.27,
+    "cost_gap_amount": 2173.27,
+    "cost_gap_pct": 29.75,
+    "hidden_total": 4618.09,
+    "payslip_net_total": 7305.18
+  },
+  "expected_validations": {
+    "R1": true,
+    "R2": true,
+    "R3": true,
+    "R4": true
+  },
+  "register_totals": {
+    "employee_count": 4,
+    "bank_net_total": 7305.18,
+    "gross_total": 9750.0,
+    "employer_ika_total": 2173.27,
+    "employee_ika_total": 1352.32,
+    "tax_withheld_total": 1092.5,
+    "employer_cost_total": 11923.27,
+    "cost_gap_amount": 2173.27,
+    "cost_gap_pct": 29.75,
+    "hidden_total": 4618.09,
+    "payslip_net_total": 7305.18
+  },
+  "naive": null,
+  "classification": {
+    "doc-register-001": "payroll_register",
+    "doc-payslip-001": "payslip",
+    "doc-payslip-002": "payslip",
+    "doc-payslip-003": "payslip",
+    "doc-payslip-004": "payslip"
+  },
+  "artifacts": {
+    "doc-register-001": "docs/payroll_register_2026-06.pdf",
+    "doc-payslip-001": "docs/payslip_EMP-001_2026-06.pdf",
+    "doc-payslip-002": "docs/payslip_EMP-002_2026-06.pdf",
+    "doc-payslip-003": "docs/payslip_EMP-003_2026-06.pdf",
+    "doc-payslip-004": "docs/payslip_EMP-004_2026-06.pdf"
+  }
+}
