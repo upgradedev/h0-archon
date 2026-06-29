@@ -11,10 +11,13 @@ demo-flow lessons are relevant; Azure-specific implementation details are not.
   classifies bank, sales, purchase, payroll, and tax files by role.
 - Eight-agent story: the visible run ledger is Extractor, Classifier, Event
   Linker, Validator, PnL, CashFlow, Employee, and Narrator.
-- Live document upload: `/extract` plus `/api/upload` accept a PDF and run AWS
-  Bedrock vision extraction with field accuracy scored against ground truth.
-- Search: `/api/search` finds any uploaded document, vendor, or person through an
-  AWS OpenSearch CQRS read-model fed from DynamoDB Streams.
+- Live document upload: the dashboard's eight-agent run-ledger drop-zone (and
+  `/api/upload`) accept a PDF and run AWS Bedrock vision extraction; `/extract`
+  is the curated-sample read demo where field accuracy is scored against ground
+  truth.
+- Search: `/api/search` is documents-first — it returns individual documents with
+  their number and date (then vendors and people) through an AWS OpenSearch CQRS
+  read-model fed from DynamoDB Streams.
 - Verification-gating: four cross-document rules (R1–R4) must pass before the
   fused payroll event is trusted, and each rule's status is shown on the
   dashboard.
