@@ -23,14 +23,18 @@ that a single-document view never records.
 
 ## What's live
 
-- **Document upload with live extraction** — drop a PDF and watch **AWS Bedrock**
-  vision (Claude Sonnet 4.6) read it, with field accuracy scored against ground
-  truth on `/extract`.
-- **Full monthly close** — an **eight-agent** pipeline (Extractor · Classifier ·
-  Event Linker · Validator · PnL · CashFlow · Employee · Narrator) produces P&L,
-  cash flow, sales-vs-goal, supplier concentration, and payroll controls.
-- **Search** — find any uploaded document, vendor or person in milliseconds via
-  an **AWS OpenSearch** CQRS read-model fed from DynamoDB Streams.
+- **Drop a document on the dashboard** — the upload lives on the **eight-agent run
+  ledger** tile: drop a PDF and the agents light up in sequence (Extractor reads it
+  live via **AWS Bedrock** vision, Claude Sonnet 4.6 → Classifier → Event Linker →
+  Validator → PnL → CashFlow → Employee → Narrator), then the **affected tiles flash
+  and refresh** with the recomputed numbers — a per-session "what-if" that never
+  overwrites the shared demo. (`/extract` remains the curated-sample read demo with
+  accuracy scored against ground truth.)
+- **Full monthly close** — that **eight-agent** pipeline produces P&L, cash flow,
+  sales-vs-goal, supplier concentration, and payroll controls.
+- **Search** — find any uploaded **document, vendor or person** in milliseconds via
+  an **AWS OpenSearch** CQRS read-model fed from DynamoDB Streams (documents-first;
+  the aggregated close and Q&A logs are kept out of search results).
 - **Verification-gating** — four cross-document rules (R1–R4) must pass before the
   fused event is trusted; the dashboard surfaces each rule's status.
 - **Multi-period trends**, persisted **run history**, source-backed **citations**,
@@ -148,11 +152,11 @@ pipeline and dashboard work locally with no database.
 
 - `/` — marketing landing (the value prop, completeness/correlation hook, the
   module grid including search, and the Vercel + AWS stack).
-- `/dashboard` — the full finance-close command center (the product).
-- `/extract` — live document upload + extraction: pick a sample PDF, watch AWS
-  Bedrock vision read it, and see field accuracy scored against ground truth.
-  Degrades gracefully to a cached example when `BEDROCK_*` / AWS creds are not
-  configured.
+- `/dashboard` — the full finance-close command center (the product) — **including
+  document upload on the agent-ledger tile** (drop → agents animate → tiles flash).
+- `/extract` — the curated-sample read demo: pick a sample PDF, watch AWS Bedrock
+  vision read it, and see field accuracy scored against ground truth. Degrades
+  gracefully to a cached example when `BEDROCK_*` / AWS creds are not configured.
 
 A shared top nav links Home / Dashboard / Live Extract on every page.
 
@@ -172,9 +176,12 @@ A shared top nav links Home / Dashboard / Live Extract on every page.
    - bank confirmation: EUR 3,994.74
    - true employer cost: EUR 6,930
    - correlation wedge (only visible once correlated): EUR 2,935.26
-   - employer IKA: 35.8% of net
+   - employer social-security (Greece's IKA): 35.8% of net
    - source-backed citations and Ask Archon answer panel
-4. Open `/extract` and upload a sample PDF to watch live Bedrock extraction.
+4. **On the dashboard, drop a document on the 8-agent ledger tile** — watch the
+   agents fire in sequence (Extractor reads it live via Bedrock) and the affected
+   tiles flash + refresh with the recomputed numbers (per-session). `docs/demo/`
+   has fictional sample documents to drop.
 5. Use **Search** to find any document, vendor or person across the corpus.
 6. Open `https://h0-archon.vercel.app/api/report` to verify the JSON API and
    persistence mode. The live deployment should report `db_mode:
