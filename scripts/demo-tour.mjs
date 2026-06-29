@@ -138,14 +138,27 @@ await safe("evidence api", async () => {
   await sleep(6000);
 });
 
-// ---- Pad to TARGET so the video covers the full narration ----
-const remaining = TARGET - elapsed();
-if (remaining > 0) {
-  console.log(`padding ${remaining.toFixed(1)}s to reach target ${TARGET}s`);
-  await safe("closing on landing", async () => {
-    await page.goto(BASE, { waitUntil: "networkidle", timeout: 30000 });
+// ---- Pad to TARGET with a gentle dashboard pan (no frozen frame) ----
+if (TARGET - elapsed() > 1) {
+  console.log(`padding ${(TARGET - elapsed()).toFixed(1)}s with a dashboard pan to reach ${TARGET}s`);
+  await safe("closing dashboard pan", async () => {
+    await page.goto(BASE + "/dashboard", { waitUntil: "networkidle", timeout: 30000 });
+    await sleep(1500);
+    let dir = 1;
+    let y = 0;
+    while (TARGET - elapsed() > 1.5) {
+      y += dir * 700;
+      if (y > 2600) {
+        y = 2600;
+        dir = -1;
+      } else if (y < 0) {
+        y = 0;
+        dir = 1;
+      }
+      await smoothScrollTo(page, Math.max(0, y), 2500);
+      await sleep(600);
+    }
   });
-  await sleep(Math.max(0, (TARGET - elapsed()) * 1000));
 }
 
 console.log(`tour wall-time: ${elapsed().toFixed(1)}s`);
