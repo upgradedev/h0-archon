@@ -37,6 +37,25 @@ const AGENT_COUNT = 8
 const STEP_MS = 420 // per-agent stagger so each stage is visibly fired
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+// Friendly labels for the raw extractor doc_type — shown on the upload chip so a
+// viewer can read what Bedrock decided the document was.
+const DOC_TYPE_LABELS: Record<DocType, string> = {
+  bank_confirmation: "Bank confirmation",
+  payroll_register: "Payroll register",
+  payslip: "Payslip",
+  sales_invoice: "Sales invoice",
+  purchase_invoice: "Purchase invoice",
+  unknown: "Document",
+}
+
+// Persistent on-screen record of the document that went IN. `reading` shows while
+// the live /api/upload call is in flight; `read` after a successful extraction
+// (with type + confidence); `error` if the upload itself failed.
+type UploadChip =
+  | { name: string; phase: "reading" }
+  | { name: string; phase: "read"; label: string; pct: number }
+  | { name: string; phase: "error" }
+
 function StatusIcon({ status }: { status: Agent["status"] | "idle" }) {
   if (status === "done")
     return (
@@ -75,6 +94,9 @@ export function AgentLedger() {
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  // Filename chip — additive UI only; persists after the run as a record of the
+  // uploaded document. Cleared by "Reset to demo".
+  const [chip, setChip] = useState<UploadChip | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -93,6 +115,13 @@ export function AgentLedger() {
       setToast(null)
       setBusy(true)
 
+      // Echo the chosen document immediately — BEFORE the network call — so a
+      // viewer sees the document go IN. The chip tracks the first file (demo is
+      // single-file; the "+N more" suffix keeps multi-select honest).
+      const extra = files.length - 1
+      const chipName = extra > 0 ? `${files[0].name} +${extra} more` : files[0].name
+      setChip({ name: chipName, phase: "reading" })
+
       // Start the ledger: all idle, Extractor (agent 1) running — bound to the
       // real, in-flight Bedrock upload call below.
       const initial: Record<number, RunStatus> = {}
@@ -101,8 +130,10 @@ export function AgentLedger() {
 
       // 1. Live Bedrock extraction per file (Extractor is genuinely in-flight).
       const extracted: ExtractedDocument[] = []
+      let firstResult: { docType: DocType; confidence: number } | null = null
       try {
-        for (const file of files) {
+        for (let idx = 0; idx < files.length; idx++) {
+          const file = files[idx]
           if (file.size > MAX_UPLOAD_BYTES) {
             throw new Error(
               `"${file.name}" is too large — limit is ${(MAX_UPLOAD_BYTES / 1024 / 1024) | 0} MB.`,
@@ -116,14 +147,27 @@ export function AgentLedger() {
             throw new Error(payload.error ?? `Upload failed (${res.status}).`)
           }
           extracted.push(payload.document)
+          if (idx === 0) firstResult = { docType: payload.docType, confidence: payload.confidence }
           // Analytics: a real, successful live extraction. No PII — type only.
           track("document_uploaded", { type: payload.docType })
         }
       } catch (e) {
         setRun(null)
         setBusy(false)
+        setChip({ name: chipName, phase: "error" })
         setError((e as Error)?.message ?? "Upload failed — please retry.")
         return
+      }
+
+      // The document was read — promote the chip to a persistent "read" record
+      // (type + confidence). It stays on screen through the cascade and after.
+      if (firstResult) {
+        setChip({
+          name: chipName,
+          phase: "read",
+          label: DOC_TYPE_LABELS[firstResult.docType] ?? "Document",
+          pct: Math.round(firstResult.confidence * 100),
+        })
       }
 
       // Extractor done. Kick off the recompute now — the remaining seven stages
@@ -240,6 +284,35 @@ export function AgentLedger() {
         />
       </div>
 
+      {/* Persistent record of what was uploaded — sits OUTSIDE the dropzone so it
+          stays full-opacity while the dropzone dims during a run. */}
+      {chip && (
+        <div
+          className={cn(
+            "mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs",
+            chip.phase === "error"
+              ? "border-destructive/30 bg-destructive/5 text-destructive"
+              : "border-primary/30 bg-primary/5 text-foreground",
+          )}
+        >
+          <span aria-hidden>📄</span>
+          <span className="min-w-0 flex-1 truncate font-medium">{chip.name}</span>
+          {chip.phase === "reading" && (
+            <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> reading…
+            </span>
+          )}
+          {chip.phase === "read" && (
+            <span className="flex shrink-0 items-center gap-1 font-medium text-primary">
+              <Check className="size-3" /> read · {chip.label} · {chip.pct}%
+            </span>
+          )}
+          {chip.phase === "error" && (
+            <span className="shrink-0">couldn&apos;t read (try again)</span>
+          )}
+        </div>
+      )}
+
       {error && <p className="mb-3 text-xs text-destructive">{error}</p>}
 
       {isCustom && (
@@ -251,6 +324,7 @@ export function AgentLedger() {
             type="button"
             onClick={() => {
               resetPeriodData()
+              setChip(null)
               setToast("Reverted to the demo close.")
             }}
             disabled={busy}
