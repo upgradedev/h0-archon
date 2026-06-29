@@ -37,19 +37,19 @@ export const SAMPLE_CASE = {
       file: "payroll_register_2026-07.pdf",
       docType: "payroll_register",
       label: "Payroll register",
-      hint: "Company totals incl. employer IKA — the true employer cost.",
+      hint: "Company totals incl. employer social-security contributions — the true employer cost.",
     },
     {
       file: "payslip_EMP-001_2026-07.pdf",
       docType: "payslip",
       label: "Payslip — Eleni Manos (EMP-001)",
-      hint: "A single employee's gross / IKA / tax / net breakdown.",
+      hint: "A single employee's gross / social-security / tax / net breakdown.",
     },
     {
       file: "payslip_EMP-002_2026-07.pdf",
       docType: "payslip",
       label: "Payslip — Vasiliki Dimou (EMP-002)",
-      hint: "A single employee's gross / IKA / tax / net breakdown.",
+      hint: "A single employee's gross / social-security / tax / net breakdown.",
     },
     {
       file: "sales_invoice_2026-07.pdf",

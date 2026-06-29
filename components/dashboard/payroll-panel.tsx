@@ -38,7 +38,7 @@ export function PayrollPanel() {
       </div>
 
       <div className="mt-3 flex items-center justify-between rounded-lg border border-[var(--warning)]/30 bg-[var(--warning)]/10 px-3 py-2">
-        <span className="text-xs font-medium text-foreground">Employer IKA (not in the bank transfer)</span>
+        <span className="text-xs font-medium text-foreground">Employer social-security contributions (not in the bank transfer)</span>
         <span className="text-sm font-semibold tabular-nums text-[var(--warning)]">
           +{formatEUR(payroll.employerWedge)} · {payroll.employerWedgePct}% of net
         </span>

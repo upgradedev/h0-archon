@@ -22,12 +22,13 @@ type SearchResponse = {
   error?: string
 }
 
-// Display order + labels for the grouped result list.
+// Display order + labels for the grouped result list. Documents lead: the panel is
+// framed around "find your uploaded documents" first, counterparties and people next.
 const GROUPS: { type: string; label: string }[] = [
+  { type: "document", label: "Documents" },
   { type: "report", label: "Reports" },
   { type: "counterparty", label: "Counterparties" },
   { type: "employee", label: "Employees" },
-  { type: "document", label: "Documents" },
   { type: "activity", label: "Activity" },
 ]
 
@@ -108,8 +109,8 @@ export function SearchPanel() {
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Search every document & counterparty…"
-          aria-label="Search every financial document and counterparty"
+          placeholder="Search your uploaded documents, vendors & people…"
+          aria-label="Search your uploaded documents, vendors and people"
           className="w-40 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground md:w-56"
         />
         {loading ? (
@@ -131,6 +132,12 @@ export function SearchPanel() {
 
       {showPanel && (
         <div className="absolute right-0 z-50 mt-2 w-[min(92vw,420px)] overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+          <div className="border-b border-border bg-muted/40 px-3 py-1.5">
+            <p className="text-[10px] leading-tight text-muted-foreground">
+              Find any uploaded document, counterparty or transaction — powered by an OpenSearch
+              read-model (CQRS).
+            </p>
+          </div>
           <div className="max-h-[70vh] overflow-y-auto p-2">
             {data?.error ? (
               <p className="px-2 py-3 text-xs text-muted-foreground">{data.error}</p>

@@ -12,8 +12,10 @@
 
 import type { AnalysisReport, AuditActivity } from "./types";
 import { buildDashboardVM } from "./dashboard-vm";
+import { buildBusinessIntelligence } from "./business";
 import { buildLedger } from "./demo-ledger";
 import { formatEUR } from "./format";
+import financeData from "../data/sample-finance.json";
 
 // --- Document model --------------------------------------------------------
 
@@ -80,23 +82,51 @@ function titleCase(value: string): string {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 }
 
+// Initialism for a multi-word name ("Amazon Web Services" -> "AWS"). Indexing this
+// alongside the full name lets short queries like "AWS" or "PPC" hit a vendor whose
+// tokens ([amazon, web, services]) fuzziness alone could never bridge to. Returns ""
+// for single-word names so we never inject a noise token.
+function acronym(value: string): string {
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length < 2) return "";
+  return words.map((word) => word[0]).join("").toUpperCase();
+}
+
+// Real source filenames for the demo close, keyed by the document-intake label, so a
+// filename search ("bank_confirmation_202601.pdf") resolves to the right document.
+const DOC_FILENAMES: Record<string, string> = {
+  "Bank confirmation": financeData.sources.bank,
+  "Sales invoices": financeData.sources.sales,
+  "Purchase invoices": financeData.sources.purchases,
+};
+
 // --- Document builders -----------------------------------------------------
 
 // Map one persisted report into its full set of searchable documents:
 // 1 report + N counterparties (customers + suppliers) + N employees + doc-type chips.
 export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
   const vm = buildDashboardVM(report);
+  const bi = buildBusinessIntelligence(report);
   const ledger = buildLedger(vm);
   const event = report.event;
   const docs: SearchDoc[] = [];
 
-  // Report.
+  // The supplier ledger is keyed by spend CATEGORY ("Cloud infrastructure"), so the
+  // real vendor name ("Amazon Web Services") only lives on the purchases categories.
+  // Index both, or a vendor-name query can never hit.
+  const categoryToVendor = new Map<string, string>(
+    bi.purchases.categories.map((c): [string, string] => [c.category, c.vendor]),
+  );
+  const sourceFilenames = Object.values(financeData.sources).join(" ");
+
+  // Report. The text blob carries the real source filenames so a filename search
+  // (e.g. "bank_confirmation_202601.pdf") resolves to this close.
   docs.push({
     id: `report:${event.event_id}`,
     type: "report",
     title: `${event.company} — ${vm.period} close`,
     summary: `Revenue ${formatEUR(vm.pnl.revenue)} · EBITDA ${formatEUR(vm.pnl.ebitda)} · true employer cost ${formatEUR(event.employer_cost_total)}`,
-    text: `${event.company} monthly finance close ${event.period}. Revenue, EBITDA, payroll employer cost, cash flow, cross-document validation.`,
+    text: `${event.company} monthly finance close ${event.period}. Revenue, EBITDA, payroll employer cost, cash flow, cross-document validation. ${sourceFilenames}`,
     company: event.company,
     period: event.period,
     amount: vm.pnl.revenue,
@@ -118,17 +148,22 @@ export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
     });
   }
 
-  // Counterparties — suppliers.
+  // Counterparties — suppliers. `supplier.name` is the spend CATEGORY; resolve the
+  // real vendor and index both (plus the vendor initialism, so "AWS" hits "Amazon
+  // Web Services"). The vendor leads the title since that is what a user searches for.
   for (const supplier of ledger.suppliers) {
+    const category = supplier.name;
+    const vendor = categoryToVendor.get(category) ?? category;
+    const vendorAcronym = acronym(vendor);
     docs.push({
-      id: `cp:${event.period}:supplier:${slug(supplier.name)}`,
+      id: `cp:${event.period}:supplier:${slug(category)}`,
       type: "counterparty",
-      title: supplier.name,
-      summary: `Supplier · ${formatEUR(supplier.total)} spend · ${formatEUR(supplier.openBalance)} open`,
-      text: `${supplier.name} supplier vendor counterparty of ${event.company}`,
+      title: vendor,
+      summary: `Supplier · ${category} · ${formatEUR(supplier.total)} spend · ${formatEUR(supplier.openBalance)} open`,
+      text: `${vendor} ${vendorAcronym} ${category} supplier vendor counterparty of ${event.company}`,
       company: event.company,
       period: event.period,
-      counterparty: supplier.name,
+      counterparty: vendor,
       docType: "supplier",
       amount: supplier.total,
     });
@@ -160,12 +195,13 @@ export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
   if (supplierInvoiceCount > 0) docChips.push({ label: "Purchase invoices", count: supplierInvoiceCount });
 
   for (const chip of docChips) {
+    const filename = DOC_FILENAMES[chip.label] ?? "";
     docs.push({
       id: `doc:${event.period}:${slug(chip.label)}`,
       type: "document",
       title: chip.label,
       summary: `${chip.count} ${chip.label.toLowerCase()} linked in ${vm.period}`,
-      text: `${chip.label} source document for ${event.company} ${event.period}`,
+      text: `${chip.label} ${filename} source document for ${event.company} ${event.period}`,
       company: event.company,
       period: event.period,
       docType: chip.label,

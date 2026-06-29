@@ -74,7 +74,7 @@ function tamperFieldFor(mode: TamperMode): string {
 function tamperNoteFor(mode: TamperMode): string {
   return mode === "bank-misread"
     ? "Bank confirmation net-transfer total mis-read ~15% too high"
-    : "Employer-IKA total mis-read ~20% too high vs the register";
+    : "Employer social-security total mis-read ~20% too high vs the register";
 }
 
 // Build the full clean-vs-tampered scenario for a report. Both runs use the SAME

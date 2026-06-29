@@ -93,7 +93,7 @@ export function buildDocumentSources(report: AnalysisReport): DocumentSourceInsi
       id: "register",
       title: "Payroll register",
       filename: "payroll_register_202601.pdf",
-      role: "Carries gross, withheld taxes, employee IKA, and employer IKA.",
+      role: "Carries gross pay, withheld taxes, and employee/employer social-security contributions.",
       captured: `${eur.format(report.event.employer_cost_total)} true employer cost`,
     },
     {

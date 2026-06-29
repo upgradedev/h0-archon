@@ -166,7 +166,7 @@ export function validate(event: PayrollEvent, docs: ExtractedDocument[]): Valida
   }
   results.push({
     rule: "R2",
-    description: "Employer-IKA ratio consistent with the register (flagged, not failed, when no register is present)",
+    description: "Employer social-security ratio consistent with the register (flagged, not failed, when no register is present)",
     passed: r2Passed,
     detail: r2Detail,
   });
@@ -230,7 +230,7 @@ function fallbackSummary(event: PayrollEvent): string {
     `For ${event.period}, ${event.company}'s finance close links sales, purchases, bank movement, and payroll controls into one reviewable run.`,
     `The evidence-backed payroll control is material: the bank confirmation shows EUR ${event.bank_net_total.toFixed(2)} in net salary transfers to ${event.employee_count} employees — the figure most owners treat as "payroll cost."`,
     `That figure is misleading. The true employer cost for the month is EUR ${event.employer_cost_total.toFixed(2)}. Employer social-security (IKA) contributions of EUR ${event.cost_gap_amount.toFixed(2)} — about ${event.cost_gap_pct.toFixed(1)}% on top of the net salaries — never appear on the bank confirmation.`,
-    `Including withheld employee IKA and income tax, the bank confirmation understates real payroll cash commitment by EUR ${event.hidden_total.toFixed(2)}. Budget against the fused figure, not the bank transfer.`,
+    `Including withheld employee social-security and income tax, the bank confirmation understates real payroll cash commitment by EUR ${event.hidden_total.toFixed(2)}. Budget against the fused figure, not the bank transfer.`,
   ].join("\n\n");
 }
 

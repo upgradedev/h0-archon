@@ -65,25 +65,58 @@ function osClient(): Client {
   return cachedClient;
 }
 
+// A "folding" analyzer that makes search accent- and tonos-insensitive across both
+// Latin and Greek scripts without any plugin (icu_folding would also work but is not
+// guaranteed on a managed domain):
+//   - lowercase           — case-fold Latin
+//   - greek_lowercase     — Lucene GreekLowerCaseFilter: lowercases Greek AND strips
+//                            tonos, so "Παπαδόπουλος" and "Παπαδοπουλος" match
+//   - asciifolding        — fold Latin diacritics ("Géorgiou" -> "Georgiou")
+// Note: this normalizes WITHIN a script; it does not transliterate Greek <-> Latin.
+// Applied to the analyzed text fields (title/summary/text/company/counterparty) so a
+// vendor or person name matches regardless of accents.
 const INDEX_MAPPING = {
+  settings: {
+    analysis: {
+      filter: {
+        greek_lowercase: { type: "lowercase", language: "greek" },
+      },
+      analyzer: {
+        folding: {
+          type: "custom",
+          tokenizer: "standard",
+          filter: ["lowercase", "greek_lowercase", "asciifolding"],
+        },
+      },
+    },
+  },
   mappings: {
     properties: {
       type: { type: "keyword" },
       id: { type: "keyword" },
-      company: { type: "keyword" },
       period: { type: "keyword" },
-      counterparty: { type: "keyword" },
       docType: { type: "keyword" },
-      title: { type: "text" },
-      summary: { type: "text" },
-      text: { type: "text" },
+      // counterparty/company are now analyzed text (was keyword) so vendor-name and
+      // accented queries fold-match; nothing filters/aggregates on them, only search.
+      company: { type: "text", analyzer: "folding" },
+      counterparty: { type: "text", analyzer: "folding" },
+      title: { type: "text", analyzer: "folding" },
+      summary: { type: "text", analyzer: "folding" },
+      text: { type: "text", analyzer: "folding" },
       amount: { type: "double" },
     },
   },
 };
 
-// Create the index with its mapping if it does not already exist. Idempotent and
-// tolerant of a concurrent creation race.
+// Create the index with its settings + mapping if it does not already exist.
+// Idempotent and tolerant of a concurrent creation race.
+//
+// NOTE: this is create-if-not-exists ONLY — it never drops an existing index, because
+// indexReportBestEffort / indexActivityBestEffort call it on every write and an
+// auto-drop would wipe the read-model. The folding analyzer + counterparty/company
+// text fields are NOT compatible with an index created by an older revision, so after
+// deploying this change the index must be manually recreated:
+//   DELETE /<index>  then run the backfill (reindexAll) to repopulate.
 export async function ensureIndex(): Promise<void> {
   const client = osClient();
   const index = indexName();
