@@ -2,7 +2,7 @@
 
 Every month a small business closes its books — and the truth of that month is scattered across documents that don't talk to each other: a bank statement, a payroll register, individual payslips, supplier invoices, receipts. Each tells only part of the story, so owners (and their accountants) correlate them by hand, every month.
 
-The insight that started Archon: a single payroll event produces three documents that *disagree on purpose*. The bank confirmation shows the **net** that left the account (€3,994.74). The payroll register holds the **true employer cost** — gross pay plus employer social-security (€6,930). That €2,935 gap — in our demo it's Greece's IKA plus withheld tax, but **every country has its own version of this employer-cost wedge** — is **invisible until you correlate the register with the bank transfer**. Bank-only accounting simply can't see it. The correlation problem is universal; only the local rules change. We wanted software that does that correlation for any SMB and tells you one thing: are your books complete and reconciled, or are you missing a document?
+The insight that started Archon: a single payroll event produces three documents that *disagree on purpose*. The bank confirmation shows the **net** that left the account (€3,994.74). The payroll register holds the **true employer cost** — gross pay plus employer social-security (€6,930). That €2,935 gap — in our demo it's Greece's social-security contributions (IKA, the national social-security fund) plus withheld income tax, but **every country has its own version of this employer-cost wedge** — is **invisible until you correlate the register with the bank transfer**. Bank-only accounting simply can't see it. The correlation problem is universal; only the local rules change. We wanted software that does that correlation for any SMB and tells you one thing: are your books complete and reconciled, or are you missing a document?
 
 ## What it does
 
@@ -53,4 +53,4 @@ The "zero stack": **Next.js 16 / React 19 on Vercel** for the front and API (Ver
 - More document types (VAT returns, contracts, receipts) and direct **bank-feed** ingestion.
 - **Accountant workflows** — review queues, approvals, period locking.
 - Analytics scale-out on the existing OpenSearch read-model (trends, anomaly detection).
-- **Global from day one:** multi-entity / multi-currency and pluggable country-specific tax packs for SMBs worldwide — starting with Greece (IKA, MyDATA) as the proof market, since the correlation engine is the same everywhere and only the local rules differ.
+- **Global from day one:** multi-entity / multi-currency and pluggable country-specific tax packs for SMBs worldwide — starting with Greece — its IKA social-security rules and MyDATA (the country's mandatory e-invoicing / e-bookkeeping platform) — as the proof market, since the correlation engine is the same everywhere and only the local rules differ.
