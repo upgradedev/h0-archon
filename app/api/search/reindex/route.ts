@@ -29,7 +29,11 @@ export async function POST() {
     const indexed = await reindexAll(reports, activities);
     return NextResponse.json({ indexed, reports: reports.length, activities: activities.length });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "reindex failed";
-    return NextResponse.json({ indexed: 0, error: message }, { status: 502 });
+    const e = err as { message?: string; meta?: { statusCode?: number; body?: unknown } };
+    const message = e?.message ?? "reindex failed";
+    const statusCode = e?.meta?.statusCode;
+    const body = e?.meta?.body;
+    const detail = typeof body === "string" ? body.slice(0, 600) : body;
+    return NextResponse.json({ indexed: 0, error: message, statusCode, detail }, { status: 502 });
   }
 }
