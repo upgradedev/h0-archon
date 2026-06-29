@@ -84,11 +84,13 @@ export type DashboardVM = {
   payroll: {
     bankOutflow: number;
     trueEmployerCost: number;
-    hidden: number;
-    hiddenPct: number;
+    employerWedge: number; // employer IKA — the extra cost on TOP of gross
+    employerWedgePct: number; // employer IKA as % of the net the bank shows (~28%)
+    hidden: number; // full understatement: true employer cost − bank net transfer
+    hiddenPct: number; // full understatement as % of true employer cost
     headcount: number;
     components: { name: string; value: number }[];
-    hiddenBreakdown: { name: string; value: number }[];
+    hiddenBreakdown: { name: string; value: number }[]; // sums to `hidden`
   };
   documentIntake: DocChip[];
   agents: Agent[];
@@ -250,15 +252,24 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
   const payroll: DashboardVM["payroll"] = {
     bankOutflow: event.bank_net_total,
     trueEmployerCost: event.employer_cost_total,
+    // The marquee insight: employer social-security (IKA) sits entirely OUTSIDE the
+    // bank salary transfer, yet is ~28% of the net the bank shows.
+    employerWedge: event.employer_ika_total,
+    employerWedgePct: Math.round(event.cost_gap_pct),
+    // The full reconciliation: everything the bank net transfer omits vs true cost.
     hidden: event.hidden_total,
-    hiddenPct: Math.round(event.cost_gap_pct),
+    hiddenPct: Math.round((event.hidden_total / event.employer_cost_total) * 100),
     headcount: event.employee_count,
     components: [
       { name: "Gross salaries", value: event.gross_total },
       { name: "Employer IKA", value: event.employer_ika_total },
     ],
+    // These three are exactly what the bank net transfer leaves out; they sum to `hidden`
+    // (hidden_total = employer_ika + employee_ika + tax_withheld).
     hiddenBreakdown: [
-      { name: "Employer IKA (invisible on bank confirmation)", value: event.employer_ika_total },
+      { name: "Employer IKA (employer contribution)", value: event.employer_ika_total },
+      { name: "Employee IKA (withheld from gross)", value: event.employee_ika_total },
+      { name: "Income tax withheld", value: event.tax_withheld_total },
     ],
   };
 
@@ -294,7 +305,7 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
   const citations: Citation[] = [
     { id: `BANK-${event.period}`, source: "Bank confirmation — net salary transfer", ref: "total out", amount: formatEUR(event.bank_net_total) },
     { id: `REG-${event.period}`, source: "Payroll register — employer cost", ref: "gross + employer IKA", amount: formatEUR(event.employer_cost_total) },
-    { id: `GAP-${event.period}`, source: "Hidden employer cost", ref: `${hiddenPct}% over bank`, amount: formatEUR(event.hidden_total) },
+    { id: `GAP-${event.period}`, source: "Employer IKA — hidden on bank confirmation", ref: `${hiddenPct}% of net transfer`, amount: formatEUR(event.employer_ika_total) },
     { id: `REV-${event.period}`, source: "Sales ledger — net revenue", ref: "P&L revenue", amount: formatEUR(bi.pnl.revenue) },
     { id: `EBITDA-${event.period}`, source: "P&L — EBITDA", ref: `${bi.pnl.ebitdaMarginPct.toFixed(1)}% margin`, amount: formatEUR(bi.pnl.ebitda) },
   ];

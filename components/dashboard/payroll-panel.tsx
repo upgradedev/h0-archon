@@ -34,16 +34,23 @@ export function PayrollPanel() {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-lg border border-border/70 px-3 py-2">
-        <span className="text-xs text-muted-foreground">Hidden cost not in bank run</span>
+      <div className="mt-3 flex items-center justify-between rounded-lg border border-[var(--warning)]/30 bg-[var(--warning)]/10 px-3 py-2">
+        <span className="text-xs font-medium text-foreground">Employer IKA hidden on bank run</span>
         <span className="text-sm font-semibold tabular-nums text-[var(--warning)]">
-          +{formatEUR(payroll.hidden)} · {payroll.hiddenPct}%
+          +{formatEUR(payroll.employerWedge)} · {payroll.employerWedgePct}% of net
+        </span>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between rounded-lg border border-border/70 px-3 py-2">
+        <span className="text-xs text-muted-foreground">Total understated vs true cost</span>
+        <span className="text-sm font-semibold tabular-nums text-foreground">
+          +{formatEUR(payroll.hidden)} · {payroll.hiddenPct}% of true cost
         </span>
       </div>
 
       <div className="mt-3 space-y-1.5">
         <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Variance breakdown
+          What the bank salary run omits
         </div>
         {payroll.hiddenBreakdown.map((b) => (
           <div key={b.name} className="flex items-center justify-between text-xs">
