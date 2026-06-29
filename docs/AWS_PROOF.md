@@ -17,7 +17,7 @@ aws dynamodb describe-table --table-name h0-archon-reports --region eu-west-1
 | Partition key | **pk** (String, HASH) |
 | Sort key | **sk** (String, RANGE) |
 | Billing mode | **PAY_PER_REQUEST** (on-demand — scales to zero) |
-| Item count | **41** |
+| Item count | **64+** (live scan: 84 ACTIVITY + 8 REPORT = 92) |
 | Region | **eu-west-1** |
 | ARN | `arn:aws:dynamodb:eu-west-1:308857099262:table/h0-archon-reports` |
 | AWS Account | `308857099262` (`aws sts get-caller-identity`) |
@@ -28,8 +28,10 @@ aws dynamodb describe-table --table-name h0-archon-reports --region eu-west-1
 aws dynamodb scan --table-name h0-archon-reports --region eu-west-1 --max-items 50
 ```
 
-- Scanned items: **43**
-- Partition-key breakdown: **`REPORT` = 8**, **`ACTIVITY` = 35**
+- Scanned items: **92** (refreshed 2026-06-29)
+- Partition-key breakdown: **`REPORT` = 8**, **`ACTIVITY` = 84**
+- Verified caller: `aws sts get-caller-identity` → account **308857099262**, user `tf-surface-studio`
+- Sample REPORT key: `pk=REPORT`, `sk=2026-06-27T20:58:38.541Z`
 
 This is the deliberate single-table model: finance-close reports (`pk=REPORT`,
 `sk=<ISO generated_at>#<event_id>`) and audit activity (`pk=ACTIVITY`,
