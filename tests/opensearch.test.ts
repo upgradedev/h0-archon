@@ -65,14 +65,49 @@ describe("buildReportSearchDocs", () => {
     }
   });
 
-  it("emits document docs including the source-doc families", () => {
+  it("emits document docs including the source-doc chips (no per-invoice COUNT chips)", () => {
     const docs = buildReportSearchDocs(fixtureReport());
     const documents = docs.filter((d) => d.type === "document");
     const titles = documents.map((d) => d.title);
     assert.ok(documents.length > 0);
     assert.ok(titles.includes("Bank confirmation"));
     assert.ok(titles.includes("Payroll register"));
-    assert.ok(titles.some((t) => t.includes("invoices")));
+    // The old aggregate "Sales invoices" / "Purchase invoices" COUNT chips are gone —
+    // individual invoice documents (below) replace them.
+    assert.ok(!titles.includes("Sales invoices"));
+    assert.ok(!titles.includes("Purchase invoices"));
+  });
+
+  it("indexes every invoice as its own searchable document with number + date", () => {
+    const report = fixtureReport();
+    const docs = buildReportSearchDocs(report);
+    // Individual invoices are the document records that carry a `date`.
+    const invoices = docs.filter((d) => d.type === "document" && d.date);
+    assert.ok(invoices.length > 0, "individual invoice documents are emitted");
+    for (const inv of invoices) {
+      assert.ok(inv.id.startsWith(`inv:${report.event.period}:`));
+      assert.ok(typeof inv.title === "string" && inv.title.length > 0, "title is the invoice number");
+      assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(inv.date ?? ""), "date is ISO yyyy-mm-dd");
+      assert.ok(typeof inv.counterparty === "string" && inv.counterparty.length > 0);
+      assert.equal(typeof inv.amount, "number");
+      assert.ok(["Sales invoice", "Purchase invoice"].includes(inv.docType ?? ""));
+    }
+    // A counterparty-name query ("hotel") must reach the invoice via text/counterparty.
+    const hotelInvoices = invoices.filter(
+      (d) =>
+        (d.counterparty ?? "").toLowerCase().includes("hotel") ||
+        (d.text ?? "").toLowerCase().includes("hotel"),
+    );
+    assert.ok(hotelInvoices.length > 0, "Hotel Aegeon invoices are findable by name");
+    const hotel = hotelInvoices[0];
+    assert.equal(hotel.counterparty, "Hotel Aegeon");
+    // subtitle (via mapSearchResponse) shows "<type> · <date>"; title stays the number.
+    const mapped = mapSearchResponse({
+      hits: { total: 1, hits: [{ _id: hotel.id, _score: 1, _source: hotel }] },
+    });
+    assert.equal(mapped.hits[0].title, hotel.title);
+    assert.equal(mapped.hits[0].subtitle, `Sales invoice · ${hotel.date}`);
+    assert.equal(mapped.hits[0].date, hotel.date);
   });
 
   it("indexes the real vendor name and its initialism on supplier docs", () => {
