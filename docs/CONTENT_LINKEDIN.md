@@ -27,3 +27,7 @@ Live (no login): https://h0-archon.vercel.app
 Code (MIT): https://github.com/upgradedev/h0-archon
 
 #Vercel #AWS #DynamoDB #SMB #Fintech #Bookkeeping #BuildInPublic
+
+
+---
+*I created this content for the purposes of entering the H0: Hack the Zero Stack with Vercel v0 and AWS Databases hackathon. #H0Hackathon*

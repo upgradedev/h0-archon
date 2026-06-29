@@ -85,3 +85,7 @@ infrastructure — it's whether the numbers are correct, cited, reproducible, an
 continuously verified. For anything that touches money, that *is* the product.
 
 Live: https://h0-archon.vercel.app · Code (MIT): https://github.com/upgradedev/h0-archon
+
+
+---
+*I created this content for the purposes of entering the H0: Hack the Zero Stack with Vercel v0 and AWS Databases hackathon. #H0Hackathon*

@@ -83,3 +83,7 @@ The lesson H0 is really teaching: when the stack collapses to "a front end and a
 ---
 
 *Archon H0 is live at https://h0-archon.vercel.app and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
+
+
+---
+*I created this content for the purposes of entering the H0: Hack the Zero Stack with Vercel v0 and AWS Databases hackathon. #H0Hackathon*
