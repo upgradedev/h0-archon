@@ -7,9 +7,7 @@ cover_image: # TODO: add cover image URL (e.g. the dashboard screenshot) before 
 
 # Dev-log — Five engineering decisions behind Archon on the Vercel + AWS zero stack
 
-> Bonus content piece 3 of 3. Technical "how I built it" companion to the main
-> blog — engineering-decisions angle, distinct from the product story. Publish to
-> dev.to / Hashnode. ~700 words.
+> *I built Archon and wrote this for the **H0 Hackathon** (Hack the Zero Stack — Vercel + AWS). #H0Hackathon*
 <!-- Lightly personalize the voice before posting. -->
 
 The main write-up covers *what* Archon does (a document-collection and

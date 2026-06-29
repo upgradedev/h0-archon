@@ -4,6 +4,8 @@
 
 **Try it live:** https://h0-archon.vercel.app · **Code (MIT):** https://github.com/upgradedev/h0-archon
 
+> *I built Archon and wrote this for the **H0 Hackathon** (Hack the Zero Stack — Vercel + AWS). #H0Hackathon*
+
 ---
 
 ## The problem
