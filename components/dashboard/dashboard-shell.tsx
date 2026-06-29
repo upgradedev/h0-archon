@@ -153,8 +153,11 @@ export function DashboardShell({
                   <h1 className="text-base font-semibold tracking-tight text-foreground">
                     Finance command center
                   </h1>
-                  <span className="hidden items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary sm:inline-flex">
-                    <span className="size-1.5 rounded-full bg-primary" /> Live
+                  <span
+                    title="May 2026 is the live extracted payroll close; Jan–Apr are illustrative trends and the customer/supplier ledger is sample data."
+                    className="hidden cursor-help items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline-flex"
+                  >
+                    <span className="size-1.5 rounded-full bg-primary" /> Demo data
                   </span>
                 </div>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

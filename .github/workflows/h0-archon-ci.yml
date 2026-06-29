@@ -68,6 +68,9 @@ jobs:
       - name: Unit tests (pipeline, store, db, insights)
         run: npm test
 
+      - name: Coverage report
+        run: npm run coverage || true
+
       - name: Production build
         run: npm run build
 

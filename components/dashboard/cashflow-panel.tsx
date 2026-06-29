@@ -49,16 +49,15 @@ const colorFor = (kind: string) =>
   kind === "out" ? "var(--chart-5)" : kind === "in" ? "var(--chart-1)" : "var(--chart-2)"
 
 export function CashflowPanel() {
-  const { cashflow, runwayMonths, monthlyFixedCost } = useDashboardData()
+  const { cashflow, cash, runwayMonths, monthlyFixedCost } = useDashboardData()
   const { selected } = useDashboardPeriods()
   const isAggregate = selected === ALL_PERIODS
   const data = isAggregate ? buildMagnitude(cashflow) : buildWaterfall(cashflow)
   const runwayPct = Math.min((runwayMonths / 24) * 100, 100)
   const mounted = useMounted()
 
-  const opening = cashflow.find((step) => step.kind === "base")?.value ?? 0
-  const closing = cashflow[cashflow.length - 1]?.value ?? 0
-  const netMovement = closing - opening
+  // Named scalar off the VM — no opening/closing re-derivation from the array.
+  const netMovement = cash.netMovement
 
   return (
     <Panel

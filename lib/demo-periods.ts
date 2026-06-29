@@ -52,11 +52,12 @@ const kpiValue = (vm: DashboardVM, id: string): number =>
 // Produce a scaled copy of the canonical VM for an earlier month. Every euro
 // figure is multiplied by `factor` and rounded to 2 decimals; every ratio,
 // count, and day-metric is left unchanged.
-function scaleVM(base: DashboardVM, _key: string, label: string, factor: number): DashboardVM {
+function scaleVM(base: DashboardVM, key: string, label: string, factor: number): DashboardVM {
   const vm = clone(base);
   const s = (n: number) => round2(n * factor);
 
   vm.period = label;
+  vm.periodKey = key;
 
   // KPIs: scale the currency tiles; leave the percent tiles (gross margin,
   // accuracy) untouched. delta is already 0. The canonical (May) hints embed
@@ -68,9 +69,22 @@ function scaleVM(base: DashboardVM, _key: string, label: string, factor: number)
     return { ...kpi, value: s(kpi.value), hint: label };
   });
 
-  vm.pnl = vm.pnl.map((step) => ({ ...step, value: s(step.value) }));
+  // P&L: scale the display steps AND the named euro scalars; the percentage
+  // scalars (gross/EBITDA margin) are ratios → invariant under uniform scaling.
+  vm.pnl.steps = vm.pnl.steps.map((step) => ({ ...step, value: s(step.value) }));
+  vm.pnl.revenue = s(vm.pnl.revenue);
+  vm.pnl.cogs = s(vm.pnl.cogs);
+  vm.pnl.grossProfit = s(vm.pnl.grossProfit);
+  vm.pnl.operatingExpenses = s(vm.pnl.operatingExpenses);
+  vm.pnl.ebitda = s(vm.pnl.ebitda);
+
   vm.opexBreakdown = vm.opexBreakdown.map((o) => ({ ...o, value: s(o.value) }));
   vm.cashflow = vm.cashflow.map((step) => ({ ...step, value: s(step.value) }));
+
+  // Cash named scalars scale uniformly (closing − opening = netMovement holds).
+  vm.cash.opening = s(vm.cash.opening);
+  vm.cash.closing = s(vm.cash.closing);
+  vm.cash.netMovement = s(vm.cash.netMovement);
 
   // runwayMonths is a ratio of two scaled numbers → invariant; leave it.
   vm.monthlyFixedCost = s(vm.monthlyFixedCost);
@@ -106,11 +120,28 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
   const last = vms[vms.length - 1];
   const vm = clone(last); // start from the latest period for structure + point-in-time balances
 
-  // --- P&L: every line is a flow → sum across months.
-  vm.pnl = vm.pnl.map((step, i) => ({
-    ...step,
-    value: round2(vms.reduce((sum, v) => sum + v.pnl[i].value, 0)),
-  }));
+  // --- P&L: every euro line is a flow → sum the named scalars across months,
+  // then rebuild the display steps + margins from the sums (same construction as
+  // buildDashboardVM). Equivalent to summing the steps positionally, but keeps
+  // scalars, steps, and KPIs consistent by construction.
+  const sumPnl = (pick: (p: DashboardVM["pnl"]) => number): number =>
+    round2(vms.reduce((acc, v) => acc + pick(v.pnl), 0));
+  vm.pnl.revenue = sumPnl((p) => p.revenue);
+  vm.pnl.cogs = sumPnl((p) => p.cogs);
+  vm.pnl.grossProfit = sumPnl((p) => p.grossProfit);
+  vm.pnl.operatingExpenses = sumPnl((p) => p.operatingExpenses);
+  vm.pnl.ebitda = sumPnl((p) => p.ebitda);
+  vm.pnl.grossMarginPct =
+    vm.pnl.revenue === 0 ? 0 : round2((vm.pnl.grossProfit / vm.pnl.revenue) * 100);
+  vm.pnl.ebitdaMarginPct =
+    vm.pnl.revenue === 0 ? 0 : round2((vm.pnl.ebitda / vm.pnl.revenue) * 100);
+  vm.pnl.steps = [
+    { name: "Revenue", value: vm.pnl.revenue, kind: "base" },
+    { name: "COGS", value: -vm.pnl.cogs, kind: "subtract" },
+    { name: "Gross profit", value: vm.pnl.grossProfit, kind: "total" },
+    { name: "Opex", value: -vm.pnl.operatingExpenses, kind: "subtract" },
+    { name: "EBITDA", value: vm.pnl.ebitda, kind: "total" },
+  ];
   vm.opexBreakdown = vm.opexBreakdown.map((o, i) => ({
     ...o,
     value: round2(vms.reduce((sum, v) => sum + v.opexBreakdown[i].value, 0)),
@@ -123,6 +154,11 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
     if (step.kind === "total") return { ...step, value: last.cashflow[i].value };
     return { ...step, value: round2(vms.reduce((sum, v) => sum + v.cashflow[i].value, 0)) };
   });
+
+  // --- Cash named scalars: point-in-time (opening = first, closing = last).
+  vm.cash.opening = first.cash.opening;
+  vm.cash.closing = last.cash.closing;
+  vm.cash.netMovement = round2(last.cash.closing - first.cash.opening);
 
   // monthlyFixedCost is a per-month figure → use the latest (not a sum).
   vm.monthlyFixedCost = last.monthlyFixedCost;
@@ -169,27 +205,18 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
     pay.trueEmployerCost === 0 ? 0 : Math.round((pay.hidden / pay.trueEmployerCost) * 100);
   // headcount kept from latest period (cloned).
 
-  // --- KPIs: rebuild from the aggregated euros above.
-  const aggRevenue = vm.pnl.find((step) => step.name === "Revenue")?.value ?? 0;
-  const aggEbitda = vm.pnl[vm.pnl.length - 1]?.value ?? 0;
-  const aggGrossProfit = vm.pnl.find((step) => step.name === "Gross profit")?.value ?? 0;
-  const aggOpening = vm.cashflow.find((step) => step.kind === "base")?.value ?? 0;
-  const aggClosing = vm.cashflow[vm.cashflow.length - 1]?.value ?? 0;
-  const aggNetCash = round2(aggClosing - aggOpening);
-
+  // --- KPIs: rebuild from the aggregated named scalars above.
+  const aggNetCash = vm.cash.netMovement;
   vm.kpis = vm.kpis.map((kpi) => {
     switch (kpi.id) {
       case "revenue":
-        return { ...kpi, value: aggRevenue, hint: `${vm.entity} · ${"Jan–May 2026 (all)"}` };
+        return { ...kpi, value: vm.pnl.revenue, hint: `${vm.entity} · ${"Jan–May 2026 (all)"}` };
       case "grossMargin":
-        return {
-          ...kpi,
-          value: aggRevenue === 0 ? 0 : round2((aggGrossProfit / aggRevenue) * 100),
-        };
+        return { ...kpi, value: vm.pnl.grossMarginPct };
       case "ebitda":
-        return { ...kpi, value: aggEbitda };
+        return { ...kpi, value: vm.pnl.ebitda };
       case "closingCash":
-        return { ...kpi, value: aggClosing };
+        return { ...kpi, value: vm.cash.closing };
       case "netCash":
         return { ...kpi, value: aggNetCash, emphasis: aggNetCash > 0 ? "positive" : undefined };
       // accuracy (percent) left unchanged.
@@ -207,6 +234,7 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
   // agents / citations / suggestedQuestions kept from the latest period (cloned).
 
   vm.period = "Jan–May 2026 (all)";
+  vm.periodKey = "all"; // aggregate marker; buildLedger falls back to canonical May
   return vm;
 }
 

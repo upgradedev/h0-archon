@@ -25,10 +25,8 @@ function vm(): DashboardVM {
   return buildDashboardVM(fixtureReport());
 }
 
-const revenueOf = (v: DashboardVM): number =>
-  round2(v.pnl.find((s) => s.name === "Revenue")?.value ?? 0);
-const cogsOf = (v: DashboardVM): number =>
-  round2(Math.abs(v.pnl.find((s) => s.name === "COGS")?.value ?? 0));
+const revenueOf = (v: DashboardVM): number => round2(v.pnl.revenue);
+const cogsOf = (v: DashboardVM): number => round2(v.pnl.cogs);
 
 const sumTotals = (accounts: { total: number }[]): number =>
   round2(accounts.reduce((s, a) => s + a.total, 0));

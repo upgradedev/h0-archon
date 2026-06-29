@@ -42,7 +42,10 @@ function usePeriodContext(): PeriodContextValue {
 // (a single DashboardVM) so the existing panels need no changes.
 export function useDashboardData(): DashboardVM {
   const { data, selected } = usePeriodContext();
-  return selected === ALL_PERIODS ? data.aggregate : data.vmByPeriod[selected];
+  if (selected === ALL_PERIODS) return data.aggregate;
+  // Guard: an unknown/stale period key must never crash a panel — fall back to
+  // the default period, then the aggregate.
+  return data.vmByPeriod[selected] ?? data.vmByPeriod[data.defaultPeriod] ?? data.aggregate;
 }
 
 export function useDashboardPeriods(): {

@@ -12,7 +12,7 @@
 
 import type { AnalysisReport } from "./types";
 import { buildBusinessIntelligence } from "./business";
-import { round2, formatEUR } from "./format";
+import { round2, formatEUR, MONTHS, initials } from "./format";
 
 // --- Panel-facing types (mirror the old lib/data.ts exports) ----------------
 // `segment` and `risk` are widened versus the v0 mock so the real Greek SMB
@@ -31,6 +31,27 @@ export type Kpi = {
 export type PnlStep = { name: string; value: number; kind: "base" | "subtract" | "total" };
 
 export type CashStep = { name: string; value: number; kind: "base" | "in" | "out" | "total" };
+
+// Named P&L scalars (positive magnitudes) carried alongside the display
+// waterfall `steps`. Consumers read these instead of re-deriving values from the
+// positional `steps` array (where COGS/Opex are stored NEGATIVE).
+export type Pnl = {
+  revenue: number;
+  cogs: number;
+  grossProfit: number;
+  operatingExpenses: number;
+  ebitda: number;
+  grossMarginPct: number;
+  ebitdaMarginPct: number;
+  steps: PnlStep[]; // the display waterfall (Revenue, COGS, Gross profit, Opex, EBITDA)
+};
+
+// Named cash scalars carried alongside the `cashflow` display waterfall.
+export type Cash = {
+  opening: number;
+  closing: number;
+  netMovement: number;
+};
 
 export type Salesperson = {
   name: string;
@@ -65,12 +86,14 @@ export type Citation = { id: string; source: string; ref: string; amount?: strin
 export type WorkingCapitalCell = { value: number; days: number; label: string; sub: string };
 
 export type DashboardVM = {
-  period: string;
+  period: string; // prettified, e.g. "May 2026"
+  periodKey: string; // raw period, e.g. "2026-05" ("all" for the aggregate)
   entity: string;
   kpis: Kpi[];
-  pnl: PnlStep[];
+  pnl: Pnl;
   opexBreakdown: { name: string; value: number }[];
   cashflow: CashStep[];
+  cash: Cash;
   runwayMonths: number;
   monthlyFixedCost: number;
   sales: Salesperson[];
@@ -104,22 +127,8 @@ function prettifyPeriod(period: string): string {
   if (!match) return period;
   const year = match[1];
   const monthIndex = Number(match[2]) - 1;
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-  const name = months[monthIndex];
+  const name = MONTHS[monthIndex];
   return name ? `${name} ${year}` : period;
-}
-
-// Initials from owner words: "Eleni" -> "E", "Maria Nikolaou" -> "MN".
-function initialsOf(owner: string): string {
-  return owner
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("")
-    .slice(0, 3);
 }
 
 export function buildDashboardVM(report: AnalysisReport): DashboardVM {
@@ -184,14 +193,33 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
     },
   ];
 
-  // --- P&L waterfall.
-  const pnl: PnlStep[] = [
+  // --- P&L waterfall (display steps; COGS/Opex stored NEGATIVE for the chart).
+  const pnlSteps: PnlStep[] = [
     { name: "Revenue", value: bi.pnl.revenue, kind: "base" },
     { name: "COGS", value: -bi.pnl.cogs, kind: "subtract" },
     { name: "Gross profit", value: bi.pnl.grossProfit, kind: "total" },
     { name: "Opex", value: -bi.pnl.operatingExpenses, kind: "subtract" },
     { name: "EBITDA", value: bi.pnl.ebitda, kind: "total" },
   ];
+
+  // --- Named P&L scalars (positive magnitudes), taken straight from `bi`.
+  const pnl: Pnl = {
+    revenue: bi.pnl.revenue,
+    cogs: bi.pnl.cogs,
+    grossProfit: bi.pnl.grossProfit,
+    operatingExpenses: bi.pnl.operatingExpenses,
+    ebitda: bi.pnl.ebitda,
+    grossMarginPct: bi.pnl.grossMarginPct,
+    ebitdaMarginPct: bi.pnl.ebitdaMarginPct,
+    steps: pnlSteps,
+  };
+
+  // --- Named cash scalars, taken straight from `bi`.
+  const cash: Cash = {
+    opening: bi.cash.openingBalance,
+    closing: bi.cash.closingBalance,
+    netMovement: bi.cash.netMovement,
+  };
 
   const opexBreakdown = [
     { name: "Payroll (true cost)", value: event.employer_cost_total },
@@ -221,7 +249,7 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
   // --- Sales.
   const sales: Salesperson[] = bi.sales.performance.map((person) => ({
     name: person.owner,
-    initials: initialsOf(person.owner),
+    initials: initials(person.owner),
     segment: person.segment,
     actual: person.actual,
     goal: person.goal,
@@ -319,11 +347,13 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
 
   return {
     period,
+    periodKey: event.period,
     entity,
     kpis,
     pnl,
     opexBreakdown,
     cashflow,
+    cash,
     runwayMonths: bi.cash.runwayMonths,
     monthlyFixedCost: bi.pnl.operatingExpenses,
     sales,

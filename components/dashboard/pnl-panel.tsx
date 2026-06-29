@@ -61,13 +61,8 @@ export function PnlPanel() {
   const maxOpex = Math.max(...opexBreakdown.map((o) => o.value))
   const mounted = useMounted()
 
-  // Absolute euro magnitudes (COGS / Opex are stored negative in the VM).
-  const revenue = Math.abs(pnl.find((s) => s.kind === "base")?.value ?? 0)
-  const cogs = Math.abs(pnl.find((s) => s.name === "COGS")?.value ?? 0)
-  const grossProfit = Math.abs(pnl.find((s) => s.name === "Gross profit")?.value ?? 0)
-  const operatingExpenses = Math.abs(pnl.find((s) => s.name === "Opex")?.value ?? 0)
-  const ebitda = Math.abs(pnl[pnl.length - 1]?.value ?? 0)
-  const ebitdaMargin = revenue === 0 ? 0 : (ebitda / revenue) * 100
+  // Named euro magnitudes (positive) straight off the VM — no array re-parsing.
+  const { cogs, grossProfit, operatingExpenses, ebitda, ebitdaMarginPct } = pnl
 
   // Revenue → {COGS, Gross profit}; Gross profit → {Operating expenses, EBITDA}.
   const sankeyData = {
@@ -93,7 +88,7 @@ export function PnlPanel() {
       icon={<Scale className="size-4" />}
       action={
         <span className="text-xs text-muted-foreground">
-          EBITDA margin {ebitdaMargin.toFixed(1)}%
+          EBITDA margin {ebitdaMarginPct.toFixed(1)}%
         </span>
       }
     >
@@ -124,7 +119,7 @@ export function PnlPanel() {
       </div>
 
       <div className="mt-3 grid grid-cols-5 gap-2 border-t border-border/70 pt-3">
-        {pnl.map((d) => (
+        {pnl.steps.map((d) => (
           <div key={d.name} className="min-w-0">
             <div className="truncate text-[11px] text-muted-foreground">{d.name}</div>
             <div className="truncate text-xs font-semibold tabular-nums text-foreground">

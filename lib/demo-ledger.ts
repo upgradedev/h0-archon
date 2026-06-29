@@ -16,7 +16,7 @@
 // server-importable, it carries NO "use client" directive.
 
 import type { DashboardVM } from "./dashboard-vm";
-import { round2 } from "./format";
+import { round2, initials } from "./format";
 
 export type TxnStatus = "paid" | "open";
 
@@ -48,26 +48,12 @@ export interface Ledger {
 
 // --- helpers ---------------------------------------------------------------
 
-const MONTHS = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
-];
-
-// Parse a (possibly prettified or scaled) period label into {year, month}.
-// Handles "May 2026", "Jan 2026", and falls back to 2026-05 for the aggregate
-// label ("Jan–May 2026 (all)") or any unparseable string.
-function parsePeriod(period: string): { year: number; month: number } {
-  const yearMatch = /(\d{4})/.exec(period);
-  const year = yearMatch ? Number(yearMatch[1]) : 2026;
-  const lower = period.toLowerCase();
-  let month = 5; // default May (canonical)
-  for (let i = 0; i < MONTHS.length; i++) {
-    if (lower.includes(MONTHS[i].slice(0, 3))) {
-      month = i + 1;
-      break;
-    }
-  }
-  return { year, month };
+// Parse a raw period key ("2026-05") into {year, month}. Falls back to the
+// canonical May 2026 for the aggregate marker ("all") or any unparseable value.
+function parsePeriod(periodKey: string): { year: number; month: number } {
+  const match = /^(\d{4})-(\d{2})$/.exec(periodKey);
+  if (!match) return { year: 2026, month: 5 };
+  return { year: Number(match[1]), month: Number(match[2]) };
 }
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
@@ -78,19 +64,6 @@ const pad3 = (n: number): string => String(n).padStart(3, "0");
 function dateFor(year: number, month: number, index: number): string {
   const day = ((index * 5 + 4) % 28) + 1;
   return `${year}-${pad2(month)}-${pad2(day)}`;
-}
-
-// Initials/abbreviation from a counterparty name: "Fresh produce" -> "FP",
-// "Masoutis Retail" -> "MR", "Dairy" -> "D".
-function abbrev(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w[0]?.toUpperCase() ?? "")
-      .join("")
-      .slice(0, 4) || "X"
-  );
 }
 
 // Fixed deterministic splits. The rounding remainder is folded into the first
@@ -120,7 +93,7 @@ function buildInvoices(
   period: string,
 ): Txn[] {
   const { year, month } = parsePeriod(period);
-  const ab = abbrev(name);
+  const ab = initials(name, 4, "X");
   const prefix = kind === "customer" ? "AR" : "AP";
   const amounts = splitAmounts(total, parts);
   return amounts.map((amount, seq) => ({
@@ -197,13 +170,12 @@ function markOpen(accounts: Account[], targetOpen: number, grandTotal: number): 
   }
 }
 
-// Extract the canonical revenue / COGS off the P&L waterfall. COGS is stored as a
-// negative "subtract" step, so its magnitude is the cost.
+// Canonical revenue / COGS — named scalars off the VM (positive magnitudes).
 function revenueOf(vm: DashboardVM): number {
-  return round2(vm.pnl.find((s) => s.name === "Revenue")?.value ?? 0);
+  return round2(vm.pnl.revenue);
 }
 function cogsOf(vm: DashboardVM): number {
-  return round2(Math.abs(vm.pnl.find((s) => s.name === "COGS")?.value ?? 0));
+  return round2(vm.pnl.cogs);
 }
 
 // Fixed customer roster (Greek SMB names) + revenue distribution weights.
@@ -251,7 +223,9 @@ function buildAccounts(
 }
 
 export function buildLedger(vm: DashboardVM): Ledger {
-  const period = vm.period;
+  // Use the raw period key ("2026-05") for deterministic invoice dates/ids;
+  // parsePeriod falls back to canonical May for the aggregate marker ("all").
+  const period = vm.periodKey;
   const arTotal = revenueOf(vm);
   const apTotal = cogsOf(vm);
   const receivables = round2(vm.workingCapital.receivables.value);
