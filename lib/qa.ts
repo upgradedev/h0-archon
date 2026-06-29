@@ -20,7 +20,7 @@ export function buildFinanceAnswer(report: AnalysisReport, question: string): Fi
   if (lower.includes("payroll") || lower.includes("bank")) {
     answer = [
       `True payroll cost is ${eur.format(report.event.employer_cost_total)}, while the bank statement shows only ${eur.format(report.event.bank_net_total)} in net salary transfers.`,
-      `The missed amount is ${eur.format(report.event.hidden_total)} this month, driven by employer IKA and withheld payroll obligations that do not appear on the bank transfer line.`,
+      `The missed amount is ${eur.format(report.event.hidden_total)} this month, driven by employer social-security contributions and withheld payroll obligations that do not appear on the bank transfer line.`,
     ].join(" ");
   } else if (lower.includes("sales") || lower.includes("goal")) {
     answer = [

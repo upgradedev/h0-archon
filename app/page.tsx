@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/landing/site-header"
 import { Hero } from "@/components/landing/hero"
 import { MetricBand } from "@/components/landing/metric-band"
 import { Modules } from "@/components/landing/modules"
+import { Testimonial } from "@/components/landing/testimonial"
 import { AiCompute } from "@/components/landing/ai-compute"
 import { StackStrip } from "@/components/landing/stack-strip"
 import { CtaFooter } from "@/components/landing/cta-footer"
@@ -14,6 +15,7 @@ export default function Page() {
         <Hero />
         <MetricBand />
         <Modules />
+        <Testimonial />
         <AiCompute />
         <StackStrip />
         <CtaFooter />

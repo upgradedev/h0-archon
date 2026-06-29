@@ -88,6 +88,20 @@ describe("buildReportSearchDocs", () => {
     assert.ok(titles.some((t) => t.includes("invoices")));
   });
 
+  it("indexes the real vendor name and its initialism on supplier docs", () => {
+    // Regression: suppliers were indexed by spend CATEGORY only, so vendor-name
+    // queries ("Anthropic", "AWS") returned nothing. Both the full vendor name and a
+    // generated initialism must be searchable.
+    const docs = buildReportSearchDocs(fixtureReport());
+    const suppliers = docs.filter((d) => d.type === "counterparty" && d.docType === "supplier");
+    const blob = suppliers.map((d) => `${d.title} ${d.text ?? ""}`).join(" ");
+    assert.ok(blob.includes("Amazon Web Services"), "full vendor name indexed");
+    assert.ok(blob.includes("AWS"), "vendor initialism indexed (AWS -> Amazon Web Services)");
+    assert.ok(blob.includes("Anthropic"), "second vendor indexed");
+    // The vendor leads the title so a hit reads as the vendor, not the category.
+    assert.ok(suppliers.some((d) => d.title === "Amazon Web Services"));
+  });
+
   it("produces unique, stable ids across the whole doc set", () => {
     const docs = buildReportSearchDocs(fixtureReport());
     const ids = docs.map((d) => d.id);

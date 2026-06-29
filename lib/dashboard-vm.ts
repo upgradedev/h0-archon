@@ -297,13 +297,13 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
     headcount: event.employee_count,
     components: [
       { name: "Gross salaries", value: event.gross_total },
-      { name: "Employer IKA", value: event.employer_ika_total },
+      { name: "Employer social-security contributions", value: event.employer_ika_total },
     ],
     // These three are exactly what the bank net transfer leaves out; they sum to `hidden`
     // (hidden_total = employer_ika + employee_ika + tax_withheld).
     hiddenBreakdown: [
-      { name: "Employer IKA (employer contribution)", value: event.employer_ika_total },
-      { name: "Employee IKA (withheld from gross)", value: event.employee_ika_total },
+      { name: "Employer social-security contributions (Greece's IKA)", value: event.employer_ika_total },
+      { name: "Employee social-security (withheld from gross)", value: event.employee_ika_total },
       { name: "Income tax withheld", value: event.tax_withheld_total },
     ],
     // Per-employee detail straight off the fused payslips. employer_cost = gross +
@@ -350,8 +350,8 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
   const hiddenPct = Math.round(event.cost_gap_pct);
   const citations: Citation[] = [
     { id: `BANK-${event.period}`, source: "Bank confirmation — net salary transfer", ref: "total out", amount: formatEUR(event.bank_net_total) },
-    { id: `REG-${event.period}`, source: "Payroll register — employer cost", ref: "gross + employer IKA", amount: formatEUR(event.employer_cost_total) },
-    { id: `GAP-${event.period}`, source: "Employer IKA — hidden on bank confirmation", ref: `${hiddenPct}% of net transfer`, amount: formatEUR(event.employer_ika_total) },
+    { id: `REG-${event.period}`, source: "Payroll register — employer cost", ref: "gross + employer social-security", amount: formatEUR(event.employer_cost_total) },
+    { id: `GAP-${event.period}`, source: "Employer social-security — hidden on bank confirmation", ref: `${hiddenPct}% of net transfer`, amount: formatEUR(event.employer_ika_total) },
     { id: `REV-${event.period}`, source: "Sales ledger — net revenue", ref: "P&L revenue", amount: formatEUR(bi.pnl.revenue) },
     { id: `EBITDA-${event.period}`, source: "P&L — EBITDA", ref: `${bi.pnl.ebitdaMarginPct.toFixed(1)}% margin`, amount: formatEUR(bi.pnl.ebitda) },
   ];

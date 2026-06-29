@@ -7,9 +7,9 @@ import { ACCURACY_TABLE, SAMPLE_CASE, type ExtractApiResponse } from "./data";
 const FIELD_LABELS: Record<string, string> = {
   bank_net_total: "Bank net total",
   gross_total: "Gross total",
-  employee_ika_total: "Employee IKA",
+  employee_ika_total: "Employee social-security",
   tax_withheld_total: "Tax withheld",
-  employer_ika_total: "Employer IKA",
+  employer_ika_total: "Employer social-security",
   employer_cost_total: "Employer cost total",
   invoice_number: "Invoice number",
   invoice_date: "Invoice date",
@@ -19,10 +19,10 @@ const FIELD_LABELS: Record<string, string> = {
   gross_amount: "Gross (incl. VAT)",
   payment_date: "Payment date",
   "employee.gross": "Gross",
-  "employee.employee_ika": "Employee IKA",
+  "employee.employee_ika": "Employee social-security",
   "employee.tax": "Tax",
   "employee.net": "Net",
-  "employee.employer_ika": "Employer IKA",
+  "employee.employer_ika": "Employer social-security",
   "employee.employer_cost": "Employer cost",
 };
 
@@ -258,9 +258,9 @@ function DocFields({ doc }: { doc: ExtractedDocument }) {
     ["Payment date", doc.payment_date],
     ["Bank net total", doc.bank_net_total],
     ["Gross total", doc.gross_total],
-    ["Employee IKA", doc.employee_ika_total],
+    ["Employee social-security", doc.employee_ika_total],
     ["Tax withheld", doc.tax_withheld_total],
-    ["Employer IKA", doc.employer_ika_total],
+    ["Employer social-security", doc.employer_ika_total],
     ["Employer cost total", doc.employer_cost_total],
     ["Register headcount", doc.register_employee_count],
     ["Invoice number", doc.invoice_number],
@@ -291,7 +291,7 @@ function DocFields({ doc }: { doc: ExtractedDocument }) {
               <strong>{fmt(doc.employee.gross)}</strong>
             </div>
             <div className="pnl-row">
-              <span>Employee IKA</span>
+              <span>Employee social-security</span>
               <strong>{fmt(doc.employee.employee_ika)}</strong>
             </div>
             <div className="pnl-row">
@@ -303,7 +303,7 @@ function DocFields({ doc }: { doc: ExtractedDocument }) {
               <strong>{fmt(doc.employee.net)}</strong>
             </div>
             <div className="pnl-row">
-              <span>Employer IKA</span>
+              <span>Employer social-security</span>
               <strong>{fmt(doc.employee.employer_ika)}</strong>
             </div>
             <div className="pnl-row">
