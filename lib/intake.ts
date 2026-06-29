@@ -83,10 +83,10 @@ export function buildIntakeResponse(files: IntakeFile[]): IntakeResponse {
 
 export function sampleIntakeResponse(): IntakeResponse {
   return buildIntakeResponse([
-    { name: "alpha_bank_statement_2026-05.pdf", size: 420_000, type: "application/pdf" },
-    { name: "sales_targets_by_owner_2026-05.xlsx", size: 116_000, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-    { name: "supplier_purchases_2026-05.xlsx", size: 133_000, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-    { name: "misthodosia_register_2026-05.xlsx", size: 91_000, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-    { name: "employee_payslips_2026-05.zip", size: 730_000, type: "application/zip" },
+    { name: "bank_confirmation_202601.pdf", size: 420_000, type: "application/pdf" },
+    { name: "sales_ledger_202601.xlsx", size: 116_000, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    { name: "vendor_purchases_202601.xlsx", size: 133_000, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    { name: "payroll_register_202601.pdf", size: 91_000, type: "application/pdf" },
+    { name: "employee_payslips_202601.zip", size: 730_000, type: "application/zip" },
   ]);
 }

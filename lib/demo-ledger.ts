@@ -48,11 +48,11 @@ export interface Ledger {
 
 // --- helpers ---------------------------------------------------------------
 
-// Parse a raw period key ("2026-05") into {year, month}. Falls back to the
-// canonical May 2026 for the aggregate marker ("all") or any unparseable value.
+// Parse a raw period key ("2026-01") into {year, month}. Falls back to the
+// canonical January 2026 for the aggregate marker ("all") or any unparseable value.
 function parsePeriod(periodKey: string): { year: number; month: number } {
   const match = /^(\d{4})-(\d{2})$/.exec(periodKey);
-  if (!match) return { year: 2026, month: 5 };
+  if (!match) return { year: 2026, month: 1 };
   return { year: Number(match[1]), month: Number(match[2]) };
 }
 
@@ -223,8 +223,8 @@ function buildAccounts(
 }
 
 export function buildLedger(vm: DashboardVM): Ledger {
-  // Use the raw period key ("2026-05") for deterministic invoice dates/ids;
-  // parsePeriod falls back to canonical May for the aggregate marker ("all").
+  // Use the raw period key ("2026-01") for deterministic invoice dates/ids;
+  // parsePeriod falls back to canonical January for the aggregate marker ("all").
   const period = vm.periodKey;
   const arTotal = revenueOf(vm);
   const apTotal = cogsOf(vm);

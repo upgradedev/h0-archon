@@ -1,12 +1,13 @@
 // Multi-period demo data for the dashboard (January–May 2026).
 //
-// The real pipeline produces a single canonical close (2026-05). For a richer
-// demo we synthesize four earlier months by uniformly scaling the canonical
-// view-model: every euro figure is multiplied by a per-month factor while every
-// ratio (margins, attainment, days, headcount, accuracy) is left untouched —
-// uniform scaling preserves all ratios. May (factor 1.0) is the canonical VM,
-// byte-for-byte. We also derive an "All periods" aggregate that correctly
-// distinguishes flows (summed) from point-in-time balances (first/last).
+// The real pipeline produces a single canonical, AUTHENTIC close: ARCHON DEMO
+// IKE, January 2026 (factor 1.0) — the byte-for-byte canonical VM. For a richer
+// demo we PROJECT the trend FORWARD by synthesizing four later months (Feb–May,
+// clearly illustrative) via uniform scaling of the canonical view-model: every
+// euro figure is multiplied by a per-month growth factor while every ratio
+// (margins, attainment, days, headcount, accuracy) is left untouched — uniform
+// scaling preserves all ratios. We also derive an "All periods" aggregate that
+// correctly distinguishes flows (summed) from point-in-time balances (first/last).
 //
 // IMPORTANT: this file is pure, server-importable TypeScript. It must NOT carry
 // a "use client" directive and must not import client-only code — the dashboard
@@ -17,11 +18,11 @@ import { round2 } from "./format";
 import { buildDashboardVM, type DashboardVM } from "./dashboard-vm";
 
 export const PERIODS = [
-  { key: "2026-01", label: "Jan 2026", short: "Jan", factor: 0.82 },
-  { key: "2026-02", label: "Feb 2026", short: "Feb", factor: 0.87 },
-  { key: "2026-03", label: "Mar 2026", short: "Mar", factor: 0.91 },
-  { key: "2026-04", label: "Apr 2026", short: "Apr", factor: 0.96 },
-  { key: "2026-05", label: "May 2026", short: "May", factor: 1.0 },
+  { key: "2026-01", label: "Jan 2026", short: "Jan", factor: 1.0 },
+  { key: "2026-02", label: "Feb 2026", short: "Feb", factor: 1.05 },
+  { key: "2026-03", label: "Mar 2026", short: "Mar", factor: 1.1 },
+  { key: "2026-04", label: "Apr 2026", short: "Apr", factor: 1.14 },
+  { key: "2026-05", label: "May 2026", short: "May", factor: 1.18 },
 ] as const;
 
 export type TrendPoint = {
@@ -63,9 +64,9 @@ function scaleVM(base: DashboardVM, key: string, label: string, factor: number):
   vm.periodKey = key;
 
   // KPIs: scale the currency tiles; leave the percent tiles (gross margin,
-  // accuracy) untouched. delta is already 0. The canonical (May) hints embed
-  // May-specific context (e.g. closing cash "from €38.4K open"), which is stale
-  // for a scaled month — replace every currency tile's hint with the neutral,
+  // accuracy) untouched. delta is already 0. The canonical (January) hints embed
+  // January-specific context (e.g. closing cash "from €52K open"), which is stale
+  // for a projected month — replace every currency tile's hint with the neutral,
   // period-correct label so nothing misleading shows.
   vm.kpis = vm.kpis.map((kpi) => {
     if (kpi.display === "percent") return kpi;
@@ -252,13 +253,14 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
 }
 
 export function buildPeriodData(baseReport: AnalysisReport): PeriodData {
-  const baseVM = buildDashboardVM(baseReport); // canonical 2026-05 VM
+  const baseVM = buildDashboardVM(baseReport); // canonical 2026-01 VM
   const defaultPeriod = baseReport.event.period;
 
   const vmByPeriod: Record<string, DashboardVM> = {};
   for (const p of PERIODS) {
-    // May is the canonical VM; clone it so the month-over-month delta pass below
-    // mutates a copy and never touches `baseVM`. Other months are scaled clones.
+    // January is the canonical VM; clone it so the month-over-month delta pass
+    // below mutates a copy and never touches `baseVM`. Later months are scaled
+    // (projected-forward) clones.
     vmByPeriod[p.key] =
       p.key === defaultPeriod ? clone(baseVM) : scaleVM(baseVM, p.key, p.label, p.factor);
   }

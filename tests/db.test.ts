@@ -59,15 +59,15 @@ describe("embedded demo persistence", () => {
       validations: validate(event, docs),
       executive_summary: "Unit-test report.",
       analysis_engine: "test-fixture",
-      generated_at: "2026-05-31T12:00:00.000Z",
+      generated_at: "2026-01-31T12:00:00.000Z",
       db_mode: "embedded-demo",
     };
 
     await persistReport(report);
 
     const latest = await getLatestReport();
-    assert.equal(latest?.event.event_id, "evt-eleftheria-foods-ae-2026-05");
-    assert.equal(latest?.event.employer_cost_total, 9110.62);
+    assert.equal(latest?.event.event_id, "evt-archon-demo-ike-2026-01");
+    assert.equal(latest?.event.employer_cost_total, 6930);
     assert.equal(latest?.db_mode, "embedded-demo");
   });
 

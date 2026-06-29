@@ -66,7 +66,7 @@ describe("buildDashboardVM named scalars", () => {
     const report = fixtureReport();
     const vm = buildDashboardVM(report);
     assert.equal(vm.periodKey, report.event.period);
-    assert.equal(vm.periodKey, "2026-05");
+    assert.equal(vm.periodKey, "2026-01");
   });
 
   it("emits the six expected KPI tiles", () => {
@@ -126,10 +126,10 @@ describe("buildDashboardVM named scalars", () => {
     assert.ok(vm.suggestedQuestions.length > 0);
   });
 
-  it("preserves the canonical May payroll figures", () => {
+  it("preserves the canonical January payroll figures", () => {
     const vm = buildDashboardVM(fixtureReport());
-    assert.equal(vm.pnl.revenue, 96800);
-    assert.equal(vm.payroll.trueEmployerCost, 9110.62);
-    assert.equal(vm.payroll.employerWedgePct, 28); // round(27.88)
+    assert.equal(vm.pnl.revenue, 47200);
+    assert.equal(vm.payroll.trueEmployerCost, 6930);
+    assert.equal(vm.payroll.employerWedgePct, 36); // round(35.80)
   });
 });

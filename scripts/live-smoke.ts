@@ -58,28 +58,28 @@ function assertLiveReport(report: LiveReport) {
   if (report.analysis_engine !== "deterministic-finance-engine") {
     throw new Error(`unexpected analysis_engine: ${report.analysis_engine}`);
   }
-  if (report.business_intelligence?.pnl?.revenue !== 96800) {
+  if (report.business_intelligence?.pnl?.revenue !== 47200) {
     throw new Error(`unexpected revenue: ${report.business_intelligence?.pnl?.revenue}`);
   }
-  if (report.business_intelligence?.pnl?.ebitda !== 20889.38) {
+  if (report.business_intelligence?.pnl?.ebitda !== 30697.55) {
     throw new Error(`unexpected ebitda: ${report.business_intelligence?.pnl?.ebitda}`);
   }
-  if (report.business_intelligence?.sales?.attainmentPct !== 96.8) {
+  if (report.business_intelligence?.sales?.attainmentPct !== 101.51) {
     throw new Error(`unexpected sales attainment: ${report.business_intelligence?.sales?.attainmentPct}`);
   }
   if ((report.citations || []).length !== 4) {
     throw new Error(`expected 4 citations, got ${(report.citations || []).length}`);
   }
-  if (report.event?.employer_cost_total !== 9110.62) {
+  if (report.event?.employer_cost_total !== 6930) {
     throw new Error(`unexpected employer_cost_total: ${report.event?.employer_cost_total}`);
   }
-  if (report.event?.hidden_total !== 3153.95) {
+  if (report.event?.hidden_total !== 2935.26) {
     throw new Error(`unexpected hidden_total: ${report.event?.hidden_total}`);
   }
-  if (report.event?.cost_gap_pct !== 27.88) {
+  if (report.event?.cost_gap_pct !== 35.8) {
     throw new Error(`unexpected cost_gap_pct: ${report.event?.cost_gap_pct}`);
   }
-  if (report.event?.employee_count !== 5) {
+  if (report.event?.employee_count !== 3) {
     throw new Error(`unexpected employee_count: ${report.event?.employee_count}`);
   }
 
@@ -104,10 +104,10 @@ async function fetchReport() {
 async function postIntake() {
   const form = new FormData();
   for (const name of [
-    "alpha_bank_statement_2026-05.pdf",
-    "sales_targets_by_owner_2026-05.xlsx",
-    "supplier_purchases_2026-05.xlsx",
-    "misthodosia_register_2026-05.xlsx",
+    "bank_confirmation_202601.pdf",
+    "sales_ledger_202601.xlsx",
+    "vendor_purchases_202601.xlsx",
+    "payroll_register_202601.pdf",
   ]) {
     form.append("files", new Blob(["judge smoke fixture"]), name);
   }
