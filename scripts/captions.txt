@@ -1,0 +1,13 @@
+3|20|Every month — bank, payroll, invoices, receipts — reconciled by hand
+20|35|Drop your documents on the 8-agent run ledger
+35|48|The Extractor reads each one live — AWS Bedrock vision
+48|62|Link, validate, recompute — the tiles update live
+63|75|Bank confirmation shows EUR 3,994.74
+75|90|True employer cost: EUR 6,930
+90|99|EUR 2,935 social-security + tax — visible only once correlated
+99|111|Complete & reconciled — or: are you missing a document?
+111|118|Search every document, vendor & person
+118|133|AI reads; a deterministic engine computes — auditable
+133|146|96.7% measured extraction accuracy
+146|159|Vercel · DynamoDB · OpenSearch · Bedrock · Terraform
+159|166|Try it live — h0-archon.vercel.app
