@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useDashboardData } from "./data-context"
 import { PeriodSelector } from "./period-selector"
 import { SearchPanel } from "./search-panel"
+import { GuidedTour } from "./guided-tour"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -174,6 +175,7 @@ export function DashboardShell({
 
             <div className="flex items-center gap-2">
               <SearchPanel />
+              <GuidedTour />
               <ThemeToggle />
               <PeriodSelector />
               <Button

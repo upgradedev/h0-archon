@@ -107,6 +107,7 @@ export function SearchPanel() {
       >
         <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <input
+          id="dashboard-search"
           value={q}
           onChange={(event) => {
             setQ(event.target.value)
