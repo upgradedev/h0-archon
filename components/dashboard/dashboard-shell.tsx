@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useDashboardData } from "./data-context"
 import { PeriodSelector } from "./period-selector"
 import { cn } from "@/lib/utils"
@@ -163,6 +164,7 @@ export function DashboardShell({
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <PeriodSelector />
               <Button
                 variant={closeState === "done" ? "outline" : "default"}

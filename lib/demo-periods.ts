@@ -59,13 +59,13 @@ function scaleVM(base: DashboardVM, _key: string, label: string, factor: number)
   vm.period = label;
 
   // KPIs: scale the currency tiles; leave the percent tiles (gross margin,
-  // accuracy) untouched. delta is already 0.
+  // accuracy) untouched. delta is already 0. The canonical (May) hints embed
+  // May-specific context (e.g. closing cash "from €38.4K open"), which is stale
+  // for a scaled month — replace every currency tile's hint with the neutral,
+  // period-correct label so nothing misleading shows.
   vm.kpis = vm.kpis.map((kpi) => {
     if (kpi.display === "percent") return kpi;
-    const next = { ...kpi, value: s(kpi.value) };
-    // The revenue hint embeds the period — rebuild it so the selected tab is honest.
-    if (kpi.id === "revenue") next.hint = `${base.entity} · ${label}`;
-    return next;
+    return { ...kpi, value: s(kpi.value), hint: label };
   });
 
   vm.pnl = vm.pnl.map((step) => ({ ...step, value: s(step.value) }));

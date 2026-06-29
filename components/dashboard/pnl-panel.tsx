@@ -1,50 +1,90 @@
 "use client"
 
-import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import type { PnlStep } from "@/lib/dashboard-vm"
+import { ResponsiveContainer, Sankey, Tooltip } from "recharts"
 import { formatEUR } from "@/lib/format"
 import { useDashboardData } from "./data-context"
 import { Panel } from "./primitives"
 import { useMounted } from "./use-mounted"
 import { Scale } from "lucide-react"
 
-// Build a waterfall: each bar sits on a transparent base.
-function buildWaterfall(pnl: PnlStep[]) {
-  let running = 0
-  return pnl.map((step) => {
-    if (step.kind === "total") {
-      const base = 0
-      const bar = step.value
-      running = step.value
-      return { name: step.name, base, bar, value: step.value, kind: step.kind }
-    }
-    if (step.kind === "base") {
-      const base = 0
-      const bar = step.value
-      running = step.value
-      return { name: step.name, base, bar, value: step.value, kind: step.kind }
-    }
-    // subtract
-    const next = running + step.value // value is negative
-    const base = next
-    const bar = -step.value
-    running = next
-    return { name: step.name, base, bar, value: step.value, kind: step.kind }
-  })
+const NODE_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-5)",
+  "var(--chart-2)",
+  "var(--chart-4)",
+  "var(--chart-3)",
+]
+
+// Minimal custom node: a colored rounded rect with the node name + amount beside
+// it. Props are recharts geometry (typed broadly — recharts injects them).
+function SankeyNode(props: any) {
+  const { x, y, width, height, index, payload, containerWidth } = props
+  const color = NODE_COLORS[index % NODE_COLORS.length]
+  const isRightHalf = x + width / 2 > containerWidth / 2
+  const labelX = isRightHalf ? x - 6 : x + width + 6
+  const anchor = isRightHalf ? "end" : "start"
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} rx={2} fill={color} fillOpacity={0.95} />
+      <text
+        x={labelX}
+        y={y + height / 2}
+        textAnchor={anchor}
+        dominantBaseline="middle"
+        fontSize={11}
+        fill="var(--foreground)"
+      >
+        {payload?.name}
+      </text>
+    </g>
+  )
 }
 
-const colorFor = (kind: string) =>
-  kind === "subtract" ? "var(--chart-5)" : kind === "total" ? "var(--chart-1)" : "var(--chart-2)"
+// Minimal custom link: a soft emerald ribbon (visible on both light and dark).
+function SankeyLink(props: any) {
+  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index } =
+    props
+  return (
+    <path
+      key={index}
+      d={`M${sourceX},${sourceY}C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`}
+      fill="none"
+      stroke="var(--chart-3)"
+      strokeWidth={linkWidth}
+      strokeOpacity={0.28}
+    />
+  )
+}
 
 export function PnlPanel() {
   const { pnl, opexBreakdown } = useDashboardData()
-  const data = buildWaterfall(pnl)
   const maxOpex = Math.max(...opexBreakdown.map((o) => o.value))
   const mounted = useMounted()
 
-  const revenue = pnl.find((step) => step.kind === "base")?.value ?? 0
-  const ebitda = pnl[pnl.length - 1]?.value ?? 0
+  // Absolute euro magnitudes (COGS / Opex are stored negative in the VM).
+  const revenue = Math.abs(pnl.find((s) => s.kind === "base")?.value ?? 0)
+  const cogs = Math.abs(pnl.find((s) => s.name === "COGS")?.value ?? 0)
+  const grossProfit = Math.abs(pnl.find((s) => s.name === "Gross profit")?.value ?? 0)
+  const operatingExpenses = Math.abs(pnl.find((s) => s.name === "Opex")?.value ?? 0)
+  const ebitda = Math.abs(pnl[pnl.length - 1]?.value ?? 0)
   const ebitdaMargin = revenue === 0 ? 0 : (ebitda / revenue) * 100
+
+  // Revenue → {COGS, Gross profit}; Gross profit → {Operating expenses, EBITDA}.
+  const sankeyData = {
+    nodes: [
+      { name: "Revenue" },
+      { name: "COGS" },
+      { name: "Gross profit" },
+      { name: "Operating expenses" },
+      { name: "EBITDA" },
+    ],
+    links: [
+      { source: 0, target: 1, value: cogs },
+      { source: 0, target: 2, value: grossProfit },
+      { source: 2, target: 3, value: operatingExpenses },
+      { source: 2, target: 4, value: ebitda },
+    ],
+  }
 
   return (
     <Panel
@@ -57,37 +97,37 @@ export function PnlPanel() {
         </span>
       }
     >
-      <div className="h-44 w-full">
+      <div className="h-[200px] w-full">
         {mounted ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-              interval={0}
-            />
-            <YAxis hide domain={[0, "dataMax"]} />
-            <Bar dataKey="base" stackId="a" fill="transparent" isAnimationActive={false} />
-            <Bar dataKey="bar" stackId="a" radius={[4, 4, 4, 4]} maxBarSize={46}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={colorFor(d.kind)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
+            <Sankey
+              data={sankeyData}
+              node={<SankeyNode />}
+              link={<SankeyLink />}
+              nodePadding={18}
+              nodeWidth={10}
+              margin={{ top: 8, right: 96, bottom: 8, left: 8 }}
+            >
+              <Tooltip
+                formatter={(value: any) => formatEUR(Number(value) || 0, { compact: true })}
+                contentStyle={{
+                  background: "var(--popover)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  color: "var(--popover-foreground)",
+                  fontSize: 12,
+                }}
+              />
+            </Sankey>
+          </ResponsiveContainer>
         ) : null}
       </div>
 
       <div className="mt-3 grid grid-cols-5 gap-2 border-t border-border/70 pt-3">
-        {data.map((d) => (
+        {pnl.map((d) => (
           <div key={d.name} className="min-w-0">
             <div className="truncate text-[11px] text-muted-foreground">{d.name}</div>
-            <div
-              className="truncate text-xs font-semibold tabular-nums"
-              style={{ color: colorFor(d.kind) }}
-            >
+            <div className="truncate text-xs font-semibold tabular-nums text-foreground">
               {d.value < 0 ? "−" : ""}
               {formatEUR(Math.abs(d.value), { compact: true })}
             </div>
