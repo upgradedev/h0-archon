@@ -1,4 +1,4 @@
-import { Triangle, Database, BrainCircuit } from "lucide-react"
+import { Triangle, Database, Search, BrainCircuit } from "lucide-react"
 import { Reveal } from "./reveal"
 
 const stack = [
@@ -10,7 +10,12 @@ const stack = [
   {
     icon: Database,
     name: "AWS DynamoDB",
-    detail: "Single-table design for every entity",
+    detail: "Single-table source of truth for every entity",
+  },
+  {
+    icon: Search,
+    name: "AWS OpenSearch",
+    detail: "CQRS read-model — search every document in ms",
   },
   {
     icon: BrainCircuit,
@@ -28,7 +33,7 @@ export function StackStrip() {
             Built on infrastructure you already trust
           </p>
         </Reveal>
-        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3">
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
           {stack.map((s, i) => (
             <Reveal
               key={s.name}

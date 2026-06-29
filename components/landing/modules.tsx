@@ -8,10 +8,18 @@ import {
   Truck,
   Scale,
   Users,
+  Search,
 } from "lucide-react"
 import { Reveal } from "./reveal"
 
-const modules = [
+type Module = {
+  icon: typeof LineChart
+  title: string
+  body: string
+  caption?: string
+}
+
+const modules: Module[] = [
   {
     icon: LineChart,
     title: "P&L",
@@ -42,6 +50,12 @@ const modules = [
     title: "Payroll controls",
     body: "Correlates the payroll register with the bank transfer, so the full employer cost — not just the net that left the account — lands in your books.",
   },
+  {
+    icon: Search,
+    title: "Search",
+    body: "Search every document, vendor and person — find any uploaded record in milliseconds, then jump straight to the close it belongs to.",
+    caption: "powered by OpenSearch · CQRS read-model",
+  },
 ]
 
 export function Modules() {
@@ -54,8 +68,9 @@ export function Modules() {
             Full-company financial intelligence, not a single report.
           </h2>
           <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
-            Six modules work from the same fused ledger. Payroll is just one of
-            them — Archon understands the whole business.
+            Every module works from the same fused ledger. Payroll is just one of
+            them — Archon understands the whole business, and lets you search
+            across all of it.
           </p>
         </Reveal>
 
@@ -82,6 +97,11 @@ export function Modules() {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {m.body}
               </p>
+              {m.caption ? (
+                <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                  {m.caption}
+                </p>
+              ) : null}
             </motion.div>
           ))}
         </div>

@@ -1,5 +1,10 @@
 # H0 Live Evidence - 2026-06-28
 
+> 🕘 Historical snapshot — figures below reflect the pre-ARCHON-DEMO data set and
+> are superseded by the current canonical numbers (ARCHON DEMO IKE, Jan 2026) in
+> `docs/ARCHITECTURE_AND_EVIDENCE.md` and `docs/DYNAMODB_PROOF.md`. Kept verbatim
+> for the historical record; do not cite these numbers as current.
+
 ## Public Targets
 
 - App: https://h0-archon.vercel.app

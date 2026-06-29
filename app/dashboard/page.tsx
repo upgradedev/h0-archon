@@ -18,7 +18,7 @@ import { AgentLedger } from "@/components/dashboard/agent-ledger";
 import { ValidationPanel } from "@/components/dashboard/validation-panel";
 import { CitationsPanel } from "@/components/dashboard/citations-panel";
 import { AskArchon } from "@/components/dashboard/ask-archon";
-import { SiteNavAuth } from "@/app/components/SiteNavAuth";
+import { SiteNavAuth } from "@/components/site/SiteNavAuth";
 
 export const dynamic = "force-dynamic";
 

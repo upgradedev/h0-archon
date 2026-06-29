@@ -23,9 +23,11 @@ Use this prompt in v0 if a fresh artifact is needed:
 
 ```text
 Improve a Next.js finance dashboard for an H0 Vercel + AWS Databases hackathon.
-The app is Archon H0: SMB finance intelligence with document intake, seven-agent
-run ledger, P&L, cash, sales performance, purchase concentration, payroll
-controls, source citations, Ask Archon Q&A, and AWS DynamoDB evidence.
+The app is Archon H0: SMB finance intelligence with live document upload (AWS
+Bedrock extraction), search (AWS OpenSearch), document intake, an eight-agent
+run ledger, verification-gating (R1–R4 cross-document rules), P&L, cash, sales
+performance, purchase concentration, payroll controls, source citations, Ask
+Archon Q&A, and AWS DynamoDB evidence.
 
 Keep the interface dense and work-focused, not a marketing landing page.
 Use a restrained CFO dashboard style, visible sponsor-stack proof, and an

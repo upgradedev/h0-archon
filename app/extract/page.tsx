@@ -1,7 +1,7 @@
 import "../legacy.css";
 import { ExtractClient } from "./ExtractClient";
-import { SiteNav } from "../components/SiteNav";
-import { SiteNavAuth } from "../components/SiteNavAuth";
+import { SiteNav } from "@/components/site/SiteNav";
+import { SiteNavAuth } from "@/components/site/SiteNavAuth";
 
 export const dynamic = "force-static";
 
