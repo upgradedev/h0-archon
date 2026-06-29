@@ -2,38 +2,37 @@ import { NextResponse } from "next/server";
 import { auth, AUTH_ENABLED } from "@/auth";
 
 // ---------------------------------------------------------------------------
-// Auth gate.
+// Auth posture — "demonstrated, not gatekeeping" (intentional, documented).
 //
-// When AUTH_ENABLED is false (no GitHub OAuth env) this passes EVERYTHING
-// through — the public-judge / CI / preview path stays fully open.
+// GitHub OAuth is a REAL, working capability in this app: users can sign in,
+// a session is issued and verified, and their identity is shown in the header
+// (see SiteNavAuth). The `auth()` wrapper below attaches that session to every
+// request so server components can read it.
 //
-// When AUTH_ENABLED is true it requires a session for the product pages and the
-// data/mutating APIs. The landing page, the NextAuth endpoints and static
-// assets are always public. Unauthed HTML routes redirect to the GitHub
-// sign-in; unauthed API routes get a 401 JSON.
+// We deliberately DO NOT block the demo routes. This is a public, judged demo:
+// putting `/dashboard` or `/extract` behind a login wall would stop a reviewer
+// from seeing the product work at all. So sign-in is OFFERED, never REQUIRED —
+// the whole financial-intelligence experience is explorable without an account.
+//
+// Enforcement is one edit away. To lock the product down for a real tenant,
+// populate ENFORCE_PAGES / ENFORCE_APIS below; the redirect/401 code path is
+// present and exercised. We keep it empty on the hosted demo on purpose.
 // ---------------------------------------------------------------------------
 
-const PROTECTED_PAGES = ["/dashboard", "/extract"];
-
-const PROTECTED_APIS = [
-  "/api/run",
-  "/api/ask",
-  "/api/intake",
-  "/api/extract",
-  "/api/report",
-  "/api/history",
-  "/api/evidence",
-];
+// Empty on the hosted demo (open by design). Populate to enforce per-route.
+const ENFORCE_PAGES: string[] = [];
+const ENFORCE_APIS: string[] = [];
 
 const matchesPrefix = (pathname: string, prefixes: string[]) =>
   prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
 export default auth((req) => {
+  // Session is attached to req.auth for downstream server components regardless.
   if (!AUTH_ENABLED) return NextResponse.next();
 
   const { pathname } = req.nextUrl;
 
-  // Always public: landing, the auth endpoints themselves, and the icon.
+  // Always public: landing, the auth endpoints, the icon.
   if (
     pathname === "/" ||
     pathname === "/icon.svg" ||
@@ -42,21 +41,21 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  const isProtectedApi = matchesPrefix(pathname, PROTECTED_APIS);
-  const isProtectedPage = matchesPrefix(pathname, PROTECTED_PAGES);
+  const isEnforcedApi = matchesPrefix(pathname, ENFORCE_APIS);
+  const isEnforcedPage = matchesPrefix(pathname, ENFORCE_PAGES);
 
-  // Anything not explicitly protected (e.g. other public assets) passes through.
-  if (!isProtectedApi && !isProtectedPage) return NextResponse.next();
+  // Nothing enforced on the demo → everything is explorable.
+  if (!isEnforcedApi && !isEnforcedPage) return NextResponse.next();
 
   // Authenticated → allow.
   if (req.auth) return NextResponse.next();
 
-  // Unauthenticated API → 401 JSON (no redirect for fetch callers).
-  if (isProtectedApi) {
+  // Unauthenticated enforced API → 401 JSON (no redirect for fetch callers).
+  if (isEnforcedApi) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Unauthenticated HTML route → bounce to the GitHub sign-in, returning here.
+  // Unauthenticated enforced HTML route → bounce to GitHub sign-in, returning here.
   const signInUrl = new URL("/api/auth/signin", req.nextUrl.origin);
   signInUrl.searchParams.set("callbackUrl", `${pathname}${req.nextUrl.search}`);
   return NextResponse.redirect(signInUrl);

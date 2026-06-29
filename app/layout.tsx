@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "Archon — Agentic financial intelligence for SMBs",
   description:
     "Archon fuses every financial document your business receives — sales, purchases, bank statements and payroll — into one boardroom-ready monthly close. AI reads your books; a deterministic engine computes them. Built on Vercel + AWS.",
-  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {

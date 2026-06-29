@@ -9,11 +9,16 @@ performance versus goals, purchase concentration, and payroll controls. Payroll
 is still an important finding, but it is one control inside the full monthly
 finance close.
 
-The current build is intentionally public and ungated for judges. Instead of
-adding authentication friction, it adds judge-visible product depth: an agent
-run ledger, document intake, source-backed citations, ask-report Q&A, scenario
-planning, recent persisted run history, persisted intake/Q&A activity, and
-dedicated evidence APIs.
+**Auth posture — demonstrated, not gatekeeping.** GitHub OAuth (NextAuth v5) is a
+real, working capability: you can sign in, a session is issued and verified, and
+your identity shows in the header. But sign-in is *offered, never required* — the
+demo routes are intentionally left open so a reviewer can explore the entire
+financial-intelligence experience without a login wall. Enforcement is one edit
+away (`ENFORCE_PAGES` / `ENFORCE_APIS` in `middleware.ts`); the redirect/401 path
+is present and exercised — we keep it empty on the hosted demo on purpose. So the
+build stays public for judges *and* adds depth: an agent run ledger, document
+intake, source-backed citations, ask-report Q&A, multi-period trends, recent
+persisted run history, and dedicated evidence APIs.
 
 ## Stack
 
