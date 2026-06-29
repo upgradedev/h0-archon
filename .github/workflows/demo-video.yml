@@ -1,0 +1,99 @@
+name: Generate Demo Video (ElevenLabs + Playwright)
+
+# End-to-end demo video, no local recording needed:
+#  1. ElevenLabs synthesizes the voiceover from docs/narration.txt
+#  2. Playwright records a guided screen-capture tour of the LIVE app
+#  3. ffmpeg muxes the voiceover over the tour → demo.mp4 (uploaded as artifact)
+# Run: Actions → "Generate Demo Video" → Run workflow (or gh workflow run demo-video.yml).
+# Requires repo secret ELEVEN_LABS_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Live app URL to record."
+        required: false
+        default: "https://h0-archon.vercel.app"
+      voice_id:
+        description: "ElevenLabs voice ID."
+        required: false
+        default: "pNInz6obpgDQGcFmaJgB"
+      model_id:
+        description: "ElevenLabs model ID."
+        required: false
+        default: "eleven_multilingual_v2"
+
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Ensure ffmpeg
+        run: command -v ffmpeg >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Synthesize voiceover (ElevenLabs)
+        env:
+          XI_API_KEY: ${{ secrets.ELEVEN_LABS_KEY }}
+          VOICE_ID: ${{ github.event.inputs.voice_id }}
+          MODEL_ID: ${{ github.event.inputs.model_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XI_API_KEY:-}" ]; then echo "::error::ELEVEN_LABS_KEY not set"; exit 1; fi
+          jq -Rs --arg m "$MODEL_ID" \
+            '{text: ., model_id: $m, voice_settings: {stability: 0.45, similarity_boost: 0.8, use_speaker_boost: true}}' \
+            docs/narration.txt > body.json
+          HTTP=$(curl -sS -w "%{http_code}" -X POST \
+            "https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128" \
+            -H "xi-api-key: ${XI_API_KEY}" -H "Content-Type: application/json" -H "Accept: audio/mpeg" \
+            --data @body.json -o archon-voiceover.mp3)
+          [ "$HTTP" = "200" ] || { echo "::error::ElevenLabs HTTP $HTTP"; cat archon-voiceover.mp3; exit 1; }
+          [ "$(wc -c < archon-voiceover.mp3)" -gt 10000 ] || { echo "::error::audio too small"; exit 1; }
+
+      - name: Compute target duration
+        id: dur
+        run: |
+          set -euo pipefail
+          AUDIO=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 archon-voiceover.mp3)
+          echo "audio duration: ${AUDIO}s"
+          TARGET=$(python3 -c "print(round(float('${AUDIO}')+4,1))")
+          echo "target=${TARGET}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Playwright (chromium)
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install -D playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Record guided tour
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url }}
+          TARGET_SECONDS: ${{ steps.dur.outputs.target }}
+        run: node scripts/demo-tour.mjs
+
+      - name: Mux voiceover over tour
+        run: |
+          set -euo pipefail
+          VID=$(ls video/*.webm | head -1)
+          [ -n "$VID" ] || { echo "::error::no tour video produced"; exit 1; }
+          echo "tour video: $VID"
+          ffmpeg -y -i "$VID" -i archon-voiceover.mp3 \
+            -map 0:v:0 -map 1:a:0 \
+            -c:v libx264 -preset veryfast -pix_fmt yuv420p -r 30 \
+            -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
+            -c:a aac -b:a 192k -shortest demo.mp4
+          ls -la demo.mp4
+          ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 demo.mp4
+
+      - name: Upload demo video
+        uses: actions/upload-artifact@v4
+        with:
+          name: archon-demo-video
+          path: |
+            demo.mp4
+            archon-voiceover.mp3
+          retention-days: 14
