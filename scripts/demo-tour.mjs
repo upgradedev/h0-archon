@@ -78,7 +78,10 @@ await safe("period selector", async () => {
   const sel = page.getByLabel(/reporting period/i).first();
   await sel.scrollIntoViewIfNeeded();
   await sleep(1000);
-  for (const opt of ["2026-01", "2026-03", "2026-05", "all"]) {
+  // Cycle a couple of months for the multi-period feel, but ALWAYS land back on
+  // May 2026 (the canonical close) so on-screen figures match the narration
+  // (€5,957 / €9,111). Never end on the aggregate ("all"), which would show 5x sums.
+  for (const opt of ["2026-01", "2026-03", "2026-05"]) {
     await safe("selectOption " + opt, async () => {
       await sel.selectOption(opt);
       await sleep(2500);
