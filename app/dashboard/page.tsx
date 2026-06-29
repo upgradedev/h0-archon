@@ -1,4 +1,7 @@
+import "../legacy.css";
 import { ArchonDashboard } from "../components/ArchonDashboard";
+import { SiteNav } from "../components/SiteNav";
+import { SiteNavAuth } from "../components/SiteNavAuth";
 import { dbMode } from "@/lib/db";
 import { runPipeline } from "@/lib/pipeline";
 import { getOrCreateLatestReport } from "@/lib/report-service";
@@ -14,5 +17,10 @@ export default async function DashboardPage() {
     // fall back to a fresh, unpersisted deterministic run.
     report = await runPipeline(undefined, dbMode());
   }
-  return <ArchonDashboard initialReport={report} />;
+  return (
+    <>
+      <SiteNav authSlot={<SiteNavAuth />} />
+      <ArchonDashboard initialReport={report} />
+    </>
+  );
 }

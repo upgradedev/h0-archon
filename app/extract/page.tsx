@@ -1,4 +1,7 @@
+import "../legacy.css";
 import { ExtractClient } from "./ExtractClient";
+import { SiteNav } from "../components/SiteNav";
+import { SiteNavAuth } from "../components/SiteNavAuth";
 
 export const dynamic = "force-static";
 
@@ -10,8 +13,11 @@ export const metadata = {
 
 export default function ExtractPage() {
   return (
-    <main className="main extract-page">
-      <ExtractClient />
-    </main>
+    <>
+      <SiteNav authSlot={<SiteNavAuth />} />
+      <main className="main extract-page">
+        <ExtractClient />
+      </main>
+    </>
   );
 }

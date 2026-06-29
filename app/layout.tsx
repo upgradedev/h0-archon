@@ -1,24 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { SiteNav } from "./components/SiteNav";
-import { SiteNavAuth } from "./components/SiteNavAuth";
 import "./globals.css";
-import "./sota-ui.css";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Archon on Vercel + AWS",
+  title: "Archon — Agentic financial intelligence for SMBs",
   description:
-    "Agentic SMB finance intelligence for P&L, cash, sales, purchases, and payroll controls on Vercel with AWS persistence.",
-  icons: {
-    icon: "/icon.svg",
-  },
+    "Archon fuses every financial document your business receives — sales, purchases, bank statements and payroll — into one boardroom-ready monthly close. AI reads your books; a deterministic engine computes them. Built on Vercel + AWS.",
+  icons: { icon: "/icon.svg" },
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#0b3b2e",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <SiteNav authSlot={<SiteNavAuth />} />
+    <html lang="en" className={`light ${geistSans.variable} ${geistMono.variable} bg-background`}>
+      <body className="font-sans antialiased">
         {children}
         <Analytics />
       </body>
