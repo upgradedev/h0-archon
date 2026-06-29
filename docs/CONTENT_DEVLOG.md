@@ -33,7 +33,10 @@ feature. Three properties fall out of the deterministic decision layer for free:
   with no login wall.)
 - **Trust** — four cross-document checks (bank-net ≈ payslip-net, employer-IKA in
   the Greek statutory band, payment-date consistency, headcount consistency)
-  either pass or name the document that disagrees.
+  either pass or name the document that disagrees. A live **stress-test** in the
+  app deliberately corrupts one extracted field to simulate the vision model
+  mis-reading a document, then shows the engine catching it and *withholding* the
+  report — verification you can watch, not just claim.
 
 ## 2. DynamoDB single-table design — earn the abstraction
 
@@ -82,7 +85,10 @@ skips cleanly without them) → **post-deploy live smoke that hard-asserts
 `db_mode=aws-dynamodb`** and that intake/Q&A activity persists through DynamoDB.
 That last assertion means a deploy that lost its env var *fails* instead of
 silently shipping demo mode — the failure mode that would quietly invalidate the
-entire sponsor claim.
+entire sponsor claim. And the infrastructure is codified to match: the DynamoDB
+table and stream, the scoped IAM, and a CQRS read-model on Amazon OpenSearch
+(fed by a DynamoDB-Streams → Lambda projector) all live in **Terraform**, so the
+data tier provisions or tears down with one command.
 
 ## The meta-lesson
 

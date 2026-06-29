@@ -69,6 +69,8 @@ That is a feature, not a shortcut. A finance-close tool that gives a *different*
 
 If those four checks pass, the fused event is trustworthy. If one fails, you know exactly which document disagrees. That is the part a language model cannot give you.
 
+And because that guarantee *is* the product, I made it something you can watch. The dashboard has a **stress-test**: it deliberately corrupts one extracted field — simulating the vision model mis-reading a document — and you see R1 flip to **FAILED** (*"bank €6,850 vs payslips €5,957 · Δ 15% — the bank confirmation disagrees with the payslips"*) and the report get **withheld for review** instead of published. The AI proposes; the deterministic engine refuses to be fooled. For a tool that touches money, "refuses to publish a number the documents don't agree on" is the feature that matters most.
+
 ## What the judge (and the owner) actually sees
 
 The dashboard is intentionally dense — a work surface, not a landing page. The first viewport carries the whole monthly close: P&L revenue **€96,800**, EBITDA **€20,889**, sales-goal attainment **96.8%**, closing cash **€58,789**, a purchase-concentration risk flag (fresh produce at **42.7%** of COGS), and the payroll-truth finding front and center. A **P&L Sankey** traces revenue down through COGS and operating cost to EBITDA, and the payroll panel drills into a **per-employee breakdown** so you can see who the cost belongs to.
@@ -85,6 +87,7 @@ The honest scorecard of the zero stack:
 - **Cost at demo scale is effectively zero** — two partitions, tiny items, DynamoDB on-demand billing, Vercel's serverless tier.
 - **The resilience story is real:** DynamoDB → Aurora PostgreSQL fallback → embedded-demo, chosen at runtime by which environment variables are present. The same code runs on a judge's laptop with no AWS account and in production against a real table.
 - **CI is a full pyramid:** typecheck, unit tests for the pipeline / data layer / insights model (**86% line coverage**), a production build, a deterministic pipeline run, and a live smoke test against the deployed Vercel + DynamoDB endpoints.
+- **The infrastructure is codified:** the whole AWS footprint lives in **Terraform** (`terraform/`) — the DynamoDB table and its stream, the scoped IAM grants, and a **CQRS read-model on Amazon OpenSearch** (fed by a DynamoDB-Streams → Lambda projector) for search and analytics at scale. The data tier reproduces — or tears down — with one command, which is the difference between a demo and something an auditor would trust.
 
 The lesson H0 is really teaching: when the stack collapses to "a front end and a database," the thing that differentiates a demo from a product isn't the infrastructure — it's whether your numbers are *correct, cited, and reproducible*. For a finance tool, that is the entire game.
 
