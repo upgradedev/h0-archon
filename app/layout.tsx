@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "Archon — Agentic financial intelligence for SMBs",
   description:
     "Archon fuses every financial document your business receives — sales, purchases, bank statements and payroll — into one boardroom-ready monthly close. AI reads your books; a deterministic engine computes them. Built on Vercel + AWS.",
-  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {
@@ -19,9 +18,22 @@ export const viewport: Viewport = {
   themeColor: "#0b3b2e",
 };
 
+// Blocking, pre-paint theme bootstrap. Reads the persisted choice (default
+// "light") and applies the class to <html> before first paint so there is no
+// flash of the wrong theme. The added class also neutralizes the
+// prefers-color-scheme media override in globals.css.
+const themeScript = `(function(){try{var t=localStorage.getItem('archon-theme')||'light';document.documentElement.classList.add(t==='dark'?'dark':'light');}catch(e){document.documentElement.classList.add('light');}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`light ${geistSans.variable} ${geistMono.variable} bg-background`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

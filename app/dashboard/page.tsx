@@ -1,15 +1,17 @@
 import { dbMode } from "@/lib/db";
 import { runPipeline } from "@/lib/pipeline";
 import { getOrCreateLatestReport } from "@/lib/report-service";
-import { buildDashboardVM } from "@/lib/dashboard-vm";
+import { buildPeriodData } from "@/lib/demo-periods";
 import { DashboardDataProvider } from "@/components/dashboard/data-context";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { KpiRow } from "@/components/dashboard/kpi-row";
+import { TrendStrip } from "@/components/dashboard/trend-strip";
 import { PnlPanel } from "@/components/dashboard/pnl-panel";
 import { CashflowPanel } from "@/components/dashboard/cashflow-panel";
 import { SalesPanel } from "@/components/dashboard/sales-panel";
 import { SuppliersPanel } from "@/components/dashboard/suppliers-panel";
 import { WorkingCapitalPanel } from "@/components/dashboard/working-capital-panel";
+import { StatementsPanel } from "@/components/dashboard/statements-panel";
 import { PayrollPanel } from "@/components/dashboard/payroll-panel";
 import { DocumentIntake } from "@/components/dashboard/document-intake";
 import { AgentLedger } from "@/components/dashboard/agent-ledger";
@@ -28,13 +30,17 @@ export default async function DashboardPage() {
     // fall back to a fresh, unpersisted deterministic run.
     report = await runPipeline(undefined, dbMode());
   }
-  const vm = buildDashboardVM(report);
+  const data = buildPeriodData(report);
 
   return (
-    <DashboardDataProvider value={vm}>
+    <DashboardDataProvider value={data}>
       <DashboardShell authSlot={<SiteNavAuth />}>
         <section id="overview" className="scroll-mt-24">
           <KpiRow />
+        </section>
+
+        <section id="trends" className="scroll-mt-24">
+          <TrendStrip />
         </section>
 
         <div className="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-2">
@@ -54,6 +60,10 @@ export default async function DashboardPage() {
             <SuppliersPanel />
           </div>
         </div>
+
+        <section id="statements" className="scroll-mt-24">
+          <StatementsPanel />
+        </section>
 
         <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-3">
           <div id="capital" className="scroll-mt-24">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { buttonVariants } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 
 const NAV = [
@@ -50,6 +51,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <a
             href="/api/auth/signin"
             className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"

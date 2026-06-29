@@ -3,19 +3,20 @@
 import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import type { CashStep } from "@/lib/dashboard-vm"
 import { formatEUR } from "@/lib/format"
-import { useDashboardData } from "./data-context"
+import { ALL_PERIODS, useDashboardData, useDashboardPeriods } from "./data-context"
 import { Panel } from "./primitives"
 import { useMounted } from "./use-mounted"
 import { Waves } from "lucide-react"
 
-function buildWaterfall(cashflow: CashStep[]) {
+type Row = { name: string; base: number; bar: number; value: number; kind: string }
+
+// Single-period waterfall: each colored bar floats on a transparent base so the
+// running balance reads left→right (recharts stacks on the numeric axis, which is
+// the x-axis under layout="vertical").
+function buildWaterfall(cashflow: CashStep[]): Row[] {
   let running = 0
   return cashflow.map((step) => {
-    if (step.kind === "base") {
-      running = step.value
-      return { name: step.name, base: 0, bar: step.value, value: step.value, kind: step.kind }
-    }
-    if (step.kind === "total") {
+    if (step.kind === "base" || step.kind === "total") {
       running = step.value
       return { name: step.name, base: 0, bar: step.value, value: step.value, kind: step.kind }
     }
@@ -24,30 +25,48 @@ function buildWaterfall(cashflow: CashStep[]) {
       running += step.value
       return { name: step.name, base, bar: step.value, value: step.value, kind: step.kind }
     }
-    // out
+    // out: value is negative; draw a positive-width bar floating between next and running
     const next = running + step.value
     running = next
     return { name: step.name, base: next, bar: -step.value, value: step.value, kind: step.kind }
   })
 }
 
+// Aggregate ("All periods") magnitude view: a summed running-balance waterfall
+// does not reconcile across months, so drop the cumulative base and render each
+// step from zero — an honest magnitude comparison, not a fake running balance.
+function buildMagnitude(cashflow: CashStep[]): Row[] {
+  return cashflow.map((step) => ({
+    name: step.name,
+    base: 0,
+    bar: Math.abs(step.value),
+    value: step.value,
+    kind: step.kind,
+  }))
+}
+
 const colorFor = (kind: string) =>
   kind === "out" ? "var(--chart-5)" : kind === "in" ? "var(--chart-1)" : "var(--chart-2)"
 
 export function CashflowPanel() {
-  const { cashflow, runwayMonths, monthlyFixedCost } = useDashboardData()
-  const data = buildWaterfall(cashflow)
+  const { cashflow, cash, runwayMonths, monthlyFixedCost } = useDashboardData()
+  const { selected } = useDashboardPeriods()
+  const isAggregate = selected === ALL_PERIODS
+  const data = isAggregate ? buildMagnitude(cashflow) : buildWaterfall(cashflow)
   const runwayPct = Math.min((runwayMonths / 24) * 100, 100)
   const mounted = useMounted()
 
-  const opening = cashflow.find((step) => step.kind === "base")?.value ?? 0
-  const closing = cashflow[cashflow.length - 1]?.value ?? 0
-  const netMovement = closing - opening
+  // Named scalar off the VM — no opening/closing re-derivation from the array.
+  const netMovement = cash.netMovement
 
   return (
     <Panel
       title="Cash flow"
-      subtitle="Opening → collections → outflows → closing"
+      subtitle={
+        isAggregate
+          ? "Summed flows across Jan–May; balances are period-end"
+          : "Opening → collections → outflows → closing"
+      }
       icon={<Waves className="size-4" />}
       action={
         <span className="text-xs text-muted-foreground">
@@ -56,26 +75,32 @@ export function CashflowPanel() {
         </span>
       }
     >
-      <div className="h-44 w-full">
+      <div className="h-60 w-full">
         {mounted ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-              interval={0}
-            />
-            <YAxis hide domain={[0, "dataMax"]} />
-            <Bar dataKey="base" stackId="a" fill="transparent" isAnimationActive={false} />
-            <Bar dataKey="bar" stackId="a" radius={[4, 4, 4, 4]} maxBarSize={46}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={colorFor(d.kind)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ top: 4, right: 8, left: 4, bottom: 4 }}
+            >
+              <XAxis type="number" hide domain={[0, "dataMax"]} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={110}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                interval={0}
+              />
+              <Bar dataKey="base" stackId="a" fill="transparent" isAnimationActive={false} />
+              <Bar dataKey="bar" stackId="a" radius={[4, 4, 4, 4]} maxBarSize={22}>
+                {data.map((d, i) => (
+                  <Cell key={i} fill={colorFor(d.kind)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         ) : null}
       </div>
 

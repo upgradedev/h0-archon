@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useDashboardData } from "./data-context"
+import { PeriodSelector } from "./period-selector"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
+  TrendingUp,
   Scale,
   Waves,
   Target,
   Boxes,
   Repeat,
+  FileText,
   ShieldAlert,
   Bot,
   Sparkles,
@@ -23,11 +27,13 @@ import {
 
 const nav = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "trends", label: "Trends", icon: TrendingUp },
   { id: "pnl", label: "P&L", icon: Scale },
   { id: "cash", label: "Cash flow", icon: Waves },
   { id: "sales", label: "Sales", icon: Target },
   { id: "purchases", label: "Purchases", icon: Boxes },
   { id: "capital", label: "Working capital", icon: Repeat },
+  { id: "statements", label: "Statements", icon: FileText },
   { id: "payroll", label: "Payroll", icon: ShieldAlert },
   { id: "agents", label: "Agents", icon: Bot },
   { id: "ask", label: "Ask Archon", icon: Sparkles },
@@ -147,8 +153,11 @@ export function DashboardShell({
                   <h1 className="text-base font-semibold tracking-tight text-foreground">
                     Finance command center
                   </h1>
-                  <span className="hidden items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary sm:inline-flex">
-                    <span className="size-1.5 rounded-full bg-primary" /> Live
+                  <span
+                    title="May 2026 is the live extracted payroll close; Jan–Apr are illustrative trends and the customer/supplier ledger is sample data."
+                    className="hidden cursor-help items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline-flex"
+                  >
+                    <span className="size-1.5 rounded-full bg-primary" /> Demo data
                   </span>
                 </div>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -160,9 +169,8 @@ export function DashboardShell({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="hidden items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:flex">
-                {period}
-              </div>
+              <ThemeToggle />
+              <PeriodSelector />
               <Button
                 variant={closeState === "done" ? "outline" : "default"}
                 size="lg"

@@ -34,3 +34,26 @@ export function formatNumber(value: number, maximumFractionDigits = 0): string {
 export function formatPct(value: number, maximumFractionDigits = 1): string {
   return `${value.toFixed(maximumFractionDigits)}%`;
 }
+
+// --- Shared label helpers ---------------------------------------------------
+
+// Capitalized month names, January..December (index 0..11). Single source of
+// truth for period prettification.
+export const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+] as const;
+
+// Initials/abbreviation from a name: "Eleni" -> "E", "Maria Nikolaou" -> "MN",
+// "Masoutis Retail" -> "MR". `max` caps the length; `fallback` is returned when
+// the input has no usable letters.
+export function initials(name: string, max = 3, fallback = ""): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, max) || fallback
+  );
+}
