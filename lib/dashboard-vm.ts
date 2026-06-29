@@ -10,7 +10,7 @@
 // a "use client" directive and must not import client-only code — the dashboard
 // page (a server component) calls buildDashboardVM() before rendering.
 
-import type { AnalysisReport, ValidationResult } from "./types";
+import type { AnalysisReport, ExtractedDocument, ValidationResult } from "./types";
 import { buildBusinessIntelligence } from "./business";
 import { round2, formatEUR, MONTHS, initials } from "./format";
 
@@ -138,8 +138,13 @@ function prettifyPeriod(period: string): string {
   return name ? `${name} ${year}` : period;
 }
 
-export function buildDashboardVM(report: AnalysisReport): DashboardVM {
-  const bi = buildBusinessIntelligence(report);
+export function buildDashboardVM(
+  report: AnalysisReport,
+  // Per-session uploaded trade invoices folded into the close (empty by default →
+  // canonical output unchanged). Payroll uploads flow through `report.event`.
+  extraInvoices: ExtractedDocument[] = [],
+): DashboardVM {
+  const bi = buildBusinessIntelligence(report, extraInvoices);
   const event = report.event;
 
   const entity = event.company;
@@ -323,6 +328,13 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
     { label: "Payroll register", count: 1, status: "processed" },
     { label: "Payslips", count: event.employee_count, status: "processed" },
   ];
+  // Uploaded trade invoices, when present, surface as their own intake chips.
+  const salesUploads = extraInvoices.filter((d) => d.doc_type === "sales_invoice").length;
+  const purchaseUploads = extraInvoices.filter((d) => d.doc_type === "purchase_invoice").length;
+  if (salesUploads > 0)
+    documentIntake.push({ label: "Sales invoices", count: salesUploads, status: "processed" });
+  if (purchaseUploads > 0)
+    documentIntake.push({ label: "Purchase invoices", count: purchaseUploads, status: "processed" });
 
   // --- Agents. Reflects the real close pipeline end-to-end: read → classify →
   // link → validate → analyze → narrate (lib/pipeline.ts: extract → linkEvent →

@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { formatEUR } from "@/lib/format"
-import { useDashboardData } from "./data-context"
+import { cn } from "@/lib/utils"
+import { useDashboardData, useTileFlash } from "./data-context"
 import { Panel, Pill } from "./primitives"
 import { ChevronDown, ChevronRight, ShieldAlert } from "lucide-react"
 
 export function PayrollPanel() {
   const { payroll } = useDashboardData()
+  const flash = useTileFlash("payroll")
   const varianceCount = payroll.hiddenBreakdown.length
   const [showEmployees, setShowEmployees] = useState(false)
   const employees = payroll.employees
@@ -15,6 +17,7 @@ export function PayrollPanel() {
     <Panel
       title="Payroll controls"
       subtitle={`${payroll.headcount} employees · true employer cost vs bank`}
+      className={cn(flash && "tile-flash")}
       icon={<ShieldAlert className="size-4" />}
       action={
         <Pill tone="warning">

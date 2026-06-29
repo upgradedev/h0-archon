@@ -13,7 +13,7 @@
 // a "use client" directive and must not import client-only code — the dashboard
 // page (a server component) calls buildPeriodData() before rendering.
 
-import type { AnalysisReport } from "./types";
+import type { AnalysisReport, ExtractedDocument } from "./types";
 import { round2 } from "./format";
 import { buildDashboardVM, type DashboardVM } from "./dashboard-vm";
 
@@ -252,8 +252,13 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
   return vm;
 }
 
-export function buildPeriodData(baseReport: AnalysisReport): PeriodData {
-  const baseVM = buildDashboardVM(baseReport); // canonical 2026-01 VM
+export function buildPeriodData(
+  baseReport: AnalysisReport,
+  // Per-session uploaded trade invoices folded into the base-month VM (then
+  // projected forward like every other figure). Empty by default → canonical data.
+  extraInvoices: ExtractedDocument[] = [],
+): PeriodData {
+  const baseVM = buildDashboardVM(baseReport, extraInvoices); // canonical 2026-01 VM
   const defaultPeriod = baseReport.event.period;
 
   const vmByPeriod: Record<string, DashboardVM> = {};

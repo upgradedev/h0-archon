@@ -59,7 +59,8 @@ export async function persistActivity(input: {
     db_mode: store.mode,
   });
   const saved = await store.persistActivity(record);
-  indexAfterWrite((mod) => mod.indexActivityBestEffort(saved));
+  // Activity is intentionally NOT indexed into the search read-model — search is
+  // documents-first (source documents / vendors / people), not the activity log.
   return saved;
 }
 

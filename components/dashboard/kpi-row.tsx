@@ -2,13 +2,14 @@
 
 import type { Kpi } from "@/lib/dashboard-vm"
 import { formatEUR, formatPct } from "@/lib/format"
-import { useDashboardData } from "./data-context"
+import { useDashboardData, useTileFlash } from "./data-context"
 import { useCountUp } from "./use-count-up"
 import { Delta } from "./primitives"
 import { cn } from "@/lib/utils"
 
 function KpiCard({ kpi, index }: { kpi: Kpi; index: number }) {
   const v = useCountUp(kpi.value, 1100 + index * 90)
+  const flash = useTileFlash(`kpi:${kpi.id}`)
   let text: string
   if (kpi.display === "percent") text = formatPct(v)
   else if (kpi.display === "currencyCompact") text = formatEUR(v, { compact: true })
@@ -16,7 +17,10 @@ function KpiCard({ kpi, index }: { kpi: Kpi; index: number }) {
 
   return (
     <div
-      className="animate-rise relative flex flex-col gap-2 rounded-xl border border-border bg-card p-4"
+      className={cn(
+        "animate-rise relative flex flex-col gap-2 rounded-xl border border-border bg-card p-4",
+        flash && "tile-flash",
+      )}
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-center justify-between gap-2">

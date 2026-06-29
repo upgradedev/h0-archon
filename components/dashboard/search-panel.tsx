@@ -23,14 +23,13 @@ type SearchResponse = {
   error?: string
 }
 
-// Display order + labels for the grouped result list. Documents lead: the panel is
-// framed around "find your uploaded documents" first, counterparties and people next.
-const GROUPS: { type: string; label: string }[] = [
-  { type: "document", label: "Documents" },
-  { type: "report", label: "Reports" },
-  { type: "counterparty", label: "Counterparties" },
-  { type: "employee", label: "Employees" },
-  { type: "activity", label: "Activity" },
+// Display order + labels for the grouped result list. Documents-first: the panel is
+// framed around "find your uploaded documents" first, then vendors & people. The
+// aggregated close (report) and the activity log are not indexed, so they never
+// appear here — search returns the source documents a user is actually looking for.
+const GROUPS: { label: string; types: string[] }[] = [
+  { label: "Documents", types: ["document"] },
+  { label: "Vendors & people", types: ["counterparty", "employee"] },
 ]
 
 const eur = new Intl.NumberFormat("en-IE", {
@@ -92,7 +91,7 @@ export function SearchPanel() {
   const hits = data?.hits ?? []
   const grouped = GROUPS.map((group) => ({
     ...group,
-    hits: hits.filter((hit) => hit.type === group.type),
+    hits: hits.filter((hit) => group.types.includes(hit.type)),
   })).filter((group) => group.hits.length > 0)
 
   const showPanel = open && q.trim().length > 0
@@ -138,8 +137,7 @@ export function SearchPanel() {
         <div className="absolute right-0 z-50 mt-2 w-[min(92vw,420px)] overflow-hidden rounded-xl border border-border bg-card shadow-lg">
           <div className="border-b border-border bg-muted/40 px-3 py-1.5">
             <p className="text-[10px] leading-tight text-muted-foreground">
-              Find any uploaded document, counterparty or transaction — powered by an OpenSearch
-              read-model (CQRS).
+              Find any uploaded document, vendor or person.
             </p>
           </div>
           <div className="max-h-[70vh] overflow-y-auto p-2">
@@ -151,7 +149,7 @@ export function SearchPanel() {
               </p>
             ) : (
               grouped.map((group) => (
-                <div key={group.type} className="mb-1.5 last:mb-0">
+                <div key={group.label} className="mb-1.5 last:mb-0">
                   <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {group.label}
                   </p>

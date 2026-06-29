@@ -10,7 +10,7 @@
 // OpenSearch is NEVER used to compute KPI tiles or canonical numbers; it powers
 // search/exploration only.
 
-import type { AnalysisReport, AuditActivity } from "./types";
+import type { AnalysisReport } from "./types";
 import { buildDashboardVM } from "./dashboard-vm";
 import { buildBusinessIntelligence } from "./business";
 import { buildLedger } from "./demo-ledger";
@@ -19,7 +19,12 @@ import financeData from "../data/sample-finance.json";
 
 // --- Document model --------------------------------------------------------
 
-export type SearchDocType = "report" | "counterparty" | "employee" | "document" | "activity";
+// Search is DOCUMENTS-FIRST: the index holds only the things a user wants to FIND
+// (source documents, vendors/customers, employees). The aggregated monthly close
+// (type "report") and the "Ask Archon" / intake activity log are deliberately NOT
+// indexed — they are noise for "find a document" and used to crowd out the real
+// source documents. Canonical figures still come from the deterministic engine.
+export type SearchDocType = "counterparty" | "employee" | "document";
 
 // One flat searchable record. Field names line up 1:1 with the index mapping in
 // lib/opensearch.ts (keyword: type/id/company/period/counterparty/docType;
@@ -102,8 +107,10 @@ const DOC_FILENAMES: Record<string, string> = {
 
 // --- Document builders -----------------------------------------------------
 
-// Map one persisted report into its full set of searchable documents:
-// 1 report + N counterparties (customers + suppliers) + N employees + doc-type chips.
+// Map one persisted report into its full set of searchable DOCUMENTS-FIRST records:
+// N counterparties (customers + suppliers) + N employees + doc-type/source chips.
+// The aggregated close itself (type "report") is intentionally NOT emitted — search
+// is for finding source documents, not the rolled-up close.
 export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
   const vm = buildDashboardVM(report);
   const bi = buildBusinessIntelligence(report);
@@ -117,20 +124,6 @@ export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
   const categoryToVendor = new Map<string, string>(
     bi.purchases.categories.map((c): [string, string] => [c.category, c.vendor]),
   );
-  const sourceFilenames = Object.values(financeData.sources).join(" ");
-
-  // Report. The text blob carries the real source filenames so a filename search
-  // (e.g. "bank_confirmation_202601.pdf") resolves to this close.
-  docs.push({
-    id: `report:${event.event_id}`,
-    type: "report",
-    title: `${event.company} — ${vm.period} close`,
-    summary: `Revenue ${formatEUR(vm.pnl.revenue)} · EBITDA ${formatEUR(vm.pnl.ebitda)} · true employer cost ${formatEUR(event.employer_cost_total)}`,
-    text: `${event.company} monthly finance close ${event.period}. Revenue, EBITDA, payroll employer cost, cash flow, cross-document validation. ${sourceFilenames}`,
-    company: event.company,
-    period: event.period,
-    amount: vm.pnl.revenue,
-  });
 
   // Counterparties — customers.
   for (const customer of ledger.customers) {
@@ -211,28 +204,10 @@ export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
   return docs;
 }
 
-// Map one audit activity (intake / ask) into a searchable document.
-export function buildActivitySearchDoc(activity: AuditActivity): SearchDoc {
-  const title =
-    activity.kind === "intake" ? "Document intake" : activity.kind === "ask" ? "Ask Archon" : activity.kind;
-  return {
-    id: `activity:${activity.activity_id}`,
-    type: "activity",
-    title,
-    summary: activity.summary,
-    text: `${activity.kind} ${activity.summary}`,
-    docType: activity.kind,
-  };
-}
-
-// Build every searchable document for a full backfill.
-export function buildSearchDocs(input: {
-  reports: AnalysisReport[];
-  activities: AuditActivity[];
-}): SearchDoc[] {
-  const reportDocs = input.reports.flatMap(buildReportSearchDocs);
-  const activityDocs = input.activities.map(buildActivitySearchDoc);
-  return [...reportDocs, ...activityDocs];
+// Build every searchable document for a full backfill. Documents-first: only the
+// document / counterparty / employee records are indexed (no report, no activity).
+export function buildSearchDocs(reports: AnalysisReport[]): SearchDoc[] {
+  return reports.flatMap(buildReportSearchDocs);
 }
 
 // --- Query + response mapping ----------------------------------------------
@@ -287,10 +262,6 @@ function subtitleFor(doc: SearchDoc): string {
       return doc.docType ?? "Document";
     case "employee":
       return doc.company ? `${doc.company} · employee` : "Employee";
-    case "report":
-      return doc.period ? `Monthly close · ${doc.period}` : "Report";
-    case "activity":
-      return "Activity";
     default:
       return "";
   }

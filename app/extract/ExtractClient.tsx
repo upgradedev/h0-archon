@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { ExtractedDocument } from "@/lib/types";
 import { ACCURACY_TABLE, SAMPLE_CASE, type ExtractApiResponse } from "./data";
-import { UploadDropzone } from "./UploadDropzone";
 
 const FIELD_LABELS: Record<string, string> = {
   bank_net_total: "Bank net total",
@@ -76,15 +75,15 @@ export function ExtractClient() {
           Pick a real sample document. Archon rasterizes the PDF and sends the
           pages to <strong>AWS Bedrock vision</strong> (Claude Sonnet 4.6), then
           scores the structured result against ground truth. No competitor lets
-          you watch the AI read a document — this does.
+          you watch the AI read a document — this does. To upload your OWN documents
+          and watch the eight-agent close update live, use the run-ledger tile on the
+          dashboard.
         </p>
       </header>
 
-      <UploadDropzone />
-
       <section className="panel extract-picker">
         <div className="section-title">
-          <h3>2 · Or choose a curated sample</h3>
+          <h3>Choose a curated sample</h3>
           <span className="tag">{SAMPLE_CASE.company}</span>
         </div>
         <div className="doc-options">
@@ -127,8 +126,8 @@ export function ExtractClient() {
             <div className="section-title">
               <h3>
                 {result.mode === "live"
-                  ? "3 · Live Bedrock extraction"
-                  : "3 · Cached example (configure to run live)"}
+                  ? "Live Bedrock extraction"
+                  : "Cached example (configure to run live)"}
               </h3>
               <span className={`tag ${result.mode}`}>
                 {result.mode === "live" ? "LIVE · AWS Bedrock" : "CACHED"}

@@ -202,4 +202,30 @@
   .animate-rise {
     animation: archon-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+
+  /* Tile highlight pulse — fired on the KPI tiles / panels whose numbers changed
+     after a per-session document upload + recompute. Pure CSS; ~1.5s, runs once. */
+  @keyframes archon-tile-flash {
+    0% {
+      box-shadow: 0 0 0 0 var(--primary);
+      border-color: var(--primary);
+    }
+    20% {
+      box-shadow:
+        0 0 0 2px var(--primary),
+        0 0 22px 2px color-mix(in oklch, var(--primary) 55%, transparent);
+      border-color: var(--primary);
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+  .tile-flash {
+    animation: archon-tile-flash 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tile-flash {
+      animation: none;
+    }
+  }
 }
