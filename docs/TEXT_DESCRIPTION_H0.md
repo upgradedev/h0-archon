@@ -16,9 +16,9 @@ Here's the part that bothered us most. A single payroll event — paying your st
 - The **payroll register** holds the full employer cost — gross pay plus employer social-security contributions — the number that actually belongs in your P&L.
 - The **individual payslips** break it down per person: gross, deductions, tax withheld.
 
-They describe the same event, but you can't match them by amount alone — they need correlation. So most businesses just record the bank line. And their P&L quietly understates what payroll really cost.
+They describe the same event, but you can't match them by amount alone — they need correlation. So most businesses just record the bank line, and their P&L is incomplete: it captures the cash that moved, not the full employer cost the register holds.
 
-On our sample books, the bank shows **€5,957** going to staff. The true employer cost is **€9,111**. That **€3,154** gap — employer IKA plus withheld employee contributions — never shows up on the bank confirmation. Across our full labelled test corpus, bank-only bookkeeping understated true cost by **€314,000**. People price, budget, and hire against a number that's off by a third.
+On our demo books — **ARCHON DEMO IKE**, January 2026 — the bank shows **€3,994.74** going to staff. The true employer cost is **€6,930.00**. That **€2,935.26** difference — employer IKA plus the employee IKA and tax withheld from gross — never shows up on the bank confirmation, and it's *not a scandal*: it's the ordinary employer-IKA-and-tax wedge that's only visible once Archon correlates the payroll register with the bank transfer. Without the register, you'd only ever see the bank line. (Across our full labelled eval corpus, a naive single-document view would miss **€314,000** that's recoverable only once the documents are correlated.) People price, budget, and hire against the bank number alone — and it's incomplete.
 
 ## What Archon does
 
@@ -44,13 +44,13 @@ The principle, in one line: **the AI reads the documents; a deterministic engine
 
 ## What you'll see in the live app
 
-Open the dashboard and it's live, reading real data from DynamoDB. Revenue is shown net of tax — actual income, not invoice face value. The payroll tile shows the true employer cost from the register, not the net bank transfer — and names the gap most businesses miss. You can switch the **reporting period across January–May 2026**, watch the **trend lines** move, open **customer and supplier account statements** down to individual invoices, expand **per-employee** payroll detail, and flip the whole thing to **dark mode**. Every claim carries a source citation, and "Ask Archon" answers questions about the report in natural language.
+Open the dashboard and it's live, reading real data from DynamoDB. Revenue is shown net of tax — actual income, not invoice face value. The payroll tile shows the true employer cost from the register, not the net bank transfer — and surfaces the wedge that's only visible once the documents are correlated. You can switch the **reporting period across January–May 2026**, watch the **trend lines** move, open **customer and supplier account statements** down to individual invoices, expand **per-employee** payroll detail, and flip the whole thing to **dark mode**. Every claim carries a source citation, and "Ask Archon" answers questions about the report in natural language.
 
-*(One honest note we put right on the screen: May is the live extracted close; the other months and the customer/supplier ledger are clearly labelled sample data, so nothing on the dashboard pretends to be more real than it is.)*
+*(One honest note we put right on the screen: January is the live extracted close; the later months and the customer/supplier ledger are clearly labelled sample data, so nothing on the dashboard pretends to be more real than it is.)*
 
 ## Why it matters
 
-A real problem, quantified: bank-only bookkeeping understated true cost by **€314k** across our corpus — and Archon recovers it, with citations and auditable controls, in minutes instead of days. Most hackathon entries assert their value. We can show you a measured accuracy number, a quantified impact, a public data-proof endpoint, and CI that smoke-tests the live Vercel + AWS stack on every push.
+A real problem, quantified: across our labelled corpus, a naive single-document view would miss **€314k** of cost — recoverable only once Archon collects and correlates the documents, with citations and auditable controls, in minutes instead of days. Most hackathon entries assert their value. We can show you a measured accuracy number, a quantified impact, a public data-proof endpoint, and CI that smoke-tests the live Vercel + AWS stack on every push.
 
 ---
 
@@ -65,8 +65,8 @@ A real problem, quantified: bank-only bookkeeping understated true cost by **€
 |---|---|
 | **Technological Implementation** | Next.js + Vercel Functions; **AWS Bedrock vision, measured 96.7%**; **DynamoDB single-table**; deterministic auditable engine; eval harness; tests; CI with production build + **live smoke**; 86% test coverage; ungated public APIs. |
 | **Design** | Modern CFO command center (Tailwind, motion, recharts): period selector, trend charts, P&L Sankey, cash flow, sales, suppliers, working capital, payroll with per-employee detail, account statements with drill-down, citations, Ask-Archon, dark mode. |
-| **Impact** | Quantified: bank-only books understate true cost by **€314k** across the corpus (~28% from the employer-IKA wedge alone). Recovered with citations + auditable controls. |
-| **Originality** | Verification-gated three-document fusion — Bedrock vision proposes, a deterministic engine + cross-document rules verify; every number auditable. Measured eval + tests + CI that most entries lack. |
+| **Impact** | Quantified: a naive single-document view would miss **€314k** of cost across the corpus — much of it the employer-IKA-and-tax wedge that only a correlated view records. Recovered with citations + auditable controls. |
+| **Originality** | Document-collection + auto-correlation engine — Bedrock vision reads, a deterministic engine + cross-document rules link every document into one event and confirm the close is complete; every number auditable. Measured eval + tests + CI that most entries lack. |
 
 ## New & existing compliance
 The *concept* pre-existed (earlier builds ran on other clouds). Everything submitted here — the Vercel + AWS DynamoDB app, the single-table model, and the AWS Bedrock extraction layer with its measured eval — was **built new during the H0 window**. We claim only what's new this window and do not claim v0 provenance unless a real v0 artifact is attached.

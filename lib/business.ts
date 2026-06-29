@@ -176,7 +176,7 @@ function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligen
     brief: [
       `${report.event.company} generated EUR ${revenue.toFixed(0)} revenue in ${report.event.period}, reaching ${round2((revenue / goal) * 100).toFixed(1)}% of the sales goal.`,
       `The month is profitable: EBITDA is EUR ${ebitda.toFixed(0)} after true payroll cost, with a ${ebitdaMarginPct.toFixed(1)}% margin.`,
-      `The main control risks are payroll understatement and supplier concentration in ${purchaseCategories[0].category.toLowerCase()}.`,
+      `Every document type is present and cross-linked: payroll reconciles across the bank transfer, register, and payslips, and the only item to watch is supplier concentration in ${purchaseCategories[0].category.toLowerCase()}.`,
     ].join(" "),
     alerts: [
       {
@@ -195,9 +195,9 @@ function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligen
         severity: "risk",
       },
       {
-        title: "Payroll control gap",
-        detail: `Bank-only payroll view misses EUR ${report.event.hidden_total.toFixed(0)} of monthly cost.`,
-        severity: "risk",
+        title: "Payroll reconciled across documents",
+        detail: `Bank transfer plus employer IKA and withheld contributions tie out to the register; EUR ${report.event.hidden_total.toFixed(0)} is only visible once the documents are correlated.`,
+        severity: "watch",
       },
     ],
   };

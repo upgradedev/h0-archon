@@ -78,8 +78,8 @@ export function ValidationPanel() {
 
   return (
     <Panel
-      title="Cross-document validation"
-      subtitle="The AI proposes; the deterministic rules refuse to be fooled"
+      title="Completeness & correlation"
+      subtitle="Every document collected, cross-linked, and reconciled into one close"
       icon={<ShieldCheck className="size-4" />}
       action={
         <Pill tone={showingTampered ? "danger" : "positive"}>
@@ -89,14 +89,16 @@ export function ValidationPanel() {
         </Pill>
       }
     >
-      {/* Headline trust statement / withheld state */}
+      {/* Headline completeness statement / withheld state */}
       {showingTampered ? (
         <div className="mb-3 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5">
           <ShieldAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-destructive">Report withheld — flagged for review</p>
+            <p className="text-sm font-semibold text-destructive">
+              Possible missing or inconsistent document — report withheld until reconciled
+            </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              A cross-document check failed, so the close is not published.
+              Two documents disagree, so the close is not published until the gap is resolved.
             </p>
           </div>
         </div>
@@ -105,10 +107,13 @@ export function ValidationPanel() {
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              {passCount}/{total} cross-document checks passed — every fused number is verified against
+              {passCount}/{total} cross-document checks passed — every fused number reconciles against
               the source documents.
             </p>
-            <p className="mt-0.5 text-xs text-primary">Report released.</p>
+            <p className="mt-1 text-xs text-primary">
+              All required document types present · cross-linked into one event · P&amp;L and cash flow
+              complete and reconciled.
+            </p>
           </div>
         </div>
       )}
@@ -121,8 +126,9 @@ export function ValidationPanel() {
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Simulated mis-read: {scenario!.tamperNote} (field{" "}
-            <span className="font-mono">{scenario!.tamperedField}</span>). The deterministic engine
-            caught the disagreement between the documents and refused to publish the figure.
+            <span className="font-mono">{scenario!.tamperedField}</span>). The documents no longer
+            agree — a likely missing or mis-read document — so Archon withholds the close until it
+            reconciles.
           </p>
         </div>
       )}
@@ -136,11 +142,11 @@ export function ValidationPanel() {
       {/* Stress-test control */}
       <div className="mt-4 rounded-lg border border-border/70 bg-muted/20 p-3">
         <p className="text-sm font-medium text-foreground">
-          Stress-test: what if the AI mis-reads a document?
+          Stress-test: what if a document is missing or mis-read?
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          This deliberately corrupts one extracted field to prove the safety net — a simulation, not a
-          real extraction error.
+          This deliberately corrupts one extracted field to show the completeness check at work — a
+          simulation, not a real extraction error.
         </p>
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           {!showingTampered ? (
@@ -165,8 +171,8 @@ export function ValidationPanel() {
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-        AWS Bedrock vision proposes the numbers; the deterministic engine cross-checks them against
-        every source document and refuses to publish a figure the documents don&apos;t agree on.
+        AWS Bedrock vision reads the numbers; the deterministic engine correlates them across every
+        source document and only releases a close once the documents are complete and agree.
       </p>
     </Panel>
   )

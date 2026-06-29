@@ -5,12 +5,14 @@
 > dev.to / Hashnode. ~700 words.
 <!-- Lightly personalize the voice before posting. -->
 
-The main write-up covers *what* Archon does (fuses small-business finance
-documents into an auditable monthly close, and surfaces the employer's own IKA
-contribution — about **28% on top of the bank figure** — that appears on no
-document at all). The front end was scaffolded in **Vercel v0** and wired to live
-data; this post is for engineers: the five decisions that made the build clean
-rather than just working.
+The main write-up covers *what* Archon does (a document-collection and
+auto-correlation engine that links small-business finance documents into an
+auditable monthly close and tells you whether your books are complete and
+reconciled — surfacing, for example, the employer's own IKA wedge that's only
+visible once the payroll register is correlated with the bank transfer). The
+front end was scaffolded in **Vercel v0** and wired to live data; this post is
+for engineers: the five decisions that made the build clean rather than just
+working.
 
 ## 1. AI reads the documents; deterministic rules decide the numbers
 
@@ -19,7 +21,7 @@ documents *and* emit the numbers. I split it. A **vision model — AWS Bedrock,
 `eu.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6) in `eu-west-1` — reads** the
 messy PDFs into structured fields (measured at **96.7% field-level accuracy
 (58/60)** and **100% classification (15/15)** against a labelled corpus, ≈ $0.17
-per run). But the P&L, cash, sales, purchase-concentration, and payroll-truth
+per run). But the P&L, cash, sales, purchase-concentration, and payroll-completeness
 **math runs in a deterministic rules engine** — and so does the executive summary,
 which is generated from the computed figures, not written by an LLM — because a
 finance-close tool that returns a *different* answer each run is a liability, not a
@@ -33,10 +35,10 @@ feature. Three properties fall out of the deterministic decision layer for free:
   with no login wall.)
 - **Trust** — four cross-document checks (bank-net ≈ payslip-net, employer-IKA in
   the Greek statutory band, payment-date consistency, headcount consistency)
-  either pass or name the document that disagrees. A live **stress-test** in the
-  app deliberately corrupts one extracted field to simulate the vision model
-  mis-reading a document, then shows the engine catching it and *withholding* the
-  report — verification you can watch, not just claim.
+  either confirm the close is complete or name the document that disagrees. A live
+  **stress-test** in the app deliberately corrupts one extracted field to simulate a
+  missing or mis-read document, then shows the engine catching it and *withholding*
+  the close until it reconciles — verification you can watch, not just claim.
 
 ## 2. DynamoDB single-table design — earn the abstraction
 
@@ -97,7 +99,7 @@ a front end and a database, there's nowhere to hide. The differentiator isn't
 infrastructure — it's whether the numbers are correct, cited, reproducible, and
 continuously verified. For anything that touches money, that *is* the product.
 
-Live: https://h0-archon.vercel.app · 2:56 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4 · Code (MIT): https://github.com/upgradedev/h0-archon
+Live: https://h0-archon.vercel.app · ~2:45 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4 · Code (MIT): https://github.com/upgradedev/h0-archon
 
 
 ---

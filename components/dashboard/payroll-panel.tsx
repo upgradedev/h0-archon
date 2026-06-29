@@ -18,7 +18,7 @@ export function PayrollPanel() {
       icon={<ShieldAlert className="size-4" />}
       action={
         <Pill tone="warning">
-          {varianceCount} variance{varianceCount === 1 ? "" : "s"} flagged
+          {varianceCount} register line{varianceCount === 1 ? "" : "s"} correlated
         </Pill>
       }
     >
@@ -38,14 +38,16 @@ export function PayrollPanel() {
       </div>
 
       <div className="mt-3 flex items-center justify-between rounded-lg border border-[var(--warning)]/30 bg-[var(--warning)]/10 px-3 py-2">
-        <span className="text-xs font-medium text-foreground">Employer IKA hidden on bank run</span>
+        <span className="text-xs font-medium text-foreground">Employer IKA (not in the bank transfer)</span>
         <span className="text-sm font-semibold tabular-nums text-[var(--warning)]">
           +{formatEUR(payroll.employerWedge)} · {payroll.employerWedgePct}% of net
         </span>
       </div>
 
       <div className="mt-2 flex items-center justify-between rounded-lg border border-border/70 px-3 py-2">
-        <span className="text-xs text-muted-foreground">Total understated vs true cost</span>
+        <span className="text-xs text-muted-foreground">
+          True employer cost vs bank transfer · only visible once correlated
+        </span>
         <span className="text-sm font-semibold tabular-nums text-foreground">
           +{formatEUR(payroll.hidden)} · {payroll.hiddenPct}% of true cost
         </span>
@@ -53,7 +55,7 @@ export function PayrollPanel() {
 
       <div className="mt-3 space-y-1.5">
         <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          What the bank salary run omits
+          In the register but not on the bank transfer
         </div>
         {payroll.hiddenBreakdown.map((b) => (
           <div key={b.name} className="flex items-center justify-between text-xs">

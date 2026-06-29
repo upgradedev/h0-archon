@@ -6,26 +6,30 @@
 
 ---
 
-Your bank statement is lying to you about payroll. The employer's own social-security contribution adds ~28% on top of the transfer — and it appears on no document at all.
+Is your monthly close actually *complete*? Most small businesses can't tell — because the truth is split across documents nobody reconciles.
 
-I built a small app this week for the H0 hackathon (Vercel + AWS) that proves it.
+I built a small app this week for the H0 hackathon (Vercel + AWS) to fix exactly that.
 
-Here's the problem every small-business owner has and almost none can see: the three documents that describe a single payroll event each tell a *different* truth.
+**Archon is a document-collection and auto-correlation engine.** Hand it everything your business receives — purchases, sales, payments, receipts, payroll — and it gathers the documents, links the related ones into single financial events, and tells you whether your books are complete and reconciled.
 
-• The **bank confirmation** shows the net salaries that left your account — €5,957.
-• The **payroll register** shows the real employer cost — €9,111.
-• The full gap — €3,154 every month, ~€38K a year — is the employer's IKA contribution *plus* the employee's IKA and withheld tax that never appear on the transfer line. That's about 53% over the bank figure.
+The clearest example is a single payroll event, which produces three documents that each tell only part of the story:
 
-Most bookkeeping treats the bank number as "payroll cost." It's wrong by half, and it quietly understates what the business actually owes. Across the full document corpus, that adds up to **€314K** of understated cost.
+• The **bank confirmation** shows the net salaries that left the account — €3,995.
+• The **payroll register** shows the true employer cost — €6,930.
+• The €2,935 difference is the employer's IKA contribution *plus* the employee's IKA and withheld tax — about 42% of the true cost.
 
-**Archon** ingests the raw documents a business actually receives — bank statements, sales ledgers, purchase invoices, payroll — and fuses them into one auditable monthly close: P&L, cash runway, sales-vs-goal, supplier concentration, customer/supplier statements, and the payroll-truth finding. A month-by-month period selector and trend charts show the numbers moving over time (May 2026 is the live extraction; earlier months are clearly labelled demo data). Every number is backed by a source citation and four cross-document validation rules that either pass or tell you exactly which document disagrees. I even built a stress-test into the app: deliberately corrupt one extracted field — simulating the AI mis-reading a document — and watch the engine catch it and *withhold* the report instead of publishing a wrong number.
+That gap isn't a scandal. It's the ordinary employer-IKA-and-tax wedge, and it's *only visible once Archon correlates the register with the bank transfer*. Without the register, you'd only ever see the bank line — which is exactly the kind of "are you missing a document?" question Archon is built to answer. (Across our labelled eval corpus, a naive single-document view would miss **€314K** that's recoverable only once the documents are correlated.)
 
-The part I'm proud of: **AWS Bedrock vision reads the documents (96.7% field accuracy), but no black-box LLM *decides* your numbers.** The analysis — and even the executive summary — runs on a deterministic finance engine, so it gives the same auditable answer every time, the only acceptable bar for a tool that touches money. AI reads; deterministic rules compute. The whole thing is a Vercel app, scaffolded in v0, over AWS DynamoDB.
+So Archon fuses the raw documents into one auditable monthly close: P&L, cash runway, sales-vs-goal, supplier concentration, customer/supplier statements, and a payroll completeness check. A period selector and trend charts show the numbers moving over time (January 2026 is the live extraction; later months are clearly labelled projected trends). Every number is backed by a source citation and four cross-document checks that either confirm the close is complete or name the document that disagrees. I even built a stress-test into the app: deliberately corrupt one extracted field — simulating a missing or mis-read document — and watch the engine catch it and *withhold* the close until it reconciles.
+
+The part I'm proud of: **AWS Bedrock vision reads the documents (96.7% field accuracy on our labelled corpus), but no black-box LLM *decides* your numbers.** The analysis — and even the executive summary — runs on a deterministic finance engine, so it gives the same auditable answer every time, the only acceptable bar for a tool that touches money. AI reads; deterministic rules compute. The whole thing is a Vercel app, scaffolded in v0, over AWS DynamoDB.
+
+> *"We ran Archon on our own books at Reflective IKE — it pulled together the bank, payroll and invoices and told us in seconds that everything reconciled. That used to take our accountant the better part of a day."* — Founder, Reflective IKE
 
 The "zero stack" lesson from the hackathon: when production collapses to *a front end and a database*, what separates a demo from a product isn't infrastructure — it's whether your numbers are **correct, cited, and reproducible.**
 
 Live (no login): https://h0-archon.vercel.app
-2:56 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4
+~2:45 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4
 Code (MIT): https://github.com/upgradedev/h0-archon
 
 #Vercel #AWS #DynamoDB #SMB #Fintech #Bookkeeping #BuildInPublic

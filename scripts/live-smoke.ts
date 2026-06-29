@@ -170,6 +170,42 @@ async function fetchHistory(intakeActivityId: string, askActivityId: string) {
   return history;
 }
 
+// Advisory search round-trip: reindex the OpenSearch read-model, then query it.
+// Logs a clear PASS/FAIL but NEVER throws — the main smoke must not depend on it
+// while the OpenSearch IAM grant is still pending (reindex/search return 403 until
+// the grant is applied).
+//
+// TODO: flip to hard-assert once the OpenSearch grant is applied (currently 403
+// until then). To gate the smoke on search, replace each `console.error(... FAIL
+// ...)` + `return` below with `throw new Error(...)` — a one-line change per check.
+async function checkSearchRoundTrip(): Promise<void> {
+  try {
+    const reindexRes = await fetch(`${appBaseUrl}/api/search/reindex`, { method: "POST" });
+    if (!reindexRes.ok) {
+      console.error(`[search-smoke] FAIL (advisory): POST /api/search/reindex returned ${reindexRes.status}`);
+      return;
+    }
+    const reindex = (await reindexRes.json()) as { indexed?: number };
+    if (!reindex.indexed || reindex.indexed <= 0) {
+      console.error(`[search-smoke] FAIL (advisory): reindex indexed ${reindex.indexed ?? 0} documents (expected > 0)`);
+      return;
+    }
+    const searchRes = await fetch(`${appBaseUrl}/api/search?q=archon`, {
+      headers: { accept: "application/json" },
+    });
+    if (!searchRes.ok) {
+      console.error(`[search-smoke] FAIL (advisory): GET /api/search?q=archon returned ${searchRes.status}`);
+      return;
+    }
+    const result = (await searchRes.json()) as { total?: number };
+    console.log(
+      `[search-smoke] PASS: reindexed ${reindex.indexed} docs; search "archon" returned ${result.total ?? 0} hits`,
+    );
+  } catch (err) {
+    console.error(`[search-smoke] FAIL (advisory): ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function main() {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -179,6 +215,8 @@ async function main() {
       const intake = await postIntake();
       const answer = await postAsk();
       const history = await fetchHistory(intake.activity_id || "", answer.activity_id || "");
+      // Advisory only — never gates the main smoke (see checkSearchRoundTrip).
+      await checkSearchRoundTrip();
       console.log(
         JSON.stringify(
           {
