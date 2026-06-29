@@ -1,0 +1,73 @@
+name: Generate Voiceover (ElevenLabs)
+
+# One-click demo voiceover. Reads docs/narration.txt and synthesizes an MP3 with
+# ElevenLabs, uploaded as a build artifact. Edit docs/narration.txt, then run this
+# workflow (Actions tab → Run workflow, or `gh workflow run voiceover.yml`).
+# Requires repo secret ELEVEN_LABS_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      voice_id:
+        description: "ElevenLabs voice ID (default: Adam). Find yours at elevenlabs.io → Voices."
+        required: false
+        default: "pNInz6obpgDQGcFmaJgB"
+      model_id:
+        description: "ElevenLabs model ID."
+        required: false
+        default: "eleven_multilingual_v2"
+
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Synthesize voiceover
+        env:
+          XI_API_KEY: ${{ secrets.ELEVEN_LABS_KEY }}
+          VOICE_ID: ${{ github.event.inputs.voice_id }}
+          MODEL_ID: ${{ github.event.inputs.model_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XI_API_KEY:-}" ]; then
+            echo "::error::ELEVEN_LABS_KEY secret is not set on this repo."
+            exit 1
+          fi
+          test -f docs/narration.txt || { echo "::error::docs/narration.txt missing"; exit 1; }
+          CHARS=$(wc -m < docs/narration.txt | tr -d ' ')
+          echo "Narration length: ${CHARS} chars"
+
+          # Build a JSON body with the narration text safely escaped.
+          jq -Rs --arg m "$MODEL_ID" \
+            '{text: ., model_id: $m, voice_settings: {stability: 0.45, similarity_boost: 0.8, style: 0.0, use_speaker_boost: true}}' \
+            docs/narration.txt > body.json
+
+          HTTP=$(curl -sS -w "%{http_code}" -X POST \
+            "https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128" \
+            -H "xi-api-key: ${XI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Accept: audio/mpeg" \
+            --data @body.json \
+            -o archon-voiceover.mp3)
+
+          echo "HTTP ${HTTP}"
+          if [ "$HTTP" != "200" ]; then
+            echo "::error::ElevenLabs returned HTTP ${HTTP}:"
+            cat archon-voiceover.mp3 || true
+            exit 1
+          fi
+          SIZE=$(wc -c < archon-voiceover.mp3)
+          echo "MP3 size: ${SIZE} bytes"
+          if [ "$SIZE" -lt 10000 ]; then
+            echo "::error::Output too small to be valid audio:"
+            cat archon-voiceover.mp3 || true
+            exit 1
+          fi
+
+      - name: Upload voiceover artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: archon-voiceover-mp3
+          path: archon-voiceover.mp3
+          retention-days: 14
