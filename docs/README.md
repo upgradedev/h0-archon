@@ -46,16 +46,16 @@ source of truth).
 
 | Doc | What it is | |
 |---|---|---|
-| [`BLOG.md`](BLOG.md) | Long-form engineering blog post (refresh pending: pre-ARCHON-DEMO naming) | ✅ |
-| [`CONTENT_DEVLOG.md`](CONTENT_DEVLOG.md) | Build devlog | ✅ |
-| [`CONTENT_LINKEDIN.md`](CONTENT_LINKEDIN.md) | LinkedIn announcement draft (refresh pending: pre-ARCHON-DEMO naming) | ✅ |
+| [`BLOG.md`](BLOG.md) | Long-form engineering blog post (Medium) — publish-ready | ✅ |
+| [`CONTENT_DEVLOG.md`](CONTENT_DEVLOG.md) | Build devlog (dev.to, with front matter) — publish-ready | ✅ |
+| [`CONTENT_LINKEDIN.md`](CONTENT_LINKEDIN.md) | LinkedIn announcement — publish-ready | ✅ |
 
 ## Video
 
 | Doc | What it is | |
 |---|---|---|
 | [`VIDEO_SHOTLIST.md`](VIDEO_SHOTLIST.md) | Sub-3-minute shot list | ✅ |
-| [`VIDEO_SCRIPT_H0.md`](VIDEO_SCRIPT_H0.md) | Full narrated video script (refresh pending: "seven-step"; owned by the recording step) | ✅ |
+| [`VIDEO_SCRIPT_H0.md`](VIDEO_SCRIPT_H0.md) | Historical shot-guide — superseded by `narration.txt` (canonical spoken script) | 🕘 |
 | [`V0_VIDEO_GAP_REVIEW.md`](V0_VIDEO_GAP_REVIEW.md) | Gap review against the prior demo video | ✅ |
 | [`RECORDING_RUNSHEET.md`](RECORDING_RUNSHEET.md) | Recording runsheet (owned by the recording step) | ✅ |
 | [`narration.txt`](narration.txt) | Narration text (owned by the recording step) | ✅ |

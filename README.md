@@ -24,17 +24,25 @@ that a single-document view never records.
 ## What's live
 
 - **Drop a document on the dashboard** — the upload lives on the **eight-agent run
-  ledger** tile: drop a PDF and the agents light up in sequence (Extractor reads it
-  live via **AWS Bedrock** vision, Claude Sonnet 4.6 → Classifier → Event Linker →
-  Validator → PnL → CashFlow → Employee → Narrator), then the **affected tiles flash
-  and refresh** with the recomputed numbers — a per-session "what-if" that never
-  overwrites the shared demo. (`/extract` remains the curated-sample read demo with
-  accuracy scored against ground truth.)
+  ledger** tile: drop a PDF and a **filename chip** tracks it live
+  (`📄 <file> — reading… → read ✓ · <doc type> · <confidence>%`) while the eight
+  agents light up in sequence (Extractor reads it via **AWS Bedrock** vision,
+  Claude Sonnet 4.6 → Classifier → Event Linker → Validator → PnL → CashFlow →
+  Employee → Narrator), then the **affected tiles flash and refresh** with the
+  recomputed numbers — a per-session "what-if" that never overwrites the shared
+  DynamoDB demo. (`/extract` remains the curated-sample read demo with accuracy
+  scored against ground truth.)
+- **Take the tour** — a **driver.js** self-guided walkthrough (button in the
+  dashboard header) steps you through the KPIs → the eight-agent ledger (and the
+  upload drop-zone) → the payroll truth → completeness → search.
 - **Full monthly close** — that **eight-agent** pipeline produces P&L, cash flow,
   sales-vs-goal, supplier concentration, and payroll controls.
-- **Search** — find any uploaded **document, vendor or person** in milliseconds via
-  an **AWS OpenSearch** CQRS read-model fed from DynamoDB Streams (documents-first;
-  the aggregated close and Q&A logs are kept out of search results).
+- **Search** — documents-first and in milliseconds, via an **AWS OpenSearch** CQRS
+  read-model fed from DynamoDB Streams. A query like `hotel` returns the individual
+  invoices first — each with its **document number and date**
+  (e.g. `AR-HA-003-001 · Sales invoice · 2026-01-22 · Hotel Aegeon · €3,304 · paid`)
+  — then vendors and people, with the counterparty aggregate last. The aggregated
+  close and Q&A logs are deliberately kept out of search results.
 - **Verification-gating** — four cross-document rules (R1–R4) must pass before the
   fused event is trusted; the dashboard surfaces each rule's status.
 - **Multi-period trends**, persisted **run history**, source-backed **citations**,
@@ -89,7 +97,7 @@ flowchart LR
   tests --> build["production build"]
   build --> codeql["CodeQL<br/>(SAST)"]
   codeql --> smoke["live smoke<br/>db_mode=aws-dynamodb<br/>+ search hard-gate"]
-  smoke --> deploy(["Vercel deploy"])
+  smoke -.-> deploy(["Vercel deploy<br/>(Git auto-deploy, or<br/>manual deploy-prod.yml)"])
   sched(["scheduled / advisory"]) -.-> zap["ZAP baseline<br/>(DAST)"]
   sched -.-> audit["npm audit<br/>(dependency SCA)"]
 ```

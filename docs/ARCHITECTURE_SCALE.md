@@ -1,8 +1,9 @@
-# Scale architecture — DynamoDB today, CQRS + OpenSearch tomorrow
+# Scale architecture — DynamoDB primary + OpenSearch CQRS read-model
 
 A deliberate data-tier design: **DynamoDB is the right primary for the access
-patterns we actually have**, and the scale-out is a clean **CQRS** split that adds
-search + analytics without changing the source of truth.
+patterns we actually have**, and a clean **CQRS** split projects a read model into
+**Amazon OpenSearch** — already live for documents-first **search**, and the same
+seam scales out to analytics — without ever changing the source of truth.
 
 ## Why DynamoDB is the deliberate primary (not Aurora)
 
@@ -24,12 +25,16 @@ pooling concerns for relational power this workload doesn't use. DynamoDB is the
 intentional fit, and it scales horizontally by partition key (the table already
 has a clean multi-tenant evolution: `TENANT#<id>#REPORT`).
 
-## The scale-out: CQRS with OpenSearch as the read model
+## CQRS with OpenSearch as the read model (live today)
 
-As a single business becomes thousands of tenants with years of documents, two new
-needs appear that are **deliberately NOT DynamoDB's job**: full-text **search** and
-ad-hoc **analytics**. The clean answer is CQRS — keep DynamoDB as the write side /
-source of truth, project a query-optimized read model into **Amazon OpenSearch**:
+There are needs that are **deliberately NOT DynamoDB's job**: full-text **search**
+(shipped now) and ad-hoc **analytics** (the scale-out). The clean answer is CQRS —
+keep DynamoDB as the write side / source of truth, and project a query-optimized
+read model into **Amazon OpenSearch**. This is live in the app today: search is
+documents-first and returns individual documents with their number and date
+(e.g. `AR-HA-003-001 · Sales invoice · 2026-01-22 · Hotel Aegeon · €3,304 · paid`),
+while the aggregated close and Q&A logs are kept out of the index. The same seam
+carries the analytics scale-out below.
 
 ```
             write (command side)                 read (query side)
@@ -46,7 +51,8 @@ source of truth, project a query-optimized read model into **Amazon OpenSearch**
 
 ### What OpenSearch unlocks (that DynamoDB shouldn't do)
 - **Full-text search** across documents, vendors/counterparties, and line-items
-  ("every invoice from vendor X", "all transactions mentioning 'overtime'").
+  ("every invoice from vendor X", "all transactions mentioning 'overtime'") — **live
+  today**.
 - **Analytics & aggregations** over historical closes — spend trends, margin
   drift, cohort/period comparisons, supplier-concentration over time.
 - **Anomaly / outlier detection** on transactions and ratios (e.g. an employer-IKA
@@ -58,6 +64,7 @@ The point of CQRS here is **separation of concerns**: DynamoDB is optimal for th
 transactional write path and key reads; OpenSearch is optimal for search and
 analytics. Forcing search/analytics onto DynamoDB (scans, GSIs-for-everything) or
 swapping the whole tier to Aurora would each be the *wrong* tool for half the job.
-We ship the DynamoDB primary now because that's all the current access patterns
-need; OpenSearch enters exactly when search/analytics demand justifies the
-read-model — driven by a need, not added for show.
+DynamoDB is the primary because that's what the transactional access patterns
+need; the OpenSearch read-model is already live for search, and its analytics
+surface grows as the data volume justifies it — driven by a need, not added for
+show.

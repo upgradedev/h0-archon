@@ -3,8 +3,8 @@
 These PDFs belong to **ARCHON DEMO IKE**, a fully **fictional** Greek company.
 Every name, amount, IBAN, VAT/AFM number and date is **synthetic** — there is no
 real person, business or bank account behind any of them. They exist only to
-power the public live-extraction demo on `/extract` and the upload integration
-tests, so they are safe to commit, redistribute and screenshot.
+power the public read demo on `/extract`, the dashboard upload drop-zone, and the
+upload integration tests, so they are safe to commit, redistribute and screenshot.
 
 | File | Document type |
 |---|---|
@@ -21,12 +21,14 @@ tests, so they are safe to commit, redistribute and screenshot.
 > **Public demo: live uploads are globally capped at 10/day to bound AWS Bedrock
 > spend; the curated samples are always available.**
 
-The `/extract` drag-and-drop zone runs the **same live AWS Bedrock vision
-extraction** as the curated-sample path, but on whatever document you drop. To
-keep that public and free of abuse, the upload endpoint enforces a **global
-limit of 10 live extractions per calendar day** (a single atomic DynamoDB
-counter, TTL'd to expire automatically). When the cap is reached the endpoint
-returns HTTP 429 and the UI points you back to the always-on curated samples.
+The **dashboard's eight-agent run-ledger drop-zone** runs the **same live AWS
+Bedrock vision extraction** as the curated-sample path on `/extract`, but on
+whatever document you drop — the agents animate and the affected tiles flash with
+the recomputed (per-session) numbers. To keep that public and free of abuse, the
+upload endpoint enforces a **global limit of 10 live extractions per calendar
+day** (a single atomic DynamoDB counter, TTL'd to expire automatically). When the
+cap is reached the endpoint returns HTTP 429 and the UI points you back to the
+always-on curated samples.
 
 Uploaded documents are **ephemeral**: they are extracted for display only and are
 never written into the shared canonical monthly close.
