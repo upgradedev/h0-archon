@@ -17,6 +17,7 @@ import {
   Repeat,
   FileText,
   ShieldAlert,
+  ShieldCheck,
   Bot,
   Sparkles,
   Play,
@@ -35,6 +36,7 @@ const nav = [
   { id: "capital", label: "Working capital", icon: Repeat },
   { id: "statements", label: "Statements", icon: FileText },
   { id: "payroll", label: "Payroll", icon: ShieldAlert },
+  { id: "validation", label: "Validation", icon: ShieldCheck },
   { id: "agents", label: "Agents", icon: Bot },
   { id: "ask", label: "Ask Archon", icon: Sparkles },
 ]

@@ -1,0 +1,19 @@
+{
+  "name": "archon-indexer",
+  "version": "1.0.0",
+  "description": "CQRS stream processor: projects DynamoDB Streams changes into the OpenSearch read model via SigV4-signed requests.",
+  "type": "module",
+  "main": "index.mjs",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "comment": "All dependencies below are provided by the AWS Lambda nodejs20.x managed runtime, so they are NOT bundled into the deployment zip. They are listed for documentation and for local `npm install` if a future runtime stops vendoring them.",
+  "dependencies": {
+    "@aws-sdk/util-dynamodb": "^3.0.0",
+    "@aws-sdk/credential-provider-node": "^3.0.0",
+    "@aws-sdk/signature-v4": "^3.0.0",
+    "@aws-sdk/protocol-http": "^3.0.0",
+    "@aws-crypto/sha256-js": "^5.0.0"
+  }
+}
