@@ -1,4 +1,4 @@
-import type { AnalysisReport } from "./types";
+import type { AnalysisReport, ExtractedDocument } from "./types";
 import { round2 } from "./format";
 import financeData from "../data/sample-finance.json";
 
@@ -74,23 +74,74 @@ export interface BusinessIntelligence {
 // do not each recompute the full intelligence object.
 const biCache = new WeakMap<AnalysisReport, BusinessIntelligence>();
 
-export function buildBusinessIntelligence(report: AnalysisReport): BusinessIntelligence {
-  const cached = biCache.get(report);
-  if (cached) return cached;
-  const result = computeBusinessIntelligence(report);
-  biCache.set(report, result);
-  return result;
+export function buildBusinessIntelligence(
+  report: AnalysisReport,
+  // Per-session uploaded trade invoices (sales_invoice / purchase_invoice) folded
+  // into the close. Empty by default → byte-identical to the canonical output; the
+  // shared module imports (financeData.sales/purchases) are never mutated.
+  extraInvoices: ExtractedDocument[] = [],
+): BusinessIntelligence {
+  // Cache only the canonical (no-uploads) path — it is keyed by report identity,
+  // which uniquely determines the result. With uploaded invoices the result also
+  // depends on the invoices, so bypass the cache (recompute builds a fresh report
+  // each call, so this never duplicates work).
+  if (extraInvoices.length === 0) {
+    const cached = biCache.get(report);
+    if (cached) return cached;
+    const result = computeBusinessIntelligence(report, []);
+    biCache.set(report, result);
+    return result;
+  }
+  return computeBusinessIntelligence(report, extraInvoices);
 }
 
-function computeBusinessIntelligence(report: AnalysisReport): BusinessIntelligence {
-  const salesPerformance: SalesPerformance[] = financeData.sales;
+// The net (pre-VAT) amount is the P&L-relevant figure for an invoice; fall back to
+// the gross when net was not extracted. Zero/absent → contributes nothing.
+function invoiceAmount(doc: ExtractedDocument): number {
+  return round2(doc.net_amount ?? doc.gross_amount ?? 0);
+}
+
+function computeBusinessIntelligence(
+  report: AnalysisReport,
+  extraInvoices: ExtractedDocument[],
+): BusinessIntelligence {
+  // --- Sales: base ledger + any uploaded sales invoices. The uploaded rows carry
+  // the blended margin so they raise revenue without distorting weighted margin.
+  const baseSales: SalesPerformance[] = financeData.sales;
+  const baseRevenue = baseSales.reduce((sum, item) => sum + item.actual, 0);
+  const baseWeightedMargin =
+    baseRevenue === 0
+      ? 0
+      : round2(baseSales.reduce((sum, item) => sum + item.actual * item.marginPct, 0) / baseRevenue);
+  const uploadedSalesRows: SalesPerformance[] = extraInvoices
+    .filter((d) => d.doc_type === "sales_invoice")
+    .map((d): SalesPerformance => ({
+      owner: d.counterparty ?? "Uploaded customer",
+      segment: "Uploaded sale",
+      actual: invoiceAmount(d),
+      goal: invoiceAmount(d),
+      marginPct: baseWeightedMargin,
+    }))
+    .filter((row) => row.actual > 0);
+  const salesPerformance: SalesPerformance[] = [...baseSales, ...uploadedSalesRows];
   const revenue = round2(salesPerformance.reduce((sum, item) => sum + item.actual, 0));
   const goal = round2(salesPerformance.reduce((sum, item) => sum + item.goal, 0));
   const weightedMarginPct = round2(
     salesPerformance.reduce((sum, item) => sum + item.actual * item.marginPct, 0) / revenue
   );
 
-  const purchaseRaw = financeData.purchases;
+  // --- Purchases: base vendor invoices + any uploaded purchase invoices (spread,
+  // never mutate the shared import). Each uploaded purchase becomes its own COGS
+  // category, raising cost-of-purchase and reshaping concentration shares.
+  const uploadedPurchaseRows = extraInvoices
+    .filter((d) => d.doc_type === "purchase_invoice")
+    .map((d) => ({
+      category: d.counterparty ?? "Uploaded purchase",
+      vendor: d.counterparty ?? "Uploaded purchase",
+      amount: invoiceAmount(d),
+    }))
+    .filter((row) => row.amount > 0);
+  const purchaseRaw = [...financeData.purchases, ...uploadedPurchaseRows];
   const cogs = round2(purchaseRaw.reduce((sum, item) => sum + item.amount, 0));
   const purchaseCategories: PurchaseCategory[] = purchaseRaw.map((item) => {
     const sharePct = round2((item.amount / cogs) * 100);

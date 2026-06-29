@@ -25,9 +25,8 @@ export async function POST() {
       // Empty/embedded store — still make the canonical close searchable.
       reports = [await getOrCreateLatestReport()];
     }
-    const activities = await store.getActivityHistory(1000);
-    const indexed = await reindexAll(reports, activities);
-    return NextResponse.json({ indexed, reports: reports.length, activities: activities.length });
+    const indexed = await reindexAll(reports);
+    return NextResponse.json({ indexed, reports: reports.length });
   } catch (err) {
     const e = err as { message?: string; meta?: { statusCode?: number; body?: unknown } };
     const message = e?.message ?? "reindex failed";

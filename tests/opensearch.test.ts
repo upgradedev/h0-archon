@@ -3,9 +3,8 @@ import { describe, it } from "node:test";
 
 import samplePayroll from "../data/sample-payroll.json";
 import { extract, linkEvent, validate } from "../lib/pipeline";
-import type { AnalysisReport, AuditActivity } from "../lib/types";
+import type { AnalysisReport } from "../lib/types";
 import {
-  buildActivitySearchDoc,
   buildReportSearchDocs,
   buildSearchDocs,
   buildSearchQuery,
@@ -27,30 +26,18 @@ function fixtureReport(): AnalysisReport {
   };
 }
 
-function fixtureActivity(): AuditActivity {
-  return {
-    activity_id: "act-001",
-    kind: "intake",
-    summary: "5/5 uploaded finance documents classified",
-    details: {},
-    created_at: "2026-06-28T06:00:00.000Z",
-    db_mode: "aws-dynamodb",
-  };
-}
-
 describe("buildReportSearchDocs", () => {
-  it("emits exactly one report doc with a stable id and the canonical revenue", () => {
+  it("is documents-first: never emits a report or activity doc (only document/counterparty/employee)", () => {
     const report = fixtureReport();
     const docs = buildReportSearchDocs(report);
-    const reportDocs = docs.filter((d) => d.type === "report");
-    assert.equal(reportDocs.length, 1);
-    const doc = reportDocs[0];
-    assert.equal(doc.id, `report:${report.event.event_id}`);
-    assert.equal(doc.company, report.event.company);
-    assert.equal(doc.period, report.event.period);
-    assert.equal(doc.amount, 47200); // canonical revenue
-    assert.ok(doc.title.includes(report.event.company));
-    assert.ok((doc.summary ?? "").length > 0);
+    // The aggregated close (report) and the activity log are noise for "find a
+    // document" — they must NOT be indexed. (`type` cast to string: the narrowed
+    // SearchDocType union no longer contains these, which is exactly the point.)
+    const types = docs.map((d) => d.type as string);
+    assert.equal(types.filter((t) => t === "report").length, 0);
+    assert.equal(types.filter((t) => t === "activity").length, 0);
+    // Only the three findable kinds are produced, and at least one of each exists.
+    assert.deepEqual([...new Set(types)].sort(), ["counterparty", "document", "employee"]);
   });
 
   it("emits one employee doc per payslip, keyed by period+name", () => {
@@ -109,19 +96,16 @@ describe("buildReportSearchDocs", () => {
   });
 });
 
-describe("buildActivitySearchDoc / buildSearchDocs", () => {
-  it("maps an activity into a searchable doc", () => {
-    const doc = buildActivitySearchDoc(fixtureActivity());
-    assert.equal(doc.id, "activity:act-001");
-    assert.equal(doc.type, "activity");
-    assert.equal(doc.docType, "intake");
-    assert.equal(doc.title, "Document intake");
-  });
-
-  it("combines report and activity docs in one backfill set", () => {
-    const docs = buildSearchDocs({ reports: [fixtureReport()], activities: [fixtureActivity()] });
-    assert.ok(docs.some((d) => d.type === "report"));
-    assert.ok(docs.some((d) => d.type === "activity"));
+describe("buildSearchDocs", () => {
+  it("backfills documents-first records and excludes report/activity entirely", () => {
+    const docs = buildSearchDocs([fixtureReport()]);
+    assert.ok(docs.some((d) => d.type === "document"));
+    assert.ok(docs.some((d) => d.type === "counterparty"));
+    assert.ok(docs.some((d) => d.type === "employee"));
+    // Regression: search was crowded out by reports + "Ask Archon" activity logs.
+    const types = docs.map((d) => d.type as string);
+    assert.ok(!types.includes("report"));
+    assert.ok(!types.includes("activity"));
   });
 });
 
@@ -169,7 +153,7 @@ describe("mapSearchResponse", () => {
   it("maps total and derives subtitles per type", () => {
     const docs = buildReportSearchDocs(fixtureReport());
     const sample = [
-      docs.find((d) => d.type === "report")!,
+      docs.find((d) => d.type === "employee")!,
       docs.find((d) => d.type === "counterparty" && d.docType === "customer")!,
       docs.find((d) => d.type === "document")!,
     ];
@@ -180,8 +164,8 @@ describe("mapSearchResponse", () => {
     const customerHit = result.hits.find((h) => h.type === "counterparty");
     assert.equal(customerHit?.subtitle, "Customer");
 
-    const reportHit = result.hits.find((h) => h.type === "report");
-    assert.ok((reportHit?.subtitle ?? "").startsWith("Monthly close · "));
+    const employeeHit = result.hits.find((h) => h.type === "employee");
+    assert.ok((employeeHit?.subtitle ?? "").includes("employee"));
   });
 
   it("handles a numeric total shape", () => {

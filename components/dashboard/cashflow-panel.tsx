@@ -3,7 +3,8 @@
 import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import type { CashStep } from "@/lib/dashboard-vm"
 import { formatEUR } from "@/lib/format"
-import { ALL_PERIODS, useDashboardData, useDashboardPeriods } from "./data-context"
+import { cn } from "@/lib/utils"
+import { ALL_PERIODS, useDashboardData, useDashboardPeriods, useTileFlash } from "./data-context"
 import { Panel } from "./primitives"
 import { useMounted } from "./use-mounted"
 import { Waves } from "lucide-react"
@@ -51,6 +52,7 @@ const colorFor = (kind: string) =>
 export function CashflowPanel() {
   const { cashflow, cash, runwayMonths, monthlyFixedCost } = useDashboardData()
   const { selected } = useDashboardPeriods()
+  const flash = useTileFlash("cash")
   const isAggregate = selected === ALL_PERIODS
   const data = isAggregate ? buildMagnitude(cashflow) : buildWaterfall(cashflow)
   const runwayPct = Math.min((runwayMonths / 24) * 100, 100)
@@ -67,6 +69,7 @@ export function CashflowPanel() {
           ? "Summed flows across Jan–May; balances are period-end"
           : "Opening → collections → outflows → closing"
       }
+      className={cn(flash && "tile-flash")}
       icon={<Waves className="size-4" />}
       action={
         <span className="text-xs text-muted-foreground">

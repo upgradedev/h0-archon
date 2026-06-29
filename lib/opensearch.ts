@@ -13,9 +13,8 @@ import { Client } from "@opensearch-project/opensearch";
 import type { API } from "@opensearch-project/opensearch";
 import { AwsSigv4Signer } from "@opensearch-project/opensearch/aws";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
-import type { AnalysisReport, AuditActivity } from "./types";
+import type { AnalysisReport } from "./types";
 import {
-  buildActivitySearchDoc,
   buildReportSearchDocs,
   buildSearchDocs,
   buildSearchQuery,
@@ -112,8 +111,8 @@ const INDEX_MAPPING = {
 // Idempotent and tolerant of a concurrent creation race.
 //
 // NOTE: this is create-if-not-exists ONLY — it never drops an existing index, because
-// indexReportBestEffort / indexActivityBestEffort call it on every write and an
-// auto-drop would wipe the read-model. The folding analyzer + counterparty/company
+// indexReportBestEffort calls it on every write and an auto-drop would wipe the
+// read-model. The folding analyzer + counterparty/company
 // text fields are NOT compatible with an index created by an older revision, so after
 // deploying this change the index must be manually recreated:
 //   DELETE /<index>  then run the backfill (reindexAll) to repopulate.
@@ -167,13 +166,12 @@ export async function search(q: string, opts: SearchQueryOpts = {}): Promise<Sea
   return mapSearchResponse(response.body as unknown as SearchResponseBody);
 }
 
-// Full backfill: ensure the index then bulk-index every report + activity doc.
-export async function reindexAll(
-  reports: AnalysisReport[],
-  activities: AuditActivity[],
-): Promise<number> {
+// Full backfill: ensure the index then bulk-index the documents-first records for
+// every report (counterparties + employees + source documents). Reports and the
+// activity log are deliberately NOT indexed (see lib/search-model.ts).
+export async function reindexAll(reports: AnalysisReport[]): Promise<number> {
   await ensureIndex();
-  return bulkIndex(buildSearchDocs({ reports, activities }));
+  return bulkIndex(buildSearchDocs(reports));
 }
 
 // Best-effort on-write indexing. Swallows all errors so a search outage can never
@@ -186,15 +184,5 @@ export async function indexReportBestEffort(report: AnalysisReport): Promise<voi
     await bulkIndex(buildReportSearchDocs(report));
   } catch {
     // best-effort: search is a read-model, never the source of truth
-  }
-}
-
-export async function indexActivityBestEffort(activity: AuditActivity): Promise<void> {
-  if (!osConfigured()) return;
-  try {
-    await ensureIndex();
-    await bulkIndex([buildActivitySearchDoc(activity)]);
-  } catch {
-    // best-effort
   }
 }

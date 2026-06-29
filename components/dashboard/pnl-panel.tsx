@@ -2,7 +2,8 @@
 
 import { ResponsiveContainer, Sankey, Tooltip } from "recharts"
 import { formatEUR } from "@/lib/format"
-import { useDashboardData } from "./data-context"
+import { cn } from "@/lib/utils"
+import { useDashboardData, useTileFlash } from "./data-context"
 import { Panel } from "./primitives"
 import { useMounted } from "./use-mounted"
 import { Scale } from "lucide-react"
@@ -84,6 +85,7 @@ function SankeyLink(props: any) {
 
 export function PnlPanel() {
   const { pnl, opexBreakdown } = useDashboardData()
+  const flash = useTileFlash("pnl")
   const maxOpex = Math.max(...opexBreakdown.map((o) => o.value))
   const mounted = useMounted()
 
@@ -111,6 +113,7 @@ export function PnlPanel() {
     <Panel
       title="Profit & Loss"
       subtitle="Revenue → COGS → gross profit → opex → EBITDA"
+      className={cn(flash && "tile-flash")}
       icon={<Scale className="size-4" />}
       action={
         <span className="text-xs text-muted-foreground">
