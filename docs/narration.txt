@@ -6,8 +6,8 @@ On our sample books, the bank shows five thousand nine hundred fifty-seven euros
 
 Archon fixes this. You upload your documents, and a pipeline of agents reads each one, links the related documents into a single event, validates them, and reconciles the numbers. The Event Linker recognises that this bank transfer, this register, and these payslips are the same event, and reports the true figure. What took an accountant hours now takes seconds.
 
-Archon runs on the zero stack: Next.js on Vercel, with AWS DynamoDB and AWS Bedrock. The principle is simple — the AI reads, a deterministic engine computes. AWS Bedrock vision, running Claude Sonnet four-point-six, reads the scanned documents; we measured ninety-six point seven percent field accuracy. Then deterministic rules do the math, so every number is reproducible and auditable.
+Archon runs on the zero stack: Next.js on Vercel, with AWS DynamoDB and AWS Bedrock. The principle is simple — the AI reads, a deterministic engine computes. AWS Bedrock vision, running Claude Sonnet four-point-six, reads each document; we measured ninety-six point seven percent field accuracy. Then deterministic rules do the math, so every number is reproducible and auditable.
 
-The dashboard is live on AWS DynamoDB: revenue net of tax, true employer cost down to each employee, multi-period trends, and customer and supplier statements — and here is that exact data in the evidence API.
+The dashboard is live on AWS DynamoDB: net revenue, true employer cost down to each employee, multi-period trends, and customer and supplier statements — and here is that exact data in the evidence API.
 
 Three documents. One grounded financial truth. Measured, auditable, and shipped on the zero stack. Try it live.
