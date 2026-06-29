@@ -40,6 +40,7 @@ export interface SearchDoc {
   counterparty?: string;
   docType?: string;
   amount?: number;
+  date?: string; // ISO yyyy-mm-dd — set on individual invoice documents
 }
 
 // --- Result model (what the API + UI consume) ------------------------------
@@ -52,6 +53,7 @@ export interface SearchHit {
   snippet: string;
   amount?: number;
   period?: string;
+  date?: string;
 }
 
 export interface SearchResult {
@@ -177,15 +179,41 @@ export function buildReportSearchDocs(report: AnalysisReport): SearchDoc[] {
     });
   }
 
-  // Source documents present in this close (doc-type chips + invoice families).
+  // Individual invoices — one searchable DOCUMENT per invoice, carrying its number
+  // (title), date and amount. These replace the old per-invoice COUNT chips so a
+  // counterparty query ("hotel") surfaces the actual documents, not just a total.
+  for (const account of [...ledger.customers, ...ledger.suppliers]) {
+    const docTypeLabel = account.kind === "customer" ? "Sales invoice" : "Purchase invoice";
+    // For suppliers, account.name is the spend CATEGORY; resolve the real vendor (and
+    // its initialism) so a vendor-name query ("AWS"/"Anthropic") reaches the invoice the
+    // same way it already reaches the supplier counterparty record. Customers index as-is.
+    const vendor = account.kind === "supplier" ? categoryToVendor.get(account.name) ?? account.name : "";
+    const vendorTokens = account.kind === "supplier" ? ` ${vendor} ${acronym(vendor)}` : "";
+    for (const txn of account.invoices) {
+      docs.push({
+        id: `inv:${event.period}:${txn.id}`,
+        type: "document",
+        title: txn.id,
+        counterparty: account.name,
+        date: txn.date,
+        amount: txn.amount,
+        docType: docTypeLabel,
+        company: event.company,
+        period: event.period,
+        summary: `${account.name} · ${txn.date} · ${formatEUR(txn.amount)} · ${txn.status}`,
+        text: `${txn.id} ${txn.description} invoice ${account.name}${vendorTokens} ${account.kind} ${event.company} ${event.period}`,
+      });
+    }
+  }
+
+  // Source documents present in this close (doc-type chips). The per-invoice-COUNT
+  // chips (Sales/Purchase invoices) are intentionally NOT added here — the
+  // individual invoice documents above cover them. The other intake chips
+  // (Bank confirmation, Payroll register, Payslips, …) are kept as-is.
   const docChips: { label: string; count: number }[] = vm.documentIntake.map((chip) => ({
     label: chip.label,
     count: chip.count,
   }));
-  const customerInvoiceCount = ledger.customers.reduce((sum, c) => sum + c.invoices.length, 0);
-  const supplierInvoiceCount = ledger.suppliers.reduce((sum, s) => sum + s.invoices.length, 0);
-  if (customerInvoiceCount > 0) docChips.push({ label: "Sales invoices", count: customerInvoiceCount });
-  if (supplierInvoiceCount > 0) docChips.push({ label: "Purchase invoices", count: supplierInvoiceCount });
 
   for (const chip of docChips) {
     const filename = DOC_FILENAMES[chip.label] ?? "";
@@ -259,7 +287,9 @@ function subtitleFor(doc: SearchDoc): string {
     case "counterparty":
       return titleCase(doc.docType ?? "Counterparty");
     case "document":
-      return doc.docType ?? "Document";
+      // Individual invoices carry a date — show "<type> · <date>" so the number
+      // (title), type and date are all visible. Doc-type chips have no date.
+      return doc.date ? `${doc.docType ?? "Document"} · ${doc.date}` : doc.docType ?? "Document";
     case "employee":
       return doc.company ? `${doc.company} · employee` : "Employee";
     default:
@@ -281,6 +311,7 @@ export function mapSearchResponse(body: SearchResponseBody): SearchResult {
       snippet: source.summary ?? "",
       amount: source.amount,
       period: source.period,
+      date: source.date,
     };
   });
   return { total, hits };

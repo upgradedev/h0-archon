@@ -95,6 +95,7 @@ const INDEX_MAPPING = {
       id: { type: "keyword" },
       period: { type: "keyword" },
       docType: { type: "keyword" },
+      date: { type: "keyword" },
       // counterparty/company are now analyzed text (was keyword) so vendor-name and
       // accented queries fold-match; nothing filters/aggregates on them, only search.
       company: { type: "text", analyzer: "folding" },

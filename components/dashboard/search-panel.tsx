@@ -14,6 +14,7 @@ type Hit = {
   snippet: string
   amount?: number
   period?: string
+  date?: string
 }
 
 type SearchResponse = {
@@ -168,9 +169,18 @@ export function SearchPanel() {
                               {hit.snippet ? ` · ${hit.snippet}` : ""}
                             </p>
                           </div>
-                          {amount ? (
-                            <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
-                              {amount}
+                          {hit.date || amount ? (
+                            <span className="flex shrink-0 flex-col items-end">
+                              {amount ? (
+                                <span className="text-xs font-medium tabular-nums text-foreground">
+                                  {amount}
+                                </span>
+                              ) : null}
+                              {hit.date ? (
+                                <span className="text-[10px] tabular-nums text-muted-foreground">
+                                  {hit.date}
+                                </span>
+                              ) : null}
                             </span>
                           ) : null}
                         </li>
