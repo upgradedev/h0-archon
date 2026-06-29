@@ -100,6 +100,61 @@
   color: #fff;
 }
 
+/* --- Auth slot (GitHub sign in / avatar + sign out) ----------------------- */
+.site-nav-signin {
+  gap: 8px;
+  cursor: pointer;
+  background: transparent;
+  font-family: inherit;
+}
+
+.site-nav-gh-mark {
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-nav-user {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-nav-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.site-nav-username {
+  color: #e5e7eb;
+  font-weight: 600;
+  font-size: 14px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav-signout {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: #cbd5e1;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.site-nav-signout:hover {
+  border-color: #14b8a6;
+  color: #fff;
+}
+
 /* --- Large CTA buttons (reuse .primary/.secondary tokens) ------------------ */
 .primary.lg,
 .secondary.lg {

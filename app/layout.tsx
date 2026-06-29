@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SiteNav } from "./components/SiteNav";
+import { SiteNavAuth } from "./components/SiteNavAuth";
 import "./globals.css";
 import "./sota-ui.css";
 
@@ -17,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <SiteNav />
+        <SiteNav authSlot={<SiteNavAuth />} />
         {children}
         <Analytics />
       </body>

@@ -13,7 +13,7 @@ const LINKS = [
   { href: "/extract", label: "Live Extract" },
 ];
 
-export function SiteNav() {
+export function SiteNav({ authSlot }: { authSlot?: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -44,6 +44,7 @@ export function SiteNav() {
         >
           GitHub
         </a>
+        {authSlot}
       </nav>
     </header>
   );
