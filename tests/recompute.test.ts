@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { extract, linkEvent } from "../lib/pipeline";
+import { round2 } from "../lib/format";
 import { buildBusinessIntelligence } from "../lib/business";
 import { buildDashboardVM } from "../lib/dashboard-vm";
 import {
@@ -177,7 +178,7 @@ describe("buildBusinessIntelligence invoice folding", () => {
     const report = baseReport();
     const base = buildBusinessIntelligence(report, []);
     const withPurchase = buildBusinessIntelligence(report, [uploadedPurchase(1000)]);
-    assert.equal(withPurchase.pnl.cogs, base.pnl.cogs + 1000);
+    assert.equal(withPurchase.pnl.cogs, round2(base.pnl.cogs + 1000));
     assert.ok(withPurchase.pnl.ebitda < base.pnl.ebitda);
     // New vendor surfaces as its own purchase category.
     assert.ok(withPurchase.purchases.categories.some((c) => c.vendor === "New Vendor SA"));
