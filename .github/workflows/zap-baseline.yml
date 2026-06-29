@@ -1,0 +1,49 @@
+name: OWASP ZAP Baseline (DAST)
+
+# Dynamic Application Security Testing — a PASSIVE, non-intrusive baseline scan
+# of the LIVE app with the OWASP ZAP baseline profile.
+#
+# IMPORTANT: this scan hits PRODUCTION (https://h0-archon.vercel.app), so it is
+# deliberately NOT wired to push/PR. It runs only:
+#   - on manual dispatch (workflow_dispatch), and
+#   - on a weekly schedule.
+#
+# It is ADVISORY: fail_action is false, so a finding never blocks a merge or
+# deploy. Findings are published as a workflow artifact AND as a GitHub issue
+# for triage. Known-acceptable alerts are tuned out in .zap/rules.tsv.
+#
+# The baseline profile is passive only — it spiders and observes responses; it
+# does NOT send active attack payloads (no SQLi/XSS fuzzing against prod).
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 05:23 UTC, after the weekly CodeQL run.
+    - cron: "23 5 * * 1"
+
+# issues:write lets the ZAP action open/update its findings issue. Without it the
+# action throws when it tries to write the issue, regardless of fail_action.
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap-baseline:
+    name: ZAP baseline scan (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for .zap/rules.tsv)
+        uses: actions/checkout@v4
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://h0-archon.vercel.app"
+          rules_file_name: ".zap/rules.tsv"
+          # -a : also report alerts the passive scanner marks INFO/low-confidence.
+          cmd_options: "-a"
+          # Advisory only — report findings, never fail the job.
+          fail_action: false
+          # Open/update a tracking issue with the findings.
+          allow_issue_writing: true
+          artifact_name: "zap-baseline-report"
