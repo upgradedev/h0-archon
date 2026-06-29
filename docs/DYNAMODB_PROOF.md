@@ -31,7 +31,7 @@ key structure:
 
 | Record | `pk` | `sk` | Payload |
 |---|---|---|---|
-| Finance close report | `REPORT` | ISO `generated_at` | `report`, `event_id`, `created_at` |
+| Finance close report | `REPORT` | ISO `generated_at#event_id` | `report`, `event_id`, `created_at` |
 | Intake or Q&A activity | `ACTIVITY` | ISO `created_at#activity_id` | `activity`, `kind`, `summary`, `created_at` |
 
 This lets the app fetch:

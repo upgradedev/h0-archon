@@ -1,5 +1,12 @@
 # Archon H0 — Demo Video Script (< 3 minutes)
 
+> **Superseded — historical planning doc.** The canonical spoken script for the
+> recorded cut is **`docs/narration.txt`** (~2:55), and the canonical figures are
+> the **ARCHON DEMO IKE / January 2026** numbers (revenue €47,200, bank €3,994.74,
+> true employer cost €6,930, wedge €2,935.26). The example figures in the shot
+> table below are from an earlier cut and are kept only as a shot-by-shot visual
+> guide — defer to `narration.txt` and the live app for the actual numbers.
+
 **Target runtime:** 2:40–2:55 (hard cap 3:00 per Devpost rules).
 **One clean screen-recorded take. No slides — the live app is the proof.**
 **Prizes this script targets:** Best Technical Implementation · Most Impactful · B2B-track 1st.
@@ -23,7 +30,7 @@
 
 ## Voiceover (automated — ElevenLabs)
 
-The spoken narration lives in **`docs/narration.txt`** (one clean continuous take, ~2:45). To generate the MP3: edit that file to taste, then **Actions tab → "Generate Voiceover (ElevenLabs)" → Run workflow** (or `gh workflow run voiceover.yml`). It uses the `ELEVEN_LABS_KEY` repo secret and uploads `archon-voiceover-mp3` as an artifact. Optional inputs: `voice_id` (pick yours at elevenlabs.io → Voices) and `model_id`. Then screen-record the app silently per the shot list below and combine the two tracks (e.g. `ffmpeg -i screen.mp4 -i archon-voiceover.mp3 -c:v copy -c:a aac -shortest demo.mp4`).
+The spoken narration lives in **`docs/narration.txt`** (one clean continuous take, ~2:55). To generate the MP3: edit that file to taste, then **Actions tab → "Generate Voiceover (ElevenLabs)" → Run workflow** (or `gh workflow run voiceover.yml`). It uses the `ELEVEN_LABS_KEY` repo secret and uploads `archon-voiceover-mp3` as an artifact. Optional inputs: `voice_id` (pick yours at elevenlabs.io → Voices) and `model_id`. Then screen-record the app silently per the shot list below and combine the two tracks (e.g. `ffmpeg -i screen.mp4 -i archon-voiceover.mp3 -c:v copy -c:a aac -shortest demo.mp4`).
 
 The table below is the **visual shot guide**; the narration text is the canonical spoken script.
 
@@ -33,7 +40,7 @@ The table below is the **visual shot guide**; the narration text is the canonica
 |---|---|---|---|
 | **0:00–0:20** | **Hook (€314k / 28%)** | "Ask a small-business owner what payroll costs them, and they read their bank statement. That number is wrong. The bank shows €5,957 transferred — the true employer cost is €9,111. That's €3,154 hidden, every single month, and about 28% understatement just from employer social security. Across our test books it adds up to €314,000 of cost that bank-only bookkeeping never sees. Archon finds it." | T1 — live app first viewport; the payroll-truth card (€5,957 → €9,111, €3,154 hidden) visible |
 | **0:20–0:42** | **The product, the stack** | "Archon is a monthly finance close for small businesses, built entirely on the H0 zero stack: one Next.js app on Vercel, one AWS DynamoDB table. No servers to run. It's a full close — not just payroll." | T1 — scroll the dashboard: Revenue €96,800, EBITDA €20,889, sales goal attainment 96.8%, closing cash €58,789, purchase concentration (fresh produce 42.7% of COGS) |
-| **0:42–1:05** | **The agent flow** | "It runs a seven-step close — intake the documents, classify them, extract the fields, link the three payroll views into one event, validate, persist, and analyze. The design principle is one line: the AI reads the documents, deterministic rules compute the books. So extraction handles messy real inputs, and every reported number stays auditable." | T1 — click **Run Finance Close**; point at the seven-step run ledger and the document-intake panel |
+| **0:42–1:05** | **The agent flow** | "It runs an eight-agent close — Extractor reads the documents, Classifier types them, Event Linker fuses the three payroll views into one event, Validator cross-checks them, then PnL, CashFlow, Employee and Narrator compute and write the close. The design principle is one line: the AI reads the documents, deterministic rules compute the books. So extraction handles messy real inputs, and every reported number stays auditable." | T1 — click **Run Finance Close**; point at the eight-agent run ledger and the document-intake panel |
 | **1:05–1:35** | **★ Live AI extraction — 96.7% (Bedrock)** | "This isn't a mock. The reader is AWS Bedrock vision — Claude Sonnet 4.6 — running on real rendered PDFs. We measured it against a labelled corpus: 96.7% field-level accuracy, 100% document classification. And classification is content-only — the filename is never sent to the model. AWS reads; our rules compute." | T4 — **primary: a pre-captured terminal showing the harness run** (`npx tsx tests/live-extract-accuracy.ts eval/corpus/sample 5`) with the result table: 15/15 classification, 58/60 fields = 96.7%, model `eu.anthropic.claude-sonnet-4-6`, region eu-west-1. *Fallback if no terminal capture: `eval/LIVE_EXTRACTION.md`.* (Don't run it live on camera — cold-start/cost risk; capture the output beforehand.) |
 | **1:35–1:55** | **Fusion + validation** | "The truth is split across three documents — bank confirmation, payroll register, and payslips. Fusing them is where the hidden cost appears. Four cross-document rules prove the fusion is trustworthy: bank net matches the payslips, the employer-IKA ratio cross-checks against the register, dates agree, and the register headcount matches the payslips on file." | T1 — show R1–R4 passing; show the source-backed citations |
 | **1:55–2:10** | **Breadth: periods, statements, employees, Ask** | "It's a full close, not just payroll: switch reporting periods and watch the trends; open customer and supplier account statements down to the invoice; expand per-employee payroll detail; and ask the report a question in plain language." | T1 — click the **period selector** (Jan→May) so the **trend charts** move; open the **Account statements** panel and click a supplier → the **drill-down drawer**; expand **Per-employee breakdown** in Payroll; type *"What is the true payroll cost versus the bank statement?"*; (optional: flip **dark mode**) |

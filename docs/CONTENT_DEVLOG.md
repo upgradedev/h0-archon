@@ -1,3 +1,10 @@
+---
+title: "Five engineering decisions behind Archon on the Vercel + AWS zero stack"
+published: false
+tags: [webdev, aws, nextjs, ai]
+cover_image: # TODO: add cover image URL (e.g. the dashboard screenshot) before publishing
+---
+
 # Dev-log — Five engineering decisions behind Archon on the Vercel + AWS zero stack
 
 > Bonus content piece 3 of 3. Technical "how I built it" companion to the main
@@ -55,6 +62,16 @@ exactly what DynamoDB is built for. One table, two record types:
 no `Scan` anywhere in the data layer, no GSI. The ISO-timestamp sort-key prefix
 makes lexicographic order *be* chronological order.
 
+The read side is a deliberate CQRS split: a **DynamoDB-Streams → Lambda projector
+indexes into Amazon OpenSearch**, and that read-model is what powers
+documents-first search. A query like `hotel` returns the individual invoices
+first — each carrying its **document number and date**
+(`AR-HA-003-001 · Sales invoice · 2026-01-22 · Hotel Aegeon · €3,304 · paid`) —
+with vendors, people, and the counterparty aggregate after. DynamoDB stays the
+source of truth; OpenSearch never computes a number, and the aggregated close and
+Q&A logs are kept out of the index on purpose (they're noise when you want a
+source document).
+
 ## 3. The bug worth confessing: silent overwrite on the sort key
 
 The REPORT sort key started as just the timestamp. Two closes generated in the
@@ -81,16 +98,26 @@ implementations. DynamoDB + an in-process demo store is exactly that.
 ## 5. CI/CD that owns the whole path
 
 The pipeline isn't just tests. On every push it runs: gitleaks full-history
-secret scan + dependency audit → typecheck + the test pyramid (86% line coverage) + production build →
-deterministic pipeline evidence → **automated Vercel deploy** (gated on secrets,
-skips cleanly without them) → **post-deploy live smoke that hard-asserts
-`db_mode=aws-dynamodb`** and that intake/Q&A activity persists through DynamoDB.
-That last assertion means a deploy that lost its env var *fails* instead of
-silently shipping demo mode — the failure mode that would quietly invalidate the
-entire sponsor claim. And the infrastructure is codified to match: the DynamoDB
-table and stream, the scoped IAM, and a CQRS read-model on Amazon OpenSearch
-(fed by a DynamoDB-Streams → Lambda projector) all live in **Terraform**, so the
-data tier provisions or tears down with one command.
+secret scan + dependency audit → typecheck + the test pyramid (86% line coverage)
++ production build → deterministic pipeline evidence → CodeQL SAST → a **live smoke
+that hard-asserts `db_mode=aws-dynamodb`** and that intake/Q&A activity persists
+through DynamoDB, with a search hard-gate. That smoke assertion means a deploy
+that lost its env var gets *caught* instead of silently shipping demo mode — the
+failure mode that would quietly invalidate the entire sponsor claim. And the
+infrastructure is codified to match: the DynamoDB table and stream, the scoped
+IAM, and a CQRS read-model on Amazon OpenSearch (fed by a DynamoDB-Streams →
+Lambda projector) all live in **Terraform**, so the data tier provisions or tears
+down with one command.
+
+A war story from the deploy seam, because zero-stack still has seams: Vercel's
+Git integration is *supposed* to auto-deploy on push to `main`. Mid-build it
+started silently not picking up commits — the worst kind of failure, because
+nothing errors and the live site just quietly lags `main`. Rather than fight the
+integration under deadline, I added a one-button escape hatch: a manual
+`deploy-prod.yml` (`workflow_dispatch`) that runs `vercel pull → vercel build
+--prod → vercel deploy --prebuilt --prod` against the same `VERCEL_*` repo
+secrets. The lesson: even on a stack with "nothing to manage," own a manual
+deploy path so a flaky integration is an inconvenience, not an outage.
 
 ## The meta-lesson
 
@@ -99,7 +126,7 @@ a front end and a database, there's nowhere to hide. The differentiator isn't
 infrastructure — it's whether the numbers are correct, cited, reproducible, and
 continuously verified. For anything that touches money, that *is* the product.
 
-Live: https://h0-archon.vercel.app · ~2:45 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4 · Code (MIT): https://github.com/upgradedev/h0-archon
+Live: https://h0-archon.vercel.app · ~2:55 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4 · Code (MIT): https://github.com/upgradedev/h0-archon
 
 
 ---

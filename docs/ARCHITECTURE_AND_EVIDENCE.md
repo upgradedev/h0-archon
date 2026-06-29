@@ -25,21 +25,26 @@ flowchart LR
   Analysis --> Api["Next.js API routes"]
   Api --> Ui["Vercel dashboard"]
   Api --> Store{"Persistence mode"}
-  Store --> Dynamo["AWS DynamoDB"]
-  Store --> Aurora["AWS Aurora PostgreSQL"]
+  Store --> Dynamo["AWS DynamoDB (source of truth)"]
   Store --> Memory["Embedded demo memory store"]
+  Dynamo -. "Streams → Lambda (Terraform IaC)" .-> OS[("Amazon OpenSearch<br/>CQRS read-model · search")]
 ```
 
 ## Persistence Modes
 
-- `DYNAMODB_TABLE` or `AWS_DYNAMODB_TABLE`: serverless AWS DynamoDB path.
-- `DATABASE_URL`: Aurora PostgreSQL fallback using `db/schema.sql`.
+- `DYNAMODB_TABLE` or `AWS_DYNAMODB_TABLE`: serverless AWS DynamoDB path
+  (source of truth).
 - No database env vars: embedded demo mode, used by local tests and CI so judges
   can reproduce results without cloud credentials.
 - DynamoDB uses a single-table shape:
-  - `pk=REPORT`, `sk=<generated_at>` for finance-close reports.
+  - `pk=REPORT`, `sk=<generated_at>#<event_id>` for finance-close reports (the
+    `#event_id` suffix prevents two reports generated in the same millisecond from
+    silently overwriting each other).
   - `pk=ACTIVITY`, `sk=<created_at>#<activity_id>` for document-intake and
     ask-report activity.
+- `OPENSEARCH_ENDPOINT`: optional CQRS read-model — a DynamoDB-Streams → Lambda
+  projector indexes documents/counterparties/employees into Amazon OpenSearch for
+  documents-first search. DynamoDB stays the source of truth.
 
 See also:
 

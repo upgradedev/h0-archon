@@ -4,7 +4,7 @@
 
 <!-- Where to publish: Medium / personal blog. Lightly personalize the voice before posting. -->
 
-> **Live demo:** https://h0-archon.vercel.app · **~2:45 walkthrough:** https://h0-archon.vercel.app/archon-h0-demo.mp4 · **Code (MIT):** https://github.com/upgradedev/h0-archon
+> **Live demo:** https://h0-archon.vercel.app · **~2:55 walkthrough:** https://h0-archon.vercel.app/archon-h0-demo.mp4 · **Code (MIT):** https://github.com/upgradedev/h0-archon
 
 ## The problem: your books are split across documents that nobody reconciles
 
@@ -26,7 +26,7 @@ That is the whole product, generalized across purchases, sales, payments, receip
 
 The H0 premise is that you can build a production-shaped full-stack app with almost no infrastructure: a Vercel front end and one managed AWS database, nothing to provision, nothing to babysit. We took that literally.
 
-- **Front end + API:** a single Next.js 16 App Router project deployed on Vercel. The dashboard itself was scaffolded in **Vercel v0** and then wired to live data — Tailwind v4, framer-motion, and Recharts, with a dark-mode toggle — so the surface looks like a real product, not a hackathon stub. Every API route (`/api/report`, `/api/intake`, `/api/ask`, `/api/evidence`, `/api/history`, `/api/run`) is a Vercel Function.
+- **Front end + API:** a single Next.js 16 App Router project deployed on Vercel. The dashboard itself was scaffolded in **Vercel v0** and then wired to live data — Tailwind v4, framer-motion, and Recharts, with a dark-mode toggle — so the surface looks like a real product, not a hackathon stub. Every API route (`/api/report`, `/api/upload`, `/api/search`, `/api/ask`, `/api/evidence`, `/api/history`, `/api/run`) is a Vercel Function.
 - **Database:** **AWS DynamoDB**, accessed only from the server. The live deployment reports `db_mode: "aws-dynamodb"` straight out of `/api/report`, so the sponsor stack is verifiable in one `curl`.
 - **No server to manage:** Vercel Functions are stateless; all durable state — every finance-close report and every user interaction — lives in DynamoDB.
 
@@ -77,7 +77,9 @@ The dashboard is intentionally dense — a work surface, not a landing page. The
 
 Above all of it sits a **reporting-period selector** — January through May 2026, plus an "All periods" aggregate — with **trend line charts** that show revenue, cost, and the payroll wedge moving month to month. One honesty note I keep visible in the product: **January 2026 is the live extraction** (the documents Bedrock actually read this run); **February–May are clearly-labelled projected trends, and the customer/supplier account statements are sample data** — the dashboard carries a "Demo data" badge so nobody mistakes the illustrative history for a real close. The **customer and supplier statements** (AR/AP) let you click straight through to the underlying invoices, which is the drill-down an accountant actually wants.
 
-Driving it all is an **eight-stage agent run ledger** — Extractor → Classifier → Event Linker → Validator → PnL → CashFlow → Employee → Narrator — an "Ask Archon" panel that answers questions like *"What is the true payroll cost versus the bank statement?"* with citations back to the source documents, and a persisted activity trail backed by DynamoDB.
+Driving it all is an **eight-stage agent run ledger** — Extractor → Classifier → Event Linker → Validator → PnL → CashFlow → Employee → Narrator. The ledger is also where you *upload*: drop a PDF straight onto the tile and a **filename chip** tracks it live (`📄 <file> — reading… → read ✓ · <doc type> · <confidence>%`) while the eight agents light up in sequence and the **affected KPI tiles flash and refresh** with the recomputed numbers. It's a per-session "what-if" — your dropped document never overwrites the shared DynamoDB demo. (The separate `/extract` page is the curated-sample read demo, where Bedrock's extraction is scored against ground truth.) Alongside it sits an "Ask Archon" panel that answers questions like *"What is the true payroll cost versus the bank statement?"* with citations back to the source documents, and a persisted activity trail backed by DynamoDB.
+
+**Search is documents-first.** Type `hotel` and you get the actual invoices first — each with its **document number and date** (e.g. `AR-HA-003-001 · Sales invoice · 2026-01-22 · Hotel Aegeon · €3,304 · paid`) — then the vendors and people, with the counterparty aggregate last. It's powered by the OpenSearch CQRS read-model described below; the aggregated close and Q&A logs are deliberately left out of the index, because they're noise when you're hunting for a single source document. And for a first-time visitor there's a **"Take the tour"** button in the header — a driver.js walkthrough that steps through the KPIs, the agent ledger and upload, the payroll truth, completeness, and search.
 
 ## What "production in minutes" really bought us
 
@@ -85,17 +87,17 @@ The honest scorecard of the zero stack:
 
 - **Time-to-live** was dominated by writing product logic, not wiring infrastructure. The database was a table definition and four IAM actions (`PutItem`, `Query`, scoped to one ARN).
 - **Cost at demo scale is effectively zero** — two partitions, tiny items, DynamoDB on-demand billing, Vercel's serverless tier.
-- **The resilience story is real:** DynamoDB → Aurora PostgreSQL fallback → embedded-demo, chosen at runtime by which environment variables are present. The same code runs on a judge's laptop with no AWS account and in production against a real table.
+- **The resilience story is real:** the data layer chooses its backend at runtime by which environment variables are present — AWS DynamoDB when a table is configured, an embedded in-process store otherwise. The same code runs on a judge's laptop with no AWS account and in production against a real table.
 - **CI is a full pyramid:** typecheck, unit tests for the pipeline / data layer / insights model (**86% line coverage**), a production build, a deterministic pipeline run, and a live smoke test against the deployed Vercel + DynamoDB endpoints.
-- **The infrastructure is codified:** the whole AWS footprint lives in **Terraform** (`terraform/`) — the DynamoDB table and its stream, the scoped IAM grants, and a **CQRS read-model on Amazon OpenSearch** (fed by a DynamoDB-Streams → Lambda projector) for search and analytics at scale. The data tier reproduces — or tears down — with one command, which is the difference between a demo and something an auditor would trust.
+- **The infrastructure is codified:** the whole AWS footprint lives in **Terraform** (`terraform/`) — the DynamoDB table and its stream, the scoped IAM grants, and a **CQRS read-model on Amazon OpenSearch** (fed by a DynamoDB-Streams → Lambda projector) that powers the documents-first search above. DynamoDB stays the source of truth; OpenSearch is a projection, never the place a number is computed. The data tier reproduces — or tears down — with one command, which is the difference between a demo and something an auditor would trust.
 
 The lesson H0 is really teaching: when the stack collapses to "a front end and a database," the thing that differentiates a demo from a product isn't the infrastructure — it's whether your numbers are *correct, cited, and reproducible*. For a finance tool, that is the entire game.
 
-> *"We ran Archon on our own books at Reflective IKE — it pulled together the bank, payroll and invoices and told us in seconds that everything reconciled. That used to take our accountant the better part of a day."* — Founder, Reflective IKE
+> *"We ran Archon on our own books at ARCHON DEMO IKE — it pulled together the bank, payroll and invoices and told us in seconds that everything reconciled. That used to take our accountant the better part of a day."* — Founder, ARCHON DEMO IKE
 
 ---
 
-*Archon H0 is live at https://h0-archon.vercel.app (~2:45 walkthrough: https://h0-archon.vercel.app/archon-h0-demo.mp4) and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
+*Archon H0 is live at https://h0-archon.vercel.app (~2:55 walkthrough: https://h0-archon.vercel.app/archon-h0-demo.mp4) and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
 
 
 ---

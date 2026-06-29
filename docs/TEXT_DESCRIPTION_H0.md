@@ -24,7 +24,7 @@ On our demo books — **ARCHON DEMO IKE**, January 2026 — the bank shows **€
 
 Archon turns that pile of documents into one accurate, auditable monthly close — and it does the correlation for you.
 
-**Upload.** Drop your documents in — bank statements, payroll files, invoices — and Archon takes it from there.
+**Upload.** Drop your documents straight onto the dashboard's eight-agent run ledger — bank statements, payroll files, invoices — and watch the agents read, classify, link and recompute in sequence, with the affected tiles flashing as the numbers update. Archon takes it from there.
 
 **The agents correlate.** A pipeline of specialised agents reads every document, classifies it, links the related documents across types into a single financial event, validates them against each other, and reconciles the numbers.
 
@@ -44,7 +44,7 @@ The principle, in one line: **the AI reads the documents; a deterministic engine
 
 ## What you'll see in the live app
 
-Open the dashboard and it's live, reading real data from DynamoDB. Revenue is shown net of tax — actual income, not invoice face value. The payroll tile shows the true employer cost from the register, not the net bank transfer — and surfaces the wedge that's only visible once the documents are correlated. You can switch the **reporting period across January–May 2026**, watch the **trend lines** move, open **customer and supplier account statements** down to individual invoices, expand **per-employee** payroll detail, and flip the whole thing to **dark mode**. Every claim carries a source citation, and "Ask Archon" answers questions about the report in natural language.
+Open the dashboard and it's live, reading real data from DynamoDB. Revenue is shown net of tax — actual income, not invoice face value. The payroll tile shows the true employer cost from the register, not the net bank transfer — and surfaces the wedge that's only visible once the documents are correlated. You can switch the **reporting period across January–May 2026**, watch the **trend lines** move, open **customer and supplier account statements** down to individual invoices, expand **per-employee** payroll detail, and flip the whole thing to **dark mode**. Every claim carries a source citation, and "Ask Archon" answers questions about the report in natural language. **Search is documents-first** — type "hotel" and you get the actual invoices back, each with its document number and date (`AR-HA-003-001 · Sales invoice · 2026-01-22 · Hotel Aegeon · €3,304 · paid`), then vendors and people — powered by an Amazon OpenSearch read-model fed from DynamoDB. And a one-click **"Take the tour"** button walks first-time visitors through the whole dashboard.
 
 *(One honest note we put right on the screen: January is the live extracted close; the later months and the customer/supplier ledger are clearly labelled sample data, so nothing on the dashboard pretends to be more real than it is.)*
 
