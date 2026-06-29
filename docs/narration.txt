@@ -1,0 +1,17 @@
+Every month, a small business owner sits down to close their books. They have a bank statement. They have payroll documents. They have invoices, receipts, and tax filings. Each one tells a different version of the same month, and there is no obvious way to connect them.
+
+To know their true financial position, they have to correlate all of it by hand. Every single month.
+
+Here is the core problem. A single payroll event — paying your staff for the month — produces three documents that each tell only part of the story. The bank statement shows the net amounts that actually left the account. The payroll register holds the full employer cost — gross pay plus employer social-security contributions — the number that really belongs in your books. And the individual payslips break it down per employee. They describe the same event, but you cannot match them by amount alone. Most businesses just record the bank line, and their profit and loss quietly understates what payroll truly cost.
+
+On our sample books, the bank shows five thousand nine hundred fifty-seven euros going to staff. The true employer cost is nine thousand one hundred eleven. That gap never appears on the bank confirmation. Across our full test corpus, bank-only bookkeeping understated true cost by three hundred fourteen thousand euros.
+
+Archon fixes this. You upload your documents in any format. A pipeline of specialised agents reads every document, classifies it, links the related documents into a single financial event, validates them against each other, and reconciles the numbers. The agent we are proudest of is the Event Linker — it looks across document types and recognises that this bank transfer, this payroll register, and these payslips are all the same event, and fuses them into one true number. What used to take an accountant hours now takes seconds.
+
+Archon runs entirely on the zero stack: Next.js on Vercel, with AWS DynamoDB and AWS Bedrock. The principle is simple. The AI reads the documents; a deterministic engine computes the books. AWS Bedrock vision, running Claude Sonnet four-point-six, reads the raw scanned documents. We measured it against a labelled corpus: ninety-six point seven percent field accuracy, and one hundred percent document classification. Then a deterministic rules engine does the math — so every reported number is reproducible and auditable, with no language model inventing figures.
+
+Let me show you Archon in action. The dashboard is live, reading real data from AWS DynamoDB. Revenue is shown net of tax. The payroll panel shows the true employer cost from the register, not the net bank transfer, and names the gap most businesses miss — right down to per-employee detail. You can move across reporting periods and watch the trends, open customer and supplier account statements down to individual invoices, and ask the report a question in plain language.
+
+Everything persists to AWS DynamoDB, in a deliberate single-table design — report items for each close, activity items for every action, partitioned by record type. We chose DynamoDB because every read is a key-based lookup and it scales to zero, with no connection pool for stateless Vercel functions. Here is that exact data in the AWS console, matching the live app number for number.
+
+Seven specialised agents. Three payroll documents. One grounded financial truth — measured, auditable, and shipped on the zero stack. Try it live.
