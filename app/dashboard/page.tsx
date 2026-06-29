@@ -1,10 +1,11 @@
 import { dbMode } from "@/lib/db";
 import { runPipeline } from "@/lib/pipeline";
 import { getOrCreateLatestReport } from "@/lib/report-service";
-import { buildDashboardVM } from "@/lib/dashboard-vm";
+import { buildPeriodData } from "@/lib/demo-periods";
 import { DashboardDataProvider } from "@/components/dashboard/data-context";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { KpiRow } from "@/components/dashboard/kpi-row";
+import { TrendStrip } from "@/components/dashboard/trend-strip";
 import { PnlPanel } from "@/components/dashboard/pnl-panel";
 import { CashflowPanel } from "@/components/dashboard/cashflow-panel";
 import { SalesPanel } from "@/components/dashboard/sales-panel";
@@ -28,13 +29,17 @@ export default async function DashboardPage() {
     // fall back to a fresh, unpersisted deterministic run.
     report = await runPipeline(undefined, dbMode());
   }
-  const vm = buildDashboardVM(report);
+  const data = buildPeriodData(report);
 
   return (
-    <DashboardDataProvider value={vm}>
+    <DashboardDataProvider value={data}>
       <DashboardShell authSlot={<SiteNavAuth />}>
         <section id="overview" className="scroll-mt-24">
           <KpiRow />
+        </section>
+
+        <section id="trends" className="scroll-mt-24">
+          <TrendStrip />
         </section>
 
         <div className="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-2">

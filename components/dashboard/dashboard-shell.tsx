@@ -4,9 +4,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useDashboardData } from "./data-context"
+import { PeriodSelector } from "./period-selector"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
+  TrendingUp,
   Scale,
   Waves,
   Target,
@@ -23,6 +25,7 @@ import {
 
 const nav = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "trends", label: "Trends", icon: TrendingUp },
   { id: "pnl", label: "P&L", icon: Scale },
   { id: "cash", label: "Cash flow", icon: Waves },
   { id: "sales", label: "Sales", icon: Target },
@@ -160,9 +163,7 @@ export function DashboardShell({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="hidden items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:flex">
-                {period}
-              </div>
+              <PeriodSelector />
               <Button
                 variant={closeState === "done" ? "outline" : "default"}
                 size="lg"
