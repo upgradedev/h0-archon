@@ -23,7 +23,7 @@ export type Kpi = {
   label: string;
   value: number;
   display: "currency" | "percent" | "currencyCompact";
-  delta: number; // pct vs prior period (always 0 here — no prior period data)
+  delta: number; // pct vs prior period (0 from buildDashboardVM; demo-periods layers real MoM deltas)
   hint: string;
   emphasis?: "positive" | "warning";
 };
@@ -114,6 +114,9 @@ export type DashboardVM = {
     headcount: number;
     components: { name: string; value: number }[];
     hiddenBreakdown: { name: string; value: number }[]; // sums to `hidden`
+    // Per-employee roster from the fused event's payslips. Euro fields reconcile:
+    // sum(employerCost) ≈ trueEmployerCost.
+    employees: { name: string; gross: number; net: number; employerCost: number; employerIka: number }[];
   };
   documentIntake: DocChip[];
   agents: Agent[];
@@ -299,6 +302,15 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
       { name: "Employee IKA (withheld from gross)", value: event.employee_ika_total },
       { name: "Income tax withheld", value: event.tax_withheld_total },
     ],
+    // Per-employee detail straight off the fused payslips. employer_cost = gross +
+    // employer_ika, so sum(employerCost) reconciles to employer_cost_total.
+    employees: event.employees.map((e) => ({
+      name: e.name,
+      gross: e.gross,
+      net: e.net,
+      employerCost: e.employer_cost,
+      employerIka: e.employer_ika,
+    })),
   };
 
   // --- Document intake. Honest counts: only what the fused event proves.
@@ -308,21 +320,23 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
     { label: "Payslips", count: event.employee_count, status: "processed" },
   ];
 
-  // --- Agents. Reflects our real analysis pipeline (Classifier, PnL, CashFlow,
-  // Employee, Validator, Narrator). Confidence = share of validations that
-  // passed. The Validator is flagged only if any control failed. Durations are
-  // not fabricated.
+  // --- Agents. Reflects the real close pipeline end-to-end: read → classify →
+  // link → validate → analyze → narrate (lib/pipeline.ts: extract → linkEvent →
+  // validate → analysis). Confidence = share of validations that passed. The
+  // Validator is flagged only if any control failed. Durations are not fabricated.
   const passCount = report.validations.filter((validation) => validation.passed).length;
   const total = report.validations.length;
   const anyFailed = total > 0 && passCount < total;
   const passRate = total === 0 ? 100 : Math.round((passCount / total) * 100);
   const agents: Agent[] = [
-    { id: 1, name: "Classifier", role: "Re-classify document types", status: "done", duration: "—", items: event.linked_docs.length, confidence: passRate },
-    { id: 2, name: "PnL", role: "Aggregate P&L from register", status: "done", duration: "—", items: bi.pnl.lines.length, confidence: passRate },
-    { id: 3, name: "CashFlow", role: "Real cash from bank docs", status: "done", duration: "—", items: bi.cash.movements.length, confidence: passRate },
-    { id: 4, name: "Employee", role: "Per-employee salary analytics", status: "done", duration: "—", items: event.employee_count, confidence: passRate },
-    { id: 5, name: "Validator", role: "Cross-document consistency", status: anyFailed ? "flagged" : "done", duration: "—", items: total, confidence: passRate },
-    { id: 6, name: "Narrator", role: "CFO executive summary", status: "done", duration: "—", items: 1, confidence: passRate },
+    { id: 1, name: "Extractor", role: "AWS Bedrock vision reads each document", status: "done", duration: "—", items: event.linked_docs.length, confidence: passRate },
+    { id: 2, name: "Classifier", role: "Re-classify document types", status: "done", duration: "—", items: event.linked_docs.length, confidence: passRate },
+    { id: 3, name: "Event Linker", role: "Fuse bank + register + payslips into one event", status: "done", duration: "—", items: event.linked_docs.length, confidence: passRate },
+    { id: 4, name: "Validator", role: "Cross-document consistency", status: anyFailed ? "flagged" : "done", duration: "—", items: total, confidence: passRate },
+    { id: 5, name: "PnL", role: "Aggregate P&L from register", status: "done", duration: "—", items: bi.pnl.lines.length, confidence: passRate },
+    { id: 6, name: "CashFlow", role: "Real cash from bank docs", status: "done", duration: "—", items: bi.cash.movements.length, confidence: passRate },
+    { id: 7, name: "Employee", role: "Per-employee salary analytics", status: "done", duration: "—", items: event.employee_count, confidence: passRate },
+    { id: 8, name: "Narrator", role: "CFO executive summary", status: "done", duration: "—", items: 1, confidence: passRate },
   ];
 
   // --- Citations. Synthesized from real figures with real sources. (An

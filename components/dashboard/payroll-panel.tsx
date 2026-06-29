@@ -1,13 +1,16 @@
 "use client"
 
+import { useState } from "react"
 import { formatEUR } from "@/lib/format"
 import { useDashboardData } from "./data-context"
 import { Panel, Pill } from "./primitives"
-import { ShieldAlert } from "lucide-react"
+import { ChevronDown, ChevronRight, ShieldAlert } from "lucide-react"
 
 export function PayrollPanel() {
   const { payroll } = useDashboardData()
   const varianceCount = payroll.hiddenBreakdown.length
+  const [showEmployees, setShowEmployees] = useState(false)
+  const employees = payroll.employees
   return (
     <Panel
       title="Payroll controls"
@@ -59,6 +62,69 @@ export function PayrollPanel() {
           </div>
         ))}
       </div>
+
+      {employees.length > 0 && (
+        <div className="mt-3 border-t border-border/70 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowEmployees((v) => !v)}
+            aria-expanded={showEmployees}
+            className="flex w-full items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {showEmployees ? (
+              <ChevronDown className="size-3.5" />
+            ) : (
+              <ChevronRight className="size-3.5" />
+            )}
+            Per-employee breakdown ({employees.length})
+          </button>
+
+          {showEmployees && (
+            <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-border/70">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="border-b border-border/70 text-[11px] text-muted-foreground">
+                    <th className="px-2.5 py-1.5 text-left font-medium">Employee</th>
+                    <th className="px-2.5 py-1.5 text-right font-medium">Gross</th>
+                    <th className="px-2.5 py-1.5 text-right font-medium">Net</th>
+                    <th className="px-2.5 py-1.5 text-right font-medium">True employer cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map((e) => (
+                    <tr key={e.name} className="border-b border-border/40 last:border-0">
+                      <td className="truncate px-2.5 py-1.5 text-foreground">{e.name}</td>
+                      <td className="px-2.5 py-1.5 text-right tabular-nums text-muted-foreground">
+                        {formatEUR(e.gross)}
+                      </td>
+                      <td className="px-2.5 py-1.5 text-right tabular-nums text-muted-foreground">
+                        {formatEUR(e.net)}
+                      </td>
+                      <td className="px-2.5 py-1.5 text-right font-medium tabular-nums text-[var(--warning)]">
+                        {formatEUR(e.employerCost)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-border/70 font-semibold">
+                    <td className="px-2.5 py-1.5 text-left text-foreground">Total</td>
+                    <td className="px-2.5 py-1.5 text-right tabular-nums text-muted-foreground">
+                      {formatEUR(employees.reduce((s, e) => s + e.gross, 0))}
+                    </td>
+                    <td className="px-2.5 py-1.5 text-right tabular-nums text-muted-foreground">
+                      {formatEUR(employees.reduce((s, e) => s + e.net, 0))}
+                    </td>
+                    <td className="px-2.5 py-1.5 text-right tabular-nums text-[var(--warning)]">
+                      {formatEUR(payroll.trueEmployerCost)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </Panel>
   )
 }

@@ -49,6 +49,9 @@ function clone(vm: DashboardVM): DashboardVM {
 const kpiValue = (vm: DashboardVM, id: string): number =>
   vm.kpis.find((kpi) => kpi.id === id)?.value ?? 0;
 
+// Round to one decimal place (used for month-over-month percentage deltas).
+const round1 = (n: number): number => Math.round(n * 10) / 10;
+
 // Produce a scaled copy of the canonical VM for an earlier month. Every euro
 // figure is multiplied by `factor` and rounded to 2 decimals; every ratio,
 // count, and day-metric is left unchanged.
@@ -105,6 +108,15 @@ function scaleVM(base: DashboardVM, key: string, label: string, factor: number):
   p.hidden = s(p.hidden);
   p.components = p.components.map((c) => ({ ...c, value: s(c.value) }));
   p.hiddenBreakdown = p.hiddenBreakdown.map((c) => ({ ...c, value: s(c.value) }));
+  // Per-employee euro fields scale with the period; the roster (names/headcount)
+  // is a point-in-time fact and stays unchanged.
+  p.employees = p.employees.map((e) => ({
+    ...e,
+    gross: s(e.gross),
+    net: s(e.net),
+    employerCost: s(e.employerCost),
+    employerIka: s(e.employerIka),
+  }));
 
   // documentIntake counts, agents, citations, suggestedQuestions: unchanged.
   return vm;
@@ -203,7 +215,8 @@ function aggregateVMs(vms: DashboardVM[]): DashboardVM {
     pay.bankOutflow === 0 ? 0 : Math.round((pay.employerWedge / pay.bankOutflow) * 100);
   pay.hiddenPct =
     pay.trueEmployerCost === 0 ? 0 : Math.round((pay.hidden / pay.trueEmployerCost) * 100);
-  // headcount kept from latest period (cloned).
+  // headcount + per-employee roster kept from the latest period (cloned from
+  // `last`): a point-in-time roster, not a sum of headcounts across months.
 
   // --- KPIs: rebuild from the aggregated named scalars above.
   const aggNetCash = vm.cash.netMovement;
@@ -244,11 +257,32 @@ export function buildPeriodData(baseReport: AnalysisReport): PeriodData {
 
   const vmByPeriod: Record<string, DashboardVM> = {};
   for (const p of PERIODS) {
+    // May is the canonical VM; clone it so the month-over-month delta pass below
+    // mutates a copy and never touches `baseVM`. Other months are scaled clones.
     vmByPeriod[p.key] =
-      p.key === defaultPeriod ? baseVM : scaleVM(baseVM, p.key, p.label, p.factor);
+      p.key === defaultPeriod ? clone(baseVM) : scaleVM(baseVM, p.key, p.label, p.factor);
   }
 
+  // Aggregate BEFORE applying deltas so the "All periods" VM (cloned from the
+  // latest month inside aggregateVMs) carries no month-over-month delta.
   const aggregate = aggregateVMs(PERIODS.map((p) => vmByPeriod[p.key]));
+
+  // --- Real month-over-month KPI deltas. For each period after the first, set
+  // every KPI's delta to the percentage change vs the same KPI in the previous
+  // month. January (first) and the constant `accuracy` KPI stay at 0; a 0 delta
+  // renders nothing (the Delta primitive is sign-based). Percent-display KPIs
+  // (e.g. grossMargin) are invariant under uniform scaling, so their delta is
+  // ~0 — that is honest. These mutate the per-period clones only.
+  for (let i = 1; i < PERIODS.length; i++) {
+    const cur = vmByPeriod[PERIODS[i].key];
+    const prev = vmByPeriod[PERIODS[i - 1].key];
+    cur.kpis = cur.kpis.map((kpi) => {
+      if (kpi.id === "accuracy") return kpi; // constant — no meaningful trend
+      const prevKpi = prev.kpis.find((k) => k.id === kpi.id);
+      if (!prevKpi || prevKpi.value === 0) return kpi;
+      return { ...kpi, delta: round1(((kpi.value - prevKpi.value) / prevKpi.value) * 100) };
+    });
+  }
 
   const trends: TrendPoint[] = PERIODS.map((p) => {
     const vm = vmByPeriod[p.key];

@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import samplePayroll from "../data/sample-payroll.json";
 import { buildBusinessIntelligence } from "../lib/business";
 import { buildDashboardVM } from "../lib/dashboard-vm";
+import { round2 } from "../lib/format";
 import { extract, linkEvent, validate } from "../lib/pipeline";
 import type { AnalysisReport } from "../lib/types";
 
@@ -93,10 +94,35 @@ describe("buildDashboardVM named scalars", () => {
     assert.equal(breakdownSum, event.hidden_total);
   });
 
-  it("populates citations and the six-agent pipeline", () => {
+  it("exposes per-employee payroll that reconciles to the true employer cost", () => {
+    const report = fixtureReport();
+    const vm = buildDashboardVM(report);
+    // One row per payslip in the fused event.
+    assert.equal(vm.payroll.employees.length, vm.payroll.headcount);
+    assert.equal(vm.payroll.employees.length, report.event.employees.length);
+    // Sum of per-employee employer cost ≈ the headline true employer cost.
+    const employerCostSum = round2(
+      vm.payroll.employees.reduce((s, e) => s + e.employerCost, 0),
+    );
+    assert.ok(
+      Math.abs(employerCostSum - vm.payroll.trueEmployerCost) <= 0.02,
+      `sum(employerCost) ${employerCostSum} ≈ trueEmployerCost ${vm.payroll.trueEmployerCost}`,
+    );
+  });
+
+  it("populates citations and the eight-agent pipeline", () => {
     const vm = buildDashboardVM(fixtureReport());
     assert.ok(vm.citations.length > 0);
-    assert.equal(vm.agents.length, 6);
+    assert.equal(vm.agents.length, 8);
+    // ids are unique and run 1..8 in pipeline order.
+    assert.deepEqual(
+      vm.agents.map((a) => a.id),
+      [1, 2, 3, 4, 5, 6, 7, 8],
+    );
+    assert.deepEqual(
+      vm.agents.map((a) => a.name),
+      ["Extractor", "Classifier", "Event Linker", "Validator", "PnL", "CashFlow", "Employee", "Narrator"],
+    );
     assert.ok(vm.suggestedQuestions.length > 0);
   });
 
