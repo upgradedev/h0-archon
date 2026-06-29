@@ -1,11 +1,42 @@
-// Records a guided screen-capture tour of the live Archon app with Playwright.
-// The browser context records a webm; total wall-time ≈ TARGET_SECONDS so it can
-// be muxed against the ElevenLabs narration. Every interaction is best-effort
-// (wrapped in safe()) so a missing/renamed element never aborts the tour.
+// Records a beat-aligned screen-capture tour of the LIVE Archon app with Playwright.
+// The browser records a webm whose timeline is locked to FIXED absolute windows
+// (see BEATS below) so the burned captions in scripts/captions.txt and the
+// ElevenLabs voiceover (docs/narration.txt, ~161s) line up frame-for-frame.
+//
+// Crispness: we render at deviceScaleFactor 2 (supersampled text) and scroll the
+// target panel into the CENTER of the frame for emphasis — NO ffmpeg zoom/upscale
+// (that blurs and is not frame-verifiable).
+//
+// Every interaction is best-effort (wrapped in safe()) so a missing/renamed element
+// never aborts the tour — the timeline still lands on every beat.
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE_URL || "https://h0-archon.vercel.app";
-const TARGET = parseFloat(process.env.TARGET_SECONDS || "170");
+// Absolute end of the closing beat. The fixed beats below are anchored to the
+// caption file and never move; only the final close stretches to TARGET so the
+// recorded video is always at least as long as the (regenerated) voiceover.
+const TARGET = parseFloat(process.env.TARGET_SECONDS || "164");
+
+// The document dropped on the agent-ledger to drive the live Bedrock run.
+// CHOICE: a PURCHASE INVOICE (not the payslip). recomputeReport() MERGES uploads
+// into the canonical close: a payslip is replaced-by-employee-id (EMP-001 already
+// exists → identical merge → NO tile diff → no flash), and if its id parsed
+// differently it would ADD a 4th employee and CORRUPT the €6,930 payroll figure
+// shown in the very next beat. A purchase invoice folds in on TOP of the BI layer
+// → reliably flashes the P&L / cash / EBITDA tiles AND leaves the payroll event
+// untouched, so the payroll-truth beat still reads €3,994.74 / €6,930.
+// One-line swap if you prefer the payslip: docs/demo/payslip_emp001_202601.pdf
+const UPLOAD_DOC = "docs/demo/aws_invoice_202601.pdf";
+
+// Fixed absolute beat boundaries (seconds), matched 1:1 to scripts/captions.txt.
+const BEATS = {
+  LAND_END: 20, // 0–20  Problem — landing page
+  UPLOAD_END: 62, // 20–62 Upload centerpiece — drop doc, agents animate, tiles flash
+  PAYROLL_END: 99, // 62–99 Payroll truth — €3,994.74 / €6,930 / €2,935.26 wedge
+  SEARCH_END: 118, // 99–118 Completeness + search
+  HOOD_END: 159, // 118–159 Under the hood — 8 agents, citations, evidence API
+};
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const t0 = Date.now();
 const elapsed = () => (Date.now() - t0) / 1000;
@@ -18,7 +49,13 @@ async function safe(label, fn) {
   }
 }
 
-// Smoothly scroll the page to a target Y over `ms`.
+// Sleep until the tour clock reaches `sec` (no-op if we are already past it).
+async function waitUntil(sec) {
+  const ms = sec * 1000 - (Date.now() - t0);
+  if (ms > 0) await sleep(ms);
+}
+
+// Smoothly scroll the window to an absolute Y over `ms` (ease-in-out).
 async function smoothScrollTo(page, y, ms) {
   await page.evaluate(
     ([targetY, dur]) =>
@@ -28,7 +65,7 @@ async function smoothScrollTo(page, y, ms) {
         const start = performance.now();
         function step(now) {
           const p = Math.min((now - start) / dur, 1);
-          const eased = 0.5 - Math.cos(p * Math.PI) / 2; // ease-in-out
+          const eased = 0.5 - Math.cos(p * Math.PI) / 2;
           window.scrollTo(0, startY + dist * eased);
           if (p < 1) requestAnimationFrame(step);
           else res();
@@ -39,130 +76,165 @@ async function smoothScrollTo(page, y, ms) {
   );
 }
 
+// Smooth-scroll a section (by id) into the vertical CENTER of the frame.
+async function centerOn(page, id, ms = 1400) {
+  await page.evaluate(
+    ([sel, dur]) =>
+      new Promise((res) => {
+        const el = document.getElementById(sel);
+        if (!el) return res();
+        const rect = el.getBoundingClientRect();
+        const targetY = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+        const startY = window.scrollY;
+        const dist = targetY - startY;
+        const start = performance.now();
+        function step(now) {
+          const p = Math.min((now - start) / dur, 1);
+          const eased = 0.5 - Math.cos(p * Math.PI) / 2;
+          window.scrollTo(0, startY + dist * eased);
+          if (p < 1) requestAnimationFrame(step);
+          else res();
+        }
+        requestAnimationFrame(step);
+      }),
+    [id, ms],
+  );
+}
+
+// Gently oscillate the scroll around the current position until `untilSec` so the
+// frame is never frozen during a dwell (capability-per-second, not cinematics).
+async function dwellPan(page, untilSec, amplitude = 90) {
+  let dir = 1;
+  while (elapsed() < untilSec - 0.4) {
+    const y = Math.max(0, (await page.evaluate(() => window.scrollY)) + dir * amplitude);
+    await smoothScrollTo(page, y, 1800);
+    dir *= -1;
+    await sleep(500);
+  }
+}
+
 const browser = await chromium.launch();
 const ctx = await browser.newContext({
   viewport: { width: 1920, height: 1080 },
-  deviceScaleFactor: 1,
+  deviceScaleFactor: 2, // supersample text for crispness; record stays 1920×1080
   recordVideo: { dir: "video", size: { width: 1920, height: 1080 } },
 });
 const page = await ctx.newPage();
 
-// ---- 1. Landing (~22s) — problem + hero ----
+// ============================================================================
+// 0–20s — PROBLEM: the landing page. Slow smooth-scroll down and back to top.
+// ============================================================================
 await safe("goto landing", async () => {
   await page.goto(BASE, { waitUntil: "networkidle", timeout: 45000 });
 });
-await sleep(3500);
+await sleep(3000); // let the hero settle / mount
 await safe("scroll landing", async () => {
-  await smoothScrollTo(page, 900, 4000);
-  await sleep(1500);
-  await smoothScrollTo(page, 1900, 4000);
-  await sleep(1500);
-  await smoothScrollTo(page, 3000, 4000);
-  await sleep(1500);
-  await smoothScrollTo(page, 0, 1500);
+  await smoothScrollTo(page, 850, 3800);
+  await sleep(800);
+  await smoothScrollTo(page, 1750, 3800);
+  await sleep(800);
+  await smoothScrollTo(page, 2700, 3500);
+  await sleep(600);
+  await smoothScrollTo(page, 0, 1800);
 });
-await sleep(1500);
+await waitUntil(BEATS.LAND_END);
 
-// ---- 2. Dashboard overview (~25s) ----
+// ============================================================================
+// 20–62s — UPLOAD CENTERPIECE: go to the dashboard, center the 8-agent ledger,
+// drop a document on it, then HOLD while the agents animate and the tiles flash.
+// ============================================================================
 await safe("goto dashboard", async () => {
   await page.goto(BASE + "/dashboard", { waitUntil: "networkidle", timeout: 45000 });
 });
-await sleep(5000); // let count-ups + charts animate
-await safe("scroll kpis/pnl", async () => {
-  await smoothScrollTo(page, 700, 3500);
-  await sleep(3000);
-});
+await sleep(3500); // count-ups + charts animate, client components mount
 
-// ---- 3. Multi-period: switch periods, watch trends (~20s) ----
-await safe("period selector", async () => {
+// Pin the canonical month so on-screen figures match the narration.
+await safe("set period jan-2026", async () => {
   const sel = page.getByLabel(/reporting period/i).first();
-  await sel.scrollIntoViewIfNeeded();
-  await sleep(1000);
-  // Cycle a couple of months for the multi-period feel, but ALWAYS land back on
-  // January 2026 (the canonical authentic close) so on-screen figures match the
-  // narration (€3,994.74 / €6,930). Never end on the aggregate ("all"), which would show 5x sums.
-  for (const opt of ["2026-03", "2026-05", "2026-01"]) {
-    await safe("selectOption " + opt, async () => {
-      await sel.selectOption(opt);
-      await sleep(2500);
-    });
-  }
-});
-await safe("scroll to trends", async () => {
-  const trends = page.getByText(/trend/i).first();
-  await trends.scrollIntoViewIfNeeded();
-  await sleep(3000);
+  await sel.selectOption("2026-01");
+  await sleep(800);
 });
 
-// ---- 4. P&L Sankey + cash flow (~15s) ----
-await safe("scroll pnl/cash", async () => {
-  await smoothScrollTo(page, 1400, 3500);
-  await sleep(4000);
+// Center the run-ledger tile (#agents) — the centerpiece panel.
+await safe("center ledger", async () => {
+  await centerOn(page, "agents", 1600);
+  await sleep(800);
 });
 
-// ---- 5. Payroll controls + per-employee (~18s) ----
-await safe("payroll section", async () => {
-  await smoothScrollTo(page, 2300, 3500);
+// Drop the document onto the ledger's (hidden) file input → live Bedrock run.
+// On /dashboard this is the only <input type=file> (the /extract one is a separate page).
+await safe("upload document", async () => {
+  const input = page.locator('input[type="file"]').first();
+  await input.setInputFiles(UPLOAD_DOC);
+  console.log(`uploaded ${UPLOAD_DOC} at t=${elapsed().toFixed(1)}s`);
+});
+
+// Hold on the ledger while the eight agents fire (Extractor → … → Narrator).
+await safe("watch agents animate", async () => {
+  await dwellPan(page, 40, 60);
+});
+
+// Pan up to the KPI / P&L tiles to catch the flash + the updated values.
+await safe("show flashed tiles", async () => {
+  await centerOn(page, "overview", 1600);
   await sleep(2500);
-  const btn = page.getByRole("button", { name: /per-employee/i }).first();
-  await btn.scrollIntoViewIfNeeded();
-  await btn.click();
-  await sleep(4000);
+  await centerOn(page, "pnl", 1600);
 });
+await dwellPan(page, BEATS.UPLOAD_END, 80);
 
-// ---- 6. Account statements drill-down (~20s) ----
-await safe("statements", async () => {
-  const stmt = page.getByText(/account statements/i).first();
-  await stmt.scrollIntoViewIfNeeded();
+// ============================================================================
+// 62–99s — PAYROLL TRUTH: center the payroll panel; hold on the wedge figures.
+// ============================================================================
+await safe("center payroll", async () => {
+  await centerOn(page, "payroll", 1800);
+  await sleep(1500);
+});
+await dwellPan(page, BEATS.PAYROLL_END, 70);
+
+// ============================================================================
+// 99–118s — COMPLETENESS + SEARCH: the validation panel, then live search.
+// ============================================================================
+await safe("center validation", async () => {
+  await centerOn(page, "validation", 1800);
+});
+await dwellPan(page, 110, 60);
+await safe("live search", async () => {
+  const box = page
+    .getByPlaceholder(/search your uploaded documents/i)
+    .or(page.getByLabel(/search your uploaded documents/i))
+    .first();
+  await box.click();
+  await box.pressSequentially("invoice", { delay: 130 });
   await sleep(2500);
-  // open the first counterparty row → drawer
-  const row = page.locator("button").filter({ hasText: /€/ }).first();
-  await safe("open drawer", async () => {
-    await row.click();
-    await sleep(4500);
-    await page.keyboard.press("Escape");
-    await sleep(1000);
-  });
 });
+await dwellPan(page, BEATS.SEARCH_END, 40);
 
-// ---- 7. Dark mode toggle (~8s) ----
-await safe("dark mode", async () => {
-  const toggle = page.getByRole("button", { name: /theme|dark|light|toggle/i }).first();
-  await toggle.scrollIntoViewIfNeeded();
-  await toggle.click();
-  await sleep(3500);
-  await smoothScrollTo(page, 300, 2000);
+// ============================================================================
+// 118–159s — UNDER THE HOOD: the 8-agent ledger + citations, then the evidence API.
+// ============================================================================
+await safe("dismiss search", async () => {
+  await page.keyboard.press("Escape");
+});
+await safe("center agents + citations", async () => {
+  await centerOn(page, "agents", 1800);
   await sleep(2000);
 });
-
-// ---- 8. AWS DynamoDB proof via the public evidence API (~12s) ----
+await dwellPan(page, 144, 70);
 await safe("evidence api", async () => {
   await page.goto(BASE + "/api/evidence", { waitUntil: "networkidle", timeout: 30000 });
-  await sleep(6000);
+  await sleep(1000);
 });
+await waitUntil(BEATS.HOOD_END);
 
-// ---- Pad to TARGET with a gentle dashboard pan (no frozen frame) ----
-if (TARGET - elapsed() > 1) {
-  console.log(`padding ${(TARGET - elapsed()).toFixed(1)}s with a dashboard pan to reach ${TARGET}s`);
-  await safe("closing dashboard pan", async () => {
-    await page.goto(BASE + "/dashboard", { waitUntil: "networkidle", timeout: 30000 });
-    await sleep(1500);
-    let dir = 1;
-    let y = 0;
-    while (TARGET - elapsed() > 1.5) {
-      y += dir * 700;
-      if (y > 2600) {
-        y = 2600;
-        dir = -1;
-      } else if (y < 0) {
-        y = 0;
-        dir = 1;
-      }
-      await smoothScrollTo(page, Math.max(0, y), 2500);
-      await sleep(600);
-    }
-  });
-}
+// ============================================================================
+// 159s–end — CLOSE: back on the dashboard; gentle pan until the clock reaches TARGET.
+// ============================================================================
+await safe("close on dashboard", async () => {
+  await page.goto(BASE + "/dashboard", { waitUntil: "networkidle", timeout: 30000 });
+  await sleep(1500);
+  await centerOn(page, "overview", 1400);
+});
+await dwellPan(page, TARGET, 80);
 
 console.log(`tour wall-time: ${elapsed().toFixed(1)}s`);
 await ctx.close(); // flushes the webm
