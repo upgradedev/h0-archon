@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { track } from "@vercel/analytics"
 import { useDashboardData } from "./data-context"
 import { Panel } from "./primitives"
 import { Button } from "@/components/ui/button"
@@ -39,6 +40,8 @@ export function AskArchon() {
     setInput("")
     setPending(true)
     scrollToEnd()
+    // Analytics: a question was asked. No PII — the question text is NOT sent.
+    track("asked_archon")
     try {
       const res = await fetch("/api/ask", {
         method: "POST",

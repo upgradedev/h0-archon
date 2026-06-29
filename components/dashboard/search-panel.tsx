@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { track } from "@vercel/analytics"
 import { Search, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -67,6 +68,9 @@ export function SearchPanel() {
         const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`)
         const json = (await res.json()) as SearchResponse
         setData(json)
+        // Analytics: a search returned results. No PII — the query term is
+        // deliberately NOT included, only the hit count bucket.
+        track("opened_search", { hits: json.total })
       } catch {
         setData({ query: term, total: 0, hits: [], error: "Search is unavailable right now." })
       } finally {

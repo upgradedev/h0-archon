@@ -21,6 +21,9 @@ data "aws_iam_policy_document" "app" {
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:Query",
+      # UpdateItem powers the atomic daily upload rate-limit counter (lib/store.ts
+      # incrementDailyCounter — ADD on pk=RATELIMIT).
+      "dynamodb:UpdateItem",
     ]
     resources = [aws_dynamodb_table.reports.arn]
   }

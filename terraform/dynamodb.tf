@@ -34,6 +34,15 @@ resource "aws_dynamodb_table" "reports" {
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
+  # Auto-expire the per-day upload rate-limit counters (pk=RATELIMIT). The "ttl"
+  # attribute carries a Unix-epoch expiry written by lib/store.ts. Correctness of
+  # the cap does not depend on TTL (each day has its own date-keyed sk) — this
+  # just garbage-collects stale counter items.
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
   point_in_time_recovery {
     enabled = var.enable_point_in_time_recovery
   }

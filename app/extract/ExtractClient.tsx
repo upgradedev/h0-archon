@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ExtractedDocument } from "@/lib/types";
 import { ACCURACY_TABLE, SAMPLE_CASE, type ExtractApiResponse } from "./data";
+import { UploadDropzone } from "./UploadDropzone";
 
 const FIELD_LABELS: Record<string, string> = {
   bank_net_total: "Bank net total",
@@ -79,9 +80,11 @@ export function ExtractClient() {
         </p>
       </header>
 
+      <UploadDropzone />
+
       <section className="panel extract-picker">
         <div className="section-title">
-          <h3>1 · Choose a sample document</h3>
+          <h3>2 · Or choose a curated sample</h3>
           <span className="tag">{SAMPLE_CASE.company}</span>
         </div>
         <div className="doc-options">
@@ -124,8 +127,8 @@ export function ExtractClient() {
             <div className="section-title">
               <h3>
                 {result.mode === "live"
-                  ? "2 · Live Bedrock extraction"
-                  : "2 · Cached example (configure to run live)"}
+                  ? "3 · Live Bedrock extraction"
+                  : "3 · Cached example (configure to run live)"}
               </h3>
               <span className={`tag ${result.mode}`}>
                 {result.mode === "live" ? "LIVE · AWS Bedrock" : "CACHED"}
