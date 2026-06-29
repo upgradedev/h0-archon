@@ -175,35 +175,28 @@ async function fetchHistory(intakeActivityId: string, askActivityId: string) {
 // while the OpenSearch IAM grant is still pending (reindex/search return 403 until
 // the grant is applied).
 //
-// TODO: flip to hard-assert once the OpenSearch grant is applied (currently 403
-// until then). To gate the smoke on search, replace each `console.error(... FAIL
-// ...)` + `return` below with `throw new Error(...)` — a one-line change per check.
+// HARD GATE: the OpenSearch CQRS read-model must round-trip end to end (SigV4 →
+// index → query). The grant for the app principal is applied, so a failure here
+// is a real regression (auth, index, or query broken) and must fail the smoke.
 async function checkSearchRoundTrip(): Promise<void> {
-  try {
-    const reindexRes = await fetch(`${appBaseUrl}/api/search/reindex`, { method: "POST" });
-    if (!reindexRes.ok) {
-      console.error(`[search-smoke] FAIL (advisory): POST /api/search/reindex returned ${reindexRes.status}`);
-      return;
-    }
-    const reindex = (await reindexRes.json()) as { indexed?: number };
-    if (!reindex.indexed || reindex.indexed <= 0) {
-      console.error(`[search-smoke] FAIL (advisory): reindex indexed ${reindex.indexed ?? 0} documents (expected > 0)`);
-      return;
-    }
-    const searchRes = await fetch(`${appBaseUrl}/api/search?q=archon`, {
-      headers: { accept: "application/json" },
-    });
-    if (!searchRes.ok) {
-      console.error(`[search-smoke] FAIL (advisory): GET /api/search?q=archon returned ${searchRes.status}`);
-      return;
-    }
-    const result = (await searchRes.json()) as { total?: number };
-    console.log(
-      `[search-smoke] PASS: reindexed ${reindex.indexed} docs; search "archon" returned ${result.total ?? 0} hits`,
-    );
-  } catch (err) {
-    console.error(`[search-smoke] FAIL (advisory): ${err instanceof Error ? err.message : String(err)}`);
+  const reindexRes = await fetch(`${appBaseUrl}/api/search/reindex`, { method: "POST" });
+  if (!reindexRes.ok) {
+    throw new Error(`search-smoke: POST /api/search/reindex returned ${reindexRes.status}`);
   }
+  const reindex = (await reindexRes.json()) as { indexed?: number };
+  if (!reindex.indexed || reindex.indexed <= 0) {
+    throw new Error(`search-smoke: reindex indexed ${reindex.indexed ?? 0} documents (expected > 0)`);
+  }
+  const searchRes = await fetch(`${appBaseUrl}/api/search?q=archon`, {
+    headers: { accept: "application/json" },
+  });
+  if (!searchRes.ok) {
+    throw new Error(`search-smoke: GET /api/search?q=archon returned ${searchRes.status}`);
+  }
+  const result = (await searchRes.json()) as { total?: number };
+  console.log(
+    `[search-smoke] PASS: reindexed ${reindex.indexed} docs; search "archon" returned ${result.total ?? 0} hits`,
+  );
 }
 
 async function main() {
@@ -215,7 +208,7 @@ async function main() {
       const intake = await postIntake();
       const answer = await postAsk();
       const history = await fetchHistory(intake.activity_id || "", answer.activity_id || "");
-      // Advisory only — never gates the main smoke (see checkSearchRoundTrip).
+      // Hard gate — fails the smoke (and the deploy) if live search is down.
       await checkSearchRoundTrip();
       console.log(
         JSON.stringify(
