@@ -254,6 +254,78 @@
     "understatement_pct_of_bank": 66.62,
     "employer_ika_wedge_pct_of_bank": 32.31
   },
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2026-06.pdf",
+      "company": "Attica Bakeries OE",
+      "period": "2026-06",
+      "invoice_number": "SI-202606-0001",
+      "invoice_date": "2026-06-15",
+      "counterparty": "Lyra Hospitality OE",
+      "currency": "EUR",
+      "net_amount": 4474.5,
+      "vat_amount": 1073.88,
+      "vat_rate": 24.0,
+      "gross_amount": 5548.38,
+      "line_items": [
+        {
+          "description": "Online fulfilment batch",
+          "quantity": 35,
+          "unit_price": 65.5,
+          "amount": 2292.5
+        },
+        {
+          "description": "Private-label production run",
+          "quantity": 4,
+          "unit_price": 545.5,
+          "amount": 2182.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2026-06.pdf",
+      "company": "Attica Bakeries OE",
+      "period": "2026-06",
+      "invoice_number": "PI-202606-0002",
+      "invoice_date": "2026-06-15",
+      "counterparty": "Hellenic Power & Water",
+      "currency": "EUR",
+      "net_amount": 36186.0,
+      "vat_amount": 8684.64,
+      "vat_rate": 24.0,
+      "gross_amount": 44870.64,
+      "line_items": [
+        {
+          "description": "Dairy supplies",
+          "quantity": 31,
+          "unit_price": 72.5,
+          "amount": 2247.5
+        },
+        {
+          "description": "Cleaning consumables",
+          "quantity": 34,
+          "unit_price": 483.5,
+          "amount": 16439.0
+        },
+        {
+          "description": "Packaging materials",
+          "quantity": 37,
+          "unit_price": 372.0,
+          "amount": 13764.0
+        },
+        {
+          "description": "Cleaning consumables",
+          "quantity": 31,
+          "unit_price": 120.5,
+          "amount": 3735.5
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-bank-001": "bank_confirmation",
     "doc-register-001": "payroll_register",
@@ -267,7 +339,9 @@
     "doc-payslip-008": "payslip",
     "doc-payslip-009": "payslip",
     "doc-payslip-010": "payslip",
-    "doc-payslip-011": "payslip"
+    "doc-payslip-011": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-bank-001": "docs/bank_confirmation_2026-06.pdf",
@@ -282,6 +356,8 @@
     "doc-payslip-008": "docs/payslip_EMP-008_2026-06.pdf",
     "doc-payslip-009": "docs/payslip_EMP-009_2026-06.pdf",
     "doc-payslip-010": "docs/payslip_EMP-010_2026-06.pdf",
-    "doc-payslip-011": "docs/payslip_EMP-011_2026-06.pdf"
+    "doc-payslip-011": "docs/payslip_EMP-011_2026-06.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2026-06.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2026-06.pdf"
   }
 }

@@ -1,0 +1,8 @@
+# Corpus artifacts are binary. Without this, core.autocrlf=true rewrites LF->CRLF
+# on checkout (git classifies reportlab PDFs as "text" — they have no early NUL),
+# corrupting the PDF xref on fresh clones (Vercel/CI). That silently disabled the
+# live /extract Bedrock path. Marking them binary keeps bytes intact on checkout.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary

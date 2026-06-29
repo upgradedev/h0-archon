@@ -174,6 +174,84 @@
     "understatement_pct_of_bank": 37.21,
     "employer_ika_wedge_pct_of_bank": 25.01
   },
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2025-01.pdf",
+      "company": "Kriti Marine IKE",
+      "period": "2025-01",
+      "invoice_number": "SI-202501-0001",
+      "invoice_date": "2025-01-15",
+      "counterparty": "Meraki Cafe IKE",
+      "currency": "EUR",
+      "net_amount": 34743.0,
+      "vat_amount": 4516.59,
+      "vat_rate": 13.0,
+      "gross_amount": 39259.59,
+      "line_items": [
+        {
+          "description": "Seasonal promotion stock",
+          "quantity": 20,
+          "unit_price": 289.0,
+          "amount": 5780.0
+        },
+        {
+          "description": "Private-label production run",
+          "quantity": 7,
+          "unit_price": 816.5,
+          "amount": 5715.5
+        },
+        {
+          "description": "Seasonal promotion stock",
+          "quantity": 31,
+          "unit_price": 354.5,
+          "amount": 10989.5
+        },
+        {
+          "description": "Retail pallet delivery",
+          "quantity": 27,
+          "unit_price": 454.0,
+          "amount": 12258.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2025-01.pdf",
+      "company": "Kriti Marine IKE",
+      "period": "2025-01",
+      "invoice_number": "PI-202501-0002",
+      "invoice_date": "2025-01-15",
+      "counterparty": "Attica Growers Coop",
+      "currency": "EUR",
+      "net_amount": 7218.5,
+      "vat_amount": 1732.44,
+      "vat_rate": 24.0,
+      "gross_amount": 8950.94,
+      "line_items": [
+        {
+          "description": "Raw materials",
+          "quantity": 5,
+          "unit_price": 116.5,
+          "amount": 582.5
+        },
+        {
+          "description": "Spare components",
+          "quantity": 6,
+          "unit_price": 623.5,
+          "amount": 3741.0
+        },
+        {
+          "description": "Packaging materials",
+          "quantity": 10,
+          "unit_price": 289.5,
+          "amount": 2895.0
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-bank-001": "bank_confirmation",
     "doc-register-001": "payroll_register",
@@ -182,7 +260,9 @@
     "doc-payslip-003": "payslip",
     "doc-payslip-004": "payslip",
     "doc-payslip-005": "payslip",
-    "doc-payslip-006": "payslip"
+    "doc-payslip-006": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-bank-001": "docs/bank_confirmation_2025-01.pdf",
@@ -192,6 +272,8 @@
     "doc-payslip-003": "docs/payslip_EMP-003_2025-01.pdf",
     "doc-payslip-004": "docs/payslip_EMP-004_2025-01.pdf",
     "doc-payslip-005": "docs/payslip_EMP-005_2025-01.pdf",
-    "doc-payslip-006": "docs/payslip_EMP-006_2025-01.pdf"
+    "doc-payslip-006": "docs/payslip_EMP-006_2025-01.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2025-01.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2025-01.pdf"
   }
 }

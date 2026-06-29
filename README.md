@@ -56,9 +56,20 @@ npm run db:seed
 With no AWS env vars set, the app runs in an in-process demo store so the full
 pipeline and dashboard work locally with no database.
 
+## Pages
+
+- `/` — marketing landing (the value prop, hidden-28% hook, features, stack).
+- `/dashboard` — the full finance-close command center (the product).
+- `/extract` — live document extraction: pick a sample PDF, watch AWS Bedrock
+  vision read it, and see field accuracy scored against ground truth. Degrades
+  gracefully to a cached example when `BEDROCK_*` / AWS creds are not configured.
+
+A shared top nav links Home / Dashboard / Live Extract on every page.
+
 ## Judge Path
 
-1. Open `https://h0-archon.vercel.app`.
+1. Open `https://h0-archon.vercel.app` (landing), then click **Open the
+   dashboard** — or go straight to `https://h0-archon.vercel.app/dashboard`.
 2. Press **Run Finance Close**.
 3. Confirm the dashboard shows:
    - document intake with bank/sales/purchases/payroll coverage
@@ -91,6 +102,7 @@ pipeline and dashboard work locally with no database.
 - Judge evidence API: https://h0-archon.vercel.app/api/evidence
 - Submission package: `SUBMISSION.md`
 - AWS DynamoDB proof: `docs/DYNAMODB_PROOF.md`
+- Data-tier design + scale path (DynamoDB → CQRS + OpenSearch): `docs/ARCHITECTURE_SCALE.md`
 - v0 provenance checklist: `docs/V0_USAGE.md`
 - Architecture figure: `docs/figures/h0-architecture.svg`
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON

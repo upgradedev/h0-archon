@@ -108,16 +108,92 @@
     "understatement_pct_of_bank": 64.94,
     "employer_ika_wedge_pct_of_bank": 30.06
   },
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2026-07.pdf",
+      "company": "Kyklades Retail OE",
+      "period": "2026-07",
+      "invoice_number": "SI-202607-0001",
+      "invoice_date": "2026-07-15",
+      "counterparty": "Nautilus Stores IKE",
+      "currency": "EUR",
+      "net_amount": 9394.0,
+      "vat_amount": 1221.22,
+      "vat_rate": 13.0,
+      "gross_amount": 10615.22,
+      "line_items": [
+        {
+          "description": "Monthly distribution service",
+          "quantity": 22,
+          "unit_price": 273.0,
+          "amount": 6006.0
+        },
+        {
+          "description": "Wholesale order — dry goods",
+          "quantity": 14,
+          "unit_price": 132.0,
+          "amount": 1848.0
+        },
+        {
+          "description": "Monthly distribution service",
+          "quantity": 20,
+          "unit_price": 77.0,
+          "amount": 1540.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2026-07.pdf",
+      "company": "Kyklades Retail OE",
+      "period": "2026-07",
+      "invoice_number": "PI-202607-0002",
+      "invoice_date": "2026-07-15",
+      "counterparty": "Attica Growers Coop",
+      "currency": "EUR",
+      "net_amount": 18814.5,
+      "vat_amount": 2445.89,
+      "vat_rate": 13.0,
+      "gross_amount": 21260.39,
+      "line_items": [
+        {
+          "description": "Spare components",
+          "quantity": 3,
+          "unit_price": 683.0,
+          "amount": 2049.0
+        },
+        {
+          "description": "Cleaning consumables",
+          "quantity": 27,
+          "unit_price": 566.5,
+          "amount": 15295.5
+        },
+        {
+          "description": "Dairy supplies",
+          "quantity": 4,
+          "unit_price": 367.5,
+          "amount": 1470.0
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-bank-001": "bank_confirmation",
     "doc-register-001": "payroll_register",
     "doc-payslip-001": "payslip",
-    "doc-payslip-002": "payslip"
+    "doc-payslip-002": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-bank-001": "docs/bank_confirmation_2026-07.pdf",
     "doc-register-001": "docs/payroll_register_2026-07.pdf",
     "doc-payslip-001": "docs/payslip_EMP-001_2026-07.pdf",
-    "doc-payslip-002": "docs/payslip_EMP-002_2026-07.pdf"
+    "doc-payslip-002": "docs/payslip_EMP-002_2026-07.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2026-07.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2026-07.pdf"
   }
 }

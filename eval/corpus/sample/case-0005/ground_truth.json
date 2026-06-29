@@ -222,6 +222,66 @@
     "understatement_pct_of_bank": 52.54,
     "employer_ika_wedge_pct_of_bank": 27.8
   },
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2025-07.pdf",
+      "company": "Epirus Textiles AE",
+      "period": "2025-07",
+      "invoice_number": "SI-202507-0001",
+      "invoice_date": "2025-07-15",
+      "counterparty": "Delta Distribution OE",
+      "currency": "EUR",
+      "net_amount": 23013.0,
+      "vat_amount": 2991.69,
+      "vat_rate": 13.0,
+      "gross_amount": 26004.69,
+      "line_items": [
+        {
+          "description": "Catering contract",
+          "quantity": 21,
+          "unit_price": 648.0,
+          "amount": 13608.0
+        },
+        {
+          "description": "Wholesale order — dry goods",
+          "quantity": 11,
+          "unit_price": 855.0,
+          "amount": 9405.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2025-07.pdf",
+      "company": "Epirus Textiles AE",
+      "period": "2025-07",
+      "invoice_number": "PI-202507-0002",
+      "invoice_date": "2025-07-15",
+      "counterparty": "Aegean Dairy SA",
+      "currency": "EUR",
+      "net_amount": 5384.5,
+      "vat_amount": 1292.28,
+      "vat_rate": 24.0,
+      "gross_amount": 6676.78,
+      "line_items": [
+        {
+          "description": "Fresh produce",
+          "quantity": 11,
+          "unit_price": 79.5,
+          "amount": 874.5
+        },
+        {
+          "description": "Inbound logistics",
+          "quantity": 20,
+          "unit_price": 225.5,
+          "amount": 4510.0
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-bank-001": "bank_confirmation",
     "doc-register-001": "payroll_register",
@@ -233,7 +293,9 @@
     "doc-payslip-006": "payslip",
     "doc-payslip-007": "payslip",
     "doc-payslip-008": "payslip",
-    "doc-payslip-009": "payslip"
+    "doc-payslip-009": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-bank-001": "docs/bank_confirmation_2025-07.pdf",
@@ -246,6 +308,8 @@
     "doc-payslip-006": "docs/payslip_EMP-006_2025-07.pdf",
     "doc-payslip-007": "docs/payslip_EMP-007_2025-07.pdf",
     "doc-payslip-008": "docs/payslip_EMP-008_2025-07.pdf",
-    "doc-payslip-009": "docs/payslip_EMP-009_2025-07.pdf"
+    "doc-payslip-009": "docs/payslip_EMP-009_2025-07.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2025-07.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2025-07.pdf"
   }
 }

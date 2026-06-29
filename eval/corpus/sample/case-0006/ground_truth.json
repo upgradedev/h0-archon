@@ -158,6 +158,84 @@
     "understatement_pct_of_bank": 64.11,
     "employer_ika_wedge_pct_of_bank": 29.91
   },
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2026-10.pdf",
+      "company": "Kyklades Retail OE",
+      "period": "2026-10",
+      "invoice_number": "SI-202610-0001",
+      "invoice_date": "2026-10-15",
+      "counterparty": "Hellenic Retail Group AE",
+      "currency": "EUR",
+      "net_amount": 26703.0,
+      "vat_amount": 3471.39,
+      "vat_rate": 13.0,
+      "gross_amount": 30174.39,
+      "line_items": [
+        {
+          "description": "Wholesale order — dry goods",
+          "quantity": 26,
+          "unit_price": 849.0,
+          "amount": 22074.0
+        },
+        {
+          "description": "Retail pallet delivery",
+          "quantity": 6,
+          "unit_price": 751.5,
+          "amount": 4509.0
+        },
+        {
+          "description": "Seasonal promotion stock",
+          "quantity": 8,
+          "unit_price": 15.0,
+          "amount": 120.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2026-10.pdf",
+      "company": "Kyklades Retail OE",
+      "period": "2026-10",
+      "invoice_number": "PI-202610-0002",
+      "invoice_date": "2026-10-15",
+      "counterparty": "PackLine Hellas IKE",
+      "currency": "EUR",
+      "net_amount": 47407.5,
+      "vat_amount": 11377.8,
+      "vat_rate": 24.0,
+      "gross_amount": 58785.3,
+      "line_items": [
+        {
+          "description": "Utilities — power & water",
+          "quantity": 26,
+          "unit_price": 163.5,
+          "amount": 4251.0
+        },
+        {
+          "description": "Inbound logistics",
+          "quantity": 17,
+          "unit_price": 15.0,
+          "amount": 255.0
+        },
+        {
+          "description": "Raw materials",
+          "quantity": 37,
+          "unit_price": 783.0,
+          "amount": 28971.0
+        },
+        {
+          "description": "Fresh produce",
+          "quantity": 37,
+          "unit_price": 376.5,
+          "amount": 13930.5
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-bank-001": "bank_confirmation",
     "doc-register-001": "payroll_register",
@@ -165,7 +243,9 @@
     "doc-payslip-002": "payslip",
     "doc-payslip-003": "payslip",
     "doc-payslip-004": "payslip",
-    "doc-payslip-005": "payslip"
+    "doc-payslip-005": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-bank-001": "docs/bank_confirmation_2026-10.pdf",
@@ -174,6 +254,8 @@
     "doc-payslip-002": "docs/payslip_EMP-002_2026-10.pdf",
     "doc-payslip-003": "docs/payslip_EMP-003_2026-10.pdf",
     "doc-payslip-004": "docs/payslip_EMP-004_2026-10.pdf",
-    "doc-payslip-005": "docs/payslip_EMP-005_2026-10.pdf"
+    "doc-payslip-005": "docs/payslip_EMP-005_2026-10.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2026-10.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2026-10.pdf"
   }
 }

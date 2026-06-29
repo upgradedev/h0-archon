@@ -1,18 +1,23 @@
-import { ArchonDashboard } from "./components/ArchonDashboard";
-import { dbMode } from "@/lib/db";
-import { runPipeline } from "@/lib/pipeline";
-import { getOrCreateLatestReport } from "@/lib/report-service";
+import { SiteHeader } from "@/components/landing/site-header"
+import { Hero } from "@/components/landing/hero"
+import { MetricBand } from "@/components/landing/metric-band"
+import { Modules } from "@/components/landing/modules"
+import { AiCompute } from "@/components/landing/ai-compute"
+import { StackStrip } from "@/components/landing/stack-strip"
+import { CtaFooter } from "@/components/landing/cta-footer"
 
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  let report;
-  try {
-    report = await getOrCreateLatestReport();
-  } catch {
-    // A transient database error must never white-screen the judge demo:
-    // fall back to a fresh, unpersisted deterministic run.
-    report = await runPipeline(undefined, dbMode());
-  }
-  return <ArchonDashboard initialReport={report} />;
+export default function Page() {
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main>
+        <Hero />
+        <MetricBand />
+        <Modules />
+        <AiCompute />
+        <StackStrip />
+        <CtaFooter />
+      </main>
+    </div>
+  )
 }
