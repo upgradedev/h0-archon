@@ -14,8 +14,22 @@ export function dbMode(): DbMode {
   return currentDbMode();
 }
 
+// Fire-and-forget index into the OpenSearch read-model after a successful write.
+// Guarded by the endpoint env so the (server-only, heavy) client module is never
+// loaded — and no floating promise is created — when search is not configured.
+// Errors are swallowed: the read-model must never break the write path.
+function indexAfterWrite(run: (mod: typeof import("./opensearch")) => Promise<void>): void {
+  if (!process.env.OPENSEARCH_ENDPOINT) return;
+  void import("./opensearch")
+    .then((mod) => run(mod))
+    .catch(() => {
+      // best-effort
+    });
+}
+
 export async function persistReport(report: AnalysisReport): Promise<void> {
-  return getStore().persistReport(report);
+  await getStore().persistReport(report);
+  indexAfterWrite((mod) => mod.indexReportBestEffort(report));
 }
 
 export async function getLatestReport(): Promise<AnalysisReport | null> {
@@ -44,7 +58,9 @@ export async function persistActivity(input: {
     created_at: createdAt,
     db_mode: store.mode,
   });
-  return store.persistActivity(record);
+  const saved = await store.persistActivity(record);
+  indexAfterWrite((mod) => mod.indexActivityBestEffort(saved));
+  return saved;
 }
 
 export async function getActivityHistory(limit = 10): Promise<AuditActivity[]> {
