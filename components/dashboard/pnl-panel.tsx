@@ -15,22 +15,48 @@ const NODE_COLORS = [
   "var(--chart-3)",
 ]
 
-// Minimal custom node: a colored rounded rect with the node name + amount beside
-// it. Props are recharts geometry (typed broadly — recharts injects them).
+// Minimal custom node: a colored rounded rect with the node name as a label.
+// Props are recharts geometry (typed broadly — recharts injects them).
+//
+// This is a 3-column P&L Sankey: Revenue (left) → {COGS, Gross profit} (middle)
+// → {Operating expenses, EBITDA} (right). To keep all five labels clear of the
+// link ribbons we place them in the chart's margin gutters: the left column's
+// label sits to the LEFT of its node, the right column's to the RIGHT, and the
+// ambiguous middle column's labels are lifted ABOVE their nodes (into the
+// node-padding gap) so they never collide with the band crossing the centre.
 function SankeyNode(props: any) {
   const { x, y, width, height, index, payload, containerWidth } = props
   const color = NODE_COLORS[index % NODE_COLORS.length]
-  const isRightHalf = x + width / 2 > containerWidth / 2
-  const labelX = isRightHalf ? x - 6 : x + width + 6
-  const anchor = isRightHalf ? "end" : "start"
+  const cx = x + width / 2
+
+  let labelX = cx
+  let labelY = y + height / 2
+  let anchor: "start" | "middle" | "end" = "middle"
+  let baseline: "middle" | "auto" = "middle"
+  if (cx < containerWidth * 0.34) {
+    // Left column → label in the left gutter, ending just before the node.
+    labelX = x - 6
+    anchor = "end"
+  } else if (cx > containerWidth * 0.66) {
+    // Right column → label in the right gutter, starting just after the node.
+    labelX = x + width + 6
+    anchor = "start"
+  } else {
+    // Middle column → label above the node, centred, clear of the ribbons.
+    labelX = cx
+    labelY = y - 6
+    anchor = "middle"
+    baseline = "auto"
+  }
+
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} rx={2} fill={color} fillOpacity={0.95} />
       <text
         x={labelX}
-        y={y + height / 2}
+        y={labelY}
         textAnchor={anchor}
-        dominantBaseline="middle"
+        dominantBaseline={baseline}
         fontSize={11}
         fill="var(--foreground)"
       >
@@ -92,16 +118,16 @@ export function PnlPanel() {
         </span>
       }
     >
-      <div className="h-[200px] w-full">
+      <div className="h-[240px] w-full">
         {mounted ? (
           <ResponsiveContainer width="100%" height="100%">
             <Sankey
               data={sankeyData}
               node={<SankeyNode />}
               link={<SankeyLink />}
-              nodePadding={18}
-              nodeWidth={10}
-              margin={{ top: 8, right: 96, bottom: 8, left: 8 }}
+              nodePadding={30}
+              nodeWidth={14}
+              margin={{ top: 24, right: 120, bottom: 12, left: 64 }}
             >
               <Tooltip
                 formatter={(value: any) => formatEUR(Number(value) || 0, { compact: true })}

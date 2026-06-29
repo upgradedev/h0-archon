@@ -25,13 +25,43 @@ const kpi = (vm: ReturnType<typeof buildDashboardVM>, id: string): number =>
   vm.kpis.find((k) => k.id === id)?.value ?? 0;
 
 describe("multi-period demo data", () => {
-  it("keeps May byte-for-byte canonical", () => {
+  it("keeps May canonical except for real month-over-month KPI deltas", () => {
+    // buildPeriodData now layers REAL month-over-month deltas onto every period
+    // after January, so May carries non-zero deltas vs April. May is therefore no
+    // longer byte-for-byte identical to a fresh (delta-free) buildDashboardVM —
+    // but it must remain identical in every OTHER field. We assert that by
+    // zeroing May's KPI deltas and deep-comparing to the canonical VM.
     const report = fixtureReport();
     const data = buildPeriodData(report);
     const canonical = buildDashboardVM(report);
 
     assert.equal(data.defaultPeriod, "2026-05");
-    assert.deepEqual(data.vmByPeriod["2026-05"], canonical);
+
+    const may = data.vmByPeriod["2026-05"];
+    const mayDeltasZeroed = {
+      ...may,
+      kpis: may.kpis.map((k) => ({ ...k, delta: 0 })),
+    };
+    assert.deepEqual(mayDeltasZeroed, canonical);
+
+    // And the new behaviour is real: May's euro KPIs grow vs April (~+4.2%),
+    // while the constant accuracy KPI carries no trend.
+    const mayDelta = (id: string): number =>
+      may.kpis.find((k) => k.id === id)?.delta ?? 0;
+    assert.ok(mayDelta("revenue") > 0);
+    assert.ok(mayDelta("ebitda") > 0);
+    assert.ok(mayDelta("closingCash") > 0);
+    assert.equal(mayDelta("accuracy"), 0);
+  });
+
+  it("leaves January (first month) and the aggregate at zero KPI deltas", () => {
+    const data = buildPeriodData(fixtureReport());
+    for (const k of data.vmByPeriod["2026-01"].kpis) {
+      assert.equal(k.delta, 0);
+    }
+    for (const k of data.aggregate.kpis) {
+      assert.equal(k.delta, 0);
+    }
   });
 
   it("scales euro fields by the period factor", () => {
