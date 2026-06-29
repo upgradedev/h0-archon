@@ -104,6 +104,24 @@ A shared top nav links Home / Dashboard / Live Extract on every page.
    intake classification, conversational answers, persisted run and activity
    history, and sponsor-stack evidence.
 
+## Security
+
+Full posture, OWASP mapping, and threat model: **`docs/SECURITY.md`**.
+
+- **Scanning in CI** — gitleaks (secrets, blocking), `npm audit` (SCA, advisory),
+  **CodeQL** SAST (`.github/workflows/codeql.yml`), and an **OWASP ZAP** passive
+  baseline DAST against the live app (`.github/workflows/zap-baseline.yml`,
+  advisory / scheduled).
+- **OWASP Top 10 (2021)** and **OWASP LLM Top 10** reviewed item-by-item in
+  `docs/SECURITY.md` — injection-safe (parameterized DynamoDB + OpenSearch),
+  prompt-injection guardrail on the Bedrock extraction, deterministic engine
+  computes the numbers (the LLM only reads), ephemeral uploads.
+- **Security headers** on every route via `next.config.mjs`
+  (`X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS, and a report-only CSP).
+- **Open demo posture is intentional** (auth offered, not enforced) and documented;
+  enforcement scaffolding is one edit away in `middleware.ts`.
+
 ## Evidence
 
 - Public repo: https://github.com/upgradedev/h0-archon
