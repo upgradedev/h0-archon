@@ -12,6 +12,9 @@ paths = [
   '''\.env\.example$''',
   '''docs/.*\.md$''',
   '''README\.md$''',
+  # Fictional, anonymized demo PDFs (ARCHON DEMO IKE) — synthetic data, no real
+  # secrets. See docs/demo/README.md.
+  '''docs/demo/.*\.pdf$''',
 ]
 regexes = [
   # Empty / placeholder env values in the committed example file.

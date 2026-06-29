@@ -8,12 +8,15 @@
 // command shapes can be unit-tested without live AWS credentials.
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { AnalysisReport, AuditActivity } from "./types";
 import { normalizeActivity, normalizeReport } from "./normalize";
 
 const REPORT_PK = "REPORT";
 const ACTIVITY_PK = "ACTIVITY";
+// Partition for atomic daily counters (rate limiting). Kept off the REPORT /
+// ACTIVITY partitions so it never appears in report/activity queries.
+const RATELIMIT_PK = "RATELIMIT";
 
 export interface FinanceStore {
   readonly mode: AnalysisReport["db_mode"];
@@ -22,6 +25,9 @@ export interface FinanceStore {
   getReportHistory(limit: number): Promise<AnalysisReport[]>;
   persistActivity(record: AuditActivity): Promise<AuditActivity>;
   getActivityHistory(limit: number): Promise<AuditActivity[]>;
+  // Atomically add 1 to a named daily counter and return the new value.
+  // `ttlEpochSeconds` is written once (if absent) so the item self-expires.
+  incrementDailyCounter(key: string, ttlEpochSeconds: number): Promise<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +127,22 @@ export class DynamoStore implements FinanceStore {
       .filter((activity): activity is AuditActivity => Boolean(activity))
       .map((activity) => normalizeActivity({ ...activity, db_mode: "aws-dynamodb" }));
   }
+
+  async incrementDailyCounter(key: string, ttlEpochSeconds: number): Promise<number> {
+    // Atomic ADD: concurrent requests cannot race past the cap. The TTL is set
+    // only on first write (if_not_exists) so a re-increment never extends it.
+    const result = await this.client.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { pk: RATELIMIT_PK, sk: key },
+        UpdateExpression: "ADD #count :one SET #ttl = if_not_exists(#ttl, :ttl)",
+        ExpressionAttributeNames: { "#count": "count", "#ttl": "ttl" },
+        ExpressionAttributeValues: { ":one": 1, ":ttl": ttlEpochSeconds },
+        ReturnValues: "UPDATED_NEW",
+      })
+    );
+    return Number(result.Attributes?.count ?? 0);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -130,6 +152,7 @@ export class MemoryStore implements FinanceStore {
   readonly mode = "embedded-demo" as const;
   private reports: AnalysisReport[] = [];
   private activities: AuditActivity[] = [];
+  private counters = new Map<string, number>();
 
   async persistReport(report: AnalysisReport): Promise<void> {
     this.reports.push(normalizeReport(report));
@@ -153,6 +176,15 @@ export class MemoryStore implements FinanceStore {
 
   async getActivityHistory(limit: number): Promise<AuditActivity[]> {
     return this.activities.slice(-limit).reverse().map(normalizeActivity);
+  }
+
+  // In-process counter (no cloud DB configured). Resets on cold start; that is
+  // an acceptable degradation for the embedded demo — TTL is irrelevant here.
+  async incrementDailyCounter(key: string, _ttlEpochSeconds: number): Promise<number> {
+    void _ttlEpochSeconds;
+    const next = (this.counters.get(key) ?? 0) + 1;
+    this.counters.set(key, next);
+    return next;
   }
 }
 

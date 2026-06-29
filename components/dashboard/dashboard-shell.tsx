@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { track } from "@vercel/analytics"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useDashboardData } from "./data-context"
@@ -178,7 +179,10 @@ export function DashboardShell({
               <Button
                 variant={closeState === "done" ? "outline" : "default"}
                 size="lg"
-                onClick={() => setCloseState(closeState === "running" ? "running" : "running")}
+                onClick={() => {
+                  track("ran_finance_close")
+                  setCloseState("running")
+                }}
                 disabled={closeState === "running"}
               >
                 {closeState === "running" ? (

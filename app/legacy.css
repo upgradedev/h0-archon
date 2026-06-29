@@ -1445,6 +1445,99 @@ code {
   line-height: 1.5;
 }
 
+/* --- /extract upload drop zone -------------------------------------------- */
+.dropzone {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  padding: 30px 18px;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  background: var(--panel, #fff);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: #ecfeff;
+}
+
+.dropzone strong {
+  font-size: 15px;
+}
+
+.dropzone-hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.upload-cards {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.upload-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.upload-card.reading {
+  opacity: 0.75;
+}
+
+.upload-card.error {
+  border-color: var(--warn);
+}
+
+.upload-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.upload-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-verdict {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.link-verdict.complete {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.link-verdict.incomplete {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
 .employee-card {
   margin-top: 14px;
   padding-top: 14px;

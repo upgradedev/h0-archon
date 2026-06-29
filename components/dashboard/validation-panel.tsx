@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { track } from "@vercel/analytics"
 import type { ValidationResult } from "@/lib/types"
 import type { ValidationScenario } from "@/lib/tamper"
 import { useDashboardData } from "./data-context"
@@ -56,6 +57,7 @@ export function ValidationPanel() {
 
   async function enableStress() {
     setStress(true)
+    track("ran_stress_test")
     if (scenario || loading) return
     setLoading(true)
     setError(null)
