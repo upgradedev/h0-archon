@@ -2,28 +2,35 @@
 
 > Bonus content piece 3 of 3. Technical "how I built it" companion to the main
 > blog — engineering-decisions angle, distinct from the product story. Publish to
-> dev.to / Hashnode / Medium. ~700 words.
+> dev.to / Hashnode. ~700 words.
+<!-- Lightly personalize the voice before posting. -->
 
 The main write-up covers *what* Archon does (fuses small-business finance
-documents into an auditable monthly close, and surfaces the ~28% of payroll cost
-that the bank statement hides). This one is for engineers: the five decisions
-that made it clean rather than just working.
+documents into an auditable monthly close, and surfaces the employer's own IKA
+contribution — about **28% on top of the bank figure** — that appears on no
+document at all). The front end was scaffolded in **Vercel v0** and wired to live
+data; this post is for engineers: the five decisions that made the build clean
+rather than just working.
 
 ## 1. AI reads the documents; deterministic rules decide the numbers
 
 The obvious build for a "financial intelligence" app is to let one model read the
 documents *and* emit the numbers. I split it. A **vision model — AWS Bedrock,
-Claude Sonnet 4.6 — reads** the messy PDFs into structured fields (measured at
-**96.7% field accuracy** against a labelled corpus). But the P&L, cash, sales,
-purchase-concentration, and payroll-truth **math runs in a deterministic rules
-engine**, not a model — because a finance-close tool that returns a *different*
-answer each run is a liability, not a feature. Three properties fall out of the
-deterministic decision layer for free:
+`eu.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6) in `eu-west-1` — reads** the
+messy PDFs into structured fields (measured at **96.7% field-level accuracy
+(58/60)** and **100% classification (15/15)** against a labelled corpus, ≈ $0.17
+per run). But the P&L, cash, sales, purchase-concentration, and payroll-truth
+**math runs in a deterministic rules engine** — and so does the executive summary,
+which is generated from the computed figures, not written by an LLM — because a
+finance-close tool that returns a *different* answer each run is a liability, not a
+feature. Three properties fall out of the deterministic decision layer for free:
 
-- **Auditability** — every figure traces to a source document and a rule, and the
-  app emits citations for its claims.
+- **Auditability** — every figure traces to a source document (bank / register /
+  payslip) and a rule, and the app emits those citations for its claims.
 - **Reproducibility** — `npm run ci` produces identical numbers with no cloud
-  credentials, because the data layer falls back to an in-process store.
+  credentials, because the data layer falls back to an in-process store. (GitHub
+  OAuth is implemented but intentionally *non-gating*, so judges hit the live demo
+  with no login wall.)
 - **Trust** — four cross-document checks (bank-net ≈ payslip-net, employer-IKA in
   the Greek statutory band, payment-date consistency, headcount consistency)
   either pass or name the document that disagrees.
@@ -69,7 +76,7 @@ implementations. DynamoDB + an in-process demo store is exactly that.
 ## 5. CI/CD that owns the whole path
 
 The pipeline isn't just tests. On every push it runs: gitleaks full-history
-secret scan + dependency audit → typecheck + the test pyramid + production build →
+secret scan + dependency audit → typecheck + the test pyramid (86% line coverage) + production build →
 deterministic pipeline evidence → **automated Vercel deploy** (gated on secrets,
 skips cleanly without them) → **post-deploy live smoke that hard-asserts
 `db_mode=aws-dynamodb`** and that intake/Q&A activity persists through DynamoDB.
@@ -84,7 +91,7 @@ a front end and a database, there's nowhere to hide. The differentiator isn't
 infrastructure — it's whether the numbers are correct, cited, reproducible, and
 continuously verified. For anything that touches money, that *is* the product.
 
-Live: https://h0-archon.vercel.app · Code (MIT): https://github.com/upgradedev/h0-archon
+Live: https://h0-archon.vercel.app · 2:56 demo: https://h0-archon.vercel.app/archon-h0-demo.mp4 · Code (MIT): https://github.com/upgradedev/h0-archon
 
 
 ---
