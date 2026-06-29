@@ -10,7 +10,7 @@
 // a "use client" directive and must not import client-only code — the dashboard
 // page (a server component) calls buildDashboardVM() before rendering.
 
-import type { AnalysisReport } from "./types";
+import type { AnalysisReport, ValidationResult } from "./types";
 import { buildBusinessIntelligence } from "./business";
 import { round2, formatEUR, MONTHS, initials } from "./format";
 
@@ -121,6 +121,10 @@ export type DashboardVM = {
   documentIntake: DocChip[];
   agents: Agent[];
   citations: Citation[];
+  // Cross-document validation results (R1–R4) carried from the report so the
+  // trust panel can surface them. These are about document CONSISTENCY, not
+  // euros, so demo-periods carries them through every period unchanged.
+  validations: ValidationResult[];
   suggestedQuestions: string[];
 };
 
@@ -377,6 +381,12 @@ export function buildDashboardVM(report: AnalysisReport): DashboardVM {
     documentIntake,
     agents,
     citations,
+    validations: report.validations.map((v) => ({
+      rule: v.rule,
+      description: v.description,
+      passed: v.passed,
+      detail: v.detail,
+    })),
     suggestedQuestions,
   };
 }

@@ -15,6 +15,7 @@ import { StatementsPanel } from "@/components/dashboard/statements-panel";
 import { PayrollPanel } from "@/components/dashboard/payroll-panel";
 import { DocumentIntake } from "@/components/dashboard/document-intake";
 import { AgentLedger } from "@/components/dashboard/agent-ledger";
+import { ValidationPanel } from "@/components/dashboard/validation-panel";
 import { CitationsPanel } from "@/components/dashboard/citations-panel";
 import { AskArchon } from "@/components/dashboard/ask-archon";
 import { SiteNavAuth } from "@/app/components/SiteNavAuth";
@@ -74,6 +75,10 @@ export default async function DashboardPage() {
           </div>
           <DocumentIntake />
         </div>
+
+        <section id="validation" className="scroll-mt-24">
+          <ValidationPanel />
+        </section>
 
         <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-3">
           <div id="agents" className="scroll-mt-24">
