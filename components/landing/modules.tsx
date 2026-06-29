@@ -40,7 +40,7 @@ const modules = [
   {
     icon: Users,
     title: "Payroll controls",
-    body: "Gross-to-net checks that surface the hidden ~28% employer cost most teams forget to plan for.",
+    body: "Correlates the payroll register with the bank transfer, so the full employer cost — not just the net that left the account — lands in your books.",
   },
 ]
 

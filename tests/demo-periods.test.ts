@@ -25,33 +25,29 @@ const kpi = (vm: ReturnType<typeof buildDashboardVM>, id: string): number =>
   vm.kpis.find((k) => k.id === id)?.value ?? 0;
 
 describe("multi-period demo data", () => {
-  it("keeps May canonical except for real month-over-month KPI deltas", () => {
-    // buildPeriodData now layers REAL month-over-month deltas onto every period
-    // after January, so May carries non-zero deltas vs April. May is therefore no
-    // longer byte-for-byte identical to a fresh (delta-free) buildDashboardVM —
-    // but it must remain identical in every OTHER field. We assert that by
-    // zeroing May's KPI deltas and deep-comparing to the canonical VM.
+  it("keeps January canonical (the authentic month) byte-for-byte", () => {
+    // January is the authentic, real close (factor 1.0) and the FIRST month, so
+    // the month-over-month delta pass never touches it. It must therefore be
+    // byte-for-byte identical to a fresh buildDashboardVM. Later months are
+    // projected forward and carry real positive deltas.
     const report = fixtureReport();
     const data = buildPeriodData(report);
     const canonical = buildDashboardVM(report);
 
-    assert.equal(data.defaultPeriod, "2026-05");
+    assert.equal(data.defaultPeriod, "2026-01");
 
-    const may = data.vmByPeriod["2026-05"];
-    const mayDeltasZeroed = {
-      ...may,
-      kpis: may.kpis.map((k) => ({ ...k, delta: 0 })),
-    };
-    assert.deepEqual(mayDeltasZeroed, canonical);
+    const jan = data.vmByPeriod["2026-01"];
+    assert.deepEqual(jan, canonical);
 
-    // And the new behaviour is real: May's euro KPIs grow vs April (~+4.2%),
+    // And the forward projection is real: February's euro KPIs grow vs January,
     // while the constant accuracy KPI carries no trend.
-    const mayDelta = (id: string): number =>
-      may.kpis.find((k) => k.id === id)?.delta ?? 0;
-    assert.ok(mayDelta("revenue") > 0);
-    assert.ok(mayDelta("ebitda") > 0);
-    assert.ok(mayDelta("closingCash") > 0);
-    assert.equal(mayDelta("accuracy"), 0);
+    const feb = data.vmByPeriod["2026-02"];
+    const febDelta = (id: string): number =>
+      feb.kpis.find((k) => k.id === id)?.delta ?? 0;
+    assert.ok(febDelta("revenue") > 0);
+    assert.ok(febDelta("ebitda") > 0);
+    assert.ok(febDelta("closingCash") > 0);
+    assert.equal(febDelta("accuracy"), 0);
   });
 
   it("leaves January (first month) and the aggregate at zero KPI deltas", () => {
@@ -64,15 +60,15 @@ describe("multi-period demo data", () => {
     }
   });
 
-  it("scales euro fields by the period factor", () => {
+  it("scales euro fields forward by the period factor", () => {
     const data = buildPeriodData(fixtureReport());
-    const may = data.vmByPeriod["2026-05"];
-    const jan = data.vmByPeriod["2026-01"];
+    const may = data.vmByPeriod["2026-05"]; // projected forward, factor 1.18
+    const jan = data.vmByPeriod["2026-01"]; // canonical, factor 1.0
 
-    assert.equal(kpi(jan, "revenue"), round2(kpi(may, "revenue") * 0.82));
-    assert.equal(kpi(jan, "ebitda"), round2(kpi(may, "ebitda") * 0.82));
-    assert.equal(kpi(jan, "closingCash"), round2(kpi(may, "closingCash") * 0.82));
-    assert.equal(jan.payroll.hidden, round2(may.payroll.hidden * 0.82));
+    assert.equal(kpi(may, "revenue"), round2(kpi(jan, "revenue") * 1.18));
+    assert.equal(kpi(may, "ebitda"), round2(kpi(jan, "ebitda") * 1.18));
+    assert.equal(kpi(may, "closingCash"), round2(kpi(jan, "closingCash") * 1.18));
+    assert.equal(may.payroll.hidden, round2(jan.payroll.hidden * 1.18));
   });
 
   it("leaves percentages and ratios invariant under scaling", () => {

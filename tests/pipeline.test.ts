@@ -9,24 +9,22 @@ describe("payroll fusion pipeline", () => {
     const docs = extract(samplePayroll);
     const event = linkEvent(docs);
 
-    assert.equal(event.company, "Eleftheria Foods AE");
-    assert.equal(event.period, "2026-05");
-    assert.equal(event.employee_count, 5);
-    assert.equal(event.bank_net_total, 5956.67);
-    assert.equal(event.gross_total, 7450);
-    assert.equal(event.employer_ika_total, 1660.62);
-    assert.equal(event.employer_cost_total, 9110.62);
-    assert.equal(event.cost_gap_amount, 1660.62);
-    assert.equal(event.cost_gap_pct, 27.88);
-    assert.equal(event.hidden_total, 3153.95);
+    assert.equal(event.company, "ARCHON DEMO IKE");
+    assert.equal(event.period, "2026-01");
+    assert.equal(event.employee_count, 3);
+    assert.equal(event.bank_net_total, 3994.74);
+    assert.equal(event.gross_total, 5500);
+    assert.equal(event.employer_ika_total, 1430);
+    assert.equal(event.employer_cost_total, 6930);
+    assert.equal(event.cost_gap_amount, 1430);
+    assert.equal(event.cost_gap_pct, 35.8);
+    assert.equal(event.hidden_total, 2935.26);
     assert.deepEqual(event.linked_docs, [
       "doc-bank-001",
       "doc-register-001",
       "doc-payslip-001",
       "doc-payslip-002",
       "doc-payslip-003",
-      "doc-payslip-004",
-      "doc-payslip-005",
     ]);
   });
 
@@ -44,7 +42,7 @@ describe("payroll fusion pipeline", () => {
         ["R4", true],
       ]
     );
-    assert.match(results.find((result) => result.rule === "R3")?.detail ?? "", /2026-05-31/);
+    assert.match(results.find((result) => result.rule === "R3")?.detail ?? "", /2026-01-31/);
   });
 
   it("fails the payment-date validation when the extracted event omits it", () => {

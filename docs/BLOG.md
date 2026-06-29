@@ -1,26 +1,26 @@
-# The €3,154 your bank statement hides every month: building Archon on the Vercel + AWS "zero stack"
+# Are your books actually complete? Building Archon, a document-correlation engine, on the Vercel + AWS "zero stack"
 
-*A build log for the H0: Hack the Zero Stack hackathon — a v0-built Next.js front end on Vercel, AWS DynamoDB on the back, AWS Bedrock vision reading the documents, and a deterministic CFO engine keeping every number auditable.*
+*A build log for the H0: Hack the Zero Stack hackathon — a v0-built Next.js front end on Vercel, AWS DynamoDB on the back, AWS Bedrock vision reading the documents, and a deterministic CFO engine that correlates them and tells you whether every number reconciles.*
 
 <!-- Where to publish: Medium / personal blog. Lightly personalize the voice before posting. -->
 
-> **Live demo:** https://h0-archon.vercel.app · **2:56 walkthrough:** https://h0-archon.vercel.app/archon-h0-demo.mp4 · **Code (MIT):** https://github.com/upgradedev/h0-archon
+> **Live demo:** https://h0-archon.vercel.app · **~2:45 walkthrough:** https://h0-archon.vercel.app/archon-h0-demo.mp4 · **Code (MIT):** https://github.com/upgradedev/h0-archon
 
-## The problem nobody told the small-business owner about
+## The problem: your books are split across documents that nobody reconciles
 
-Ask a small-business owner in Greece what payroll costs them, and they will tell you the number on their bank statement: the net salary batch their bank transferred to employees. For our sample company, **Eleftheria Foods AE**, that number is **€5,956.67** for May 2026.
+Every month, a small-business owner closes their books from a pile of documents that never quite line up: a bank statement, payroll files, sales invoices, purchase invoices, receipts. Each describes a different part of the same month, and there is no obvious way to connect them. So they correlate it all by hand — every month.
 
-That number is wrong. The single biggest piece it omits — the **employer's** IKA contribution, which in Greece runs at about **22.29% of gross** and never appears on any document the company touches — adds **27.88% on top of the bank figure** by itself. That is the wedge nobody can see.
+**Archon is a document-collection and auto-correlation engine.** You hand it everything your business receives, and it gathers the documents, links the related ones into single financial events, and answers one question: *are your books complete and reconciled?*
 
-And the employer wedge is only part of it. The bank confirmation shows the *net cash that left the account*: it also strips out the employee tax withheld and the employee's own social-security (IKA) contribution. Stack all three back on — employer IKA, employee IKA, withheld tax — and the true monthly cost to the company is **€9,110.62**. The full reconciliation gap is **€3,153.95 every single month** — about **53% over the bank line** (and ~35% of the true cost), roughly €38,000 a year of real cost that naive bookkeeping silently drops on the floor.
+The clearest way to see why correlation matters is a single payroll event. It produces three documents that each tell only part of the story:
 
-This is not an exotic edge case. It is the default way a small business misreads its own payroll, because the truth is split across three documents that nobody ever reconciles:
-
-1. **The bank confirmation** — net cash transferred (understates everything).
-2. **The payroll register** — gross, taxes, employee IKA, *employer* IKA, true cost.
+1. **The bank confirmation** — the net cash that actually left the account.
+2. **The payroll register** — gross pay, taxes, employee IKA, *employer* IKA: the true cost to the company.
 3. **The individual payslips** — the per-employee breakdown.
 
-Archon's job is to fuse those three views into one accurate financial event, then build a CFO-grade monthly close on top of it. For H0, the question was: *how little stack do you need to ship that as a real product?*
+On the books of our demo company, **ARCHON DEMO IKE** (a small Athens software consultancy), the **January 2026** bank transfer to staff totals **€3,994.74**. The true employer cost — gross pay plus the employer's own IKA social-security contribution (26% of gross), the figure that belongs in the P&L — is **€6,930.00**. The difference is **€2,935.26**: employer IKA plus the employee IKA and tax withheld from gross. That is about **42% of the true cost**, roughly €35,000 a year — and it is *not a scandal*. It is the ordinary employer-IKA-and-tax wedge that a single-document, bank-only view simply never records. It only becomes visible because Archon **correlated the payroll register with the bank transfer**. Without the register, you would only ever see the bank line.
+
+That is the whole product, generalized across purchases, sales, payments, receipts, and payroll: collect every document, link the related ones into one event, and tell the owner whether the close is complete — or whether a document is missing. For H0, the question was: *how little stack do you need to ship that as a real product?*
 
 ## The "zero stack": v0/Vercel on the front, AWS databases on the back
 
@@ -55,27 +55,27 @@ The table also carries a clean upgrade path to multi-tenant — `TENANT#<id>#REP
 
 ## The deliberately boring analysis engine
 
-Here is the decision I expect to get questions about: **a vision model reads the documents, but no model decides your numbers.** Extraction uses **AWS Bedrock vision** (`eu.anthropic.claude-sonnet-4-6`, Claude Sonnet 4.6, in `eu-west-1`) to turn messy PDFs into structured fields — measured at **96.7% field-level accuracy (58/60)** and **100% document classification (15/15)** against a labelled corpus, at roughly **$0.17 per run**. But the CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll-truth finding — runs on a **deterministic finance rules engine**, not a model. Even the executive summary is generated deterministically from the computed figures, not written by an LLM. *AI reads; deterministic rules compute.*
+Here is the decision I expect to get questions about: **a vision model reads the documents, but no model decides your numbers.** Extraction uses **AWS Bedrock vision** (`eu.anthropic.claude-sonnet-4-6`, Claude Sonnet 4.6, in `eu-west-1`) to turn messy PDFs into structured fields — measured at **96.7% field-level accuracy (58/60)** and **100% document classification (15/15)** against a labelled corpus, at roughly **$0.17 per run**. But the CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll completeness check — runs on a **deterministic finance rules engine**, not a model. Even the executive summary is generated deterministically from the computed figures, not written by an LLM. *AI reads; deterministic rules compute.*
 
 That is a feature, not a shortcut. A finance-close tool that gives a *different* answer each time you run it is worse than useless; it is a liability. Determinism means:
 
 - **Auditability.** Every number traces to a source document and a rule. The app emits source citations for its claims.
 - **Reproducibility.** A judge — or an auditor — can run `npm run ci` with no cloud credentials and get the exact same figures, because the engine falls back to an in-process store in demo mode.
-- **Trust.** The four cross-document validation rules either pass or they don't:
-  - **R1** — bank net transfer ≈ sum of payslip net pay (±2%). *Pass: €5,956.67 vs €5,956.67.*
-  - **R2** — employer IKA ratio within the Greek statutory band. *Pass: 22.29% of gross.*
+- **Completeness.** The four cross-document checks either confirm the documents agree, or name the one that doesn't:
+  - **R1** — bank net transfer ≈ sum of payslip net pay (±2%). *Pass: €3,994.74 vs €3,994.74.*
+  - **R2** — employer IKA ratio within the Greek statutory band. *Pass: 26% of gross.*
   - **R3** — payment date present and consistent across documents.
   - **R4** — employee count consistent between register and payslips.
 
-If those four checks pass, the fused event is trustworthy. If one fails, you know exactly which document disagrees. That is the part a language model cannot give you.
+If those four checks pass, every document type is present, cross-linked, and reconciled — the close is complete. If one fails, you know exactly which document disagrees, and Archon withholds the close until it is reconciled. That is the part a language model cannot give you.
 
-And because that guarantee *is* the product, I made it something you can watch. The dashboard has a **stress-test**: it deliberately corrupts one extracted field — simulating the vision model mis-reading a document — and you see R1 flip to **FAILED** (*"bank €6,850 vs payslips €5,957 · Δ 15% — the bank confirmation disagrees with the payslips"*) and the report get **withheld for review** instead of published. The AI proposes; the deterministic engine refuses to be fooled. For a tool that touches money, "refuses to publish a number the documents don't agree on" is the feature that matters most.
+And because that completeness guarantee *is* the product, I made it something you can watch. The dashboard has a **stress-test**: it deliberately corrupts one extracted field — simulating a missing or mis-read document — and you see R1 flip to **FAILED** (*e.g. "bank €4,600 vs payslips €3,995 · Δ 15% — the bank confirmation disagrees with the payslips"*) and the report **withheld until reconciled** instead of published. The AI reads; the deterministic engine correlates and only releases a close once the documents are complete and agree. For a tool that touches money, "won't publish a close that doesn't reconcile" is the feature that matters most.
 
 ## What the judge (and the owner) actually sees
 
-The dashboard is intentionally dense — a work surface, not a landing page. The first viewport carries the whole monthly close: P&L revenue **€96,800**, EBITDA **€20,889**, sales-goal attainment **96.8%**, closing cash **€58,789**, a purchase-concentration risk flag (fresh produce at **42.7%** of COGS), and the payroll-truth finding front and center. A **P&L Sankey** traces revenue down through COGS and operating cost to EBITDA, and the payroll panel drills into a **per-employee breakdown** so you can see who the cost belongs to.
+The dashboard is intentionally dense — a work surface, not a landing page. The first viewport carries the whole monthly close: P&L revenue **€47,200**, EBITDA **€30,698** (a 65% margin), sales-goal attainment **101.5%**, closing cash **€79,498**, a supplier-concentration watch flag (AI-model spend at **28%** of COGS), and the payroll completeness panel front and center. A **P&L Sankey** traces revenue down through COGS and operating cost to EBITDA, and the payroll panel drills into a **per-employee breakdown** so you can see who the cost belongs to.
 
-Above all of it sits a **reporting-period selector** — January through May 2026, plus an "All periods" aggregate — with **trend line charts** that show revenue, cost, and the payroll gap moving month to month. One honesty note I keep visible in the product: **May 2026 is the live extraction** (the documents Bedrock actually read this run); **January–April, and the customer/supplier account statements, are clearly-labelled demo data** — the dashboard carries a "Demo data" badge so nobody mistakes the illustrative history for a real close. The **customer and supplier statements** (AR/AP) let you click straight through to the underlying invoices, which is the drill-down an accountant actually wants.
+Above all of it sits a **reporting-period selector** — January through May 2026, plus an "All periods" aggregate — with **trend line charts** that show revenue, cost, and the payroll wedge moving month to month. One honesty note I keep visible in the product: **January 2026 is the live extraction** (the documents Bedrock actually read this run); **February–May are clearly-labelled projected trends, and the customer/supplier account statements are sample data** — the dashboard carries a "Demo data" badge so nobody mistakes the illustrative history for a real close. The **customer and supplier statements** (AR/AP) let you click straight through to the underlying invoices, which is the drill-down an accountant actually wants.
 
 Driving it all is an **eight-stage agent run ledger** — Extractor → Classifier → Event Linker → Validator → PnL → CashFlow → Employee → Narrator — an "Ask Archon" panel that answers questions like *"What is the true payroll cost versus the bank statement?"* with citations back to the source documents, and a persisted activity trail backed by DynamoDB.
 
@@ -91,9 +91,11 @@ The honest scorecard of the zero stack:
 
 The lesson H0 is really teaching: when the stack collapses to "a front end and a database," the thing that differentiates a demo from a product isn't the infrastructure — it's whether your numbers are *correct, cited, and reproducible*. For a finance tool, that is the entire game.
 
+> *"We ran Archon on our own books at Reflective IKE — it pulled together the bank, payroll and invoices and told us in seconds that everything reconciled. That used to take our accountant the better part of a day."* — Founder, Reflective IKE
+
 ---
 
-*Archon H0 is live at https://h0-archon.vercel.app (2:56 walkthrough: https://h0-archon.vercel.app/archon-h0-demo.mp4) and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
+*Archon H0 is live at https://h0-archon.vercel.app (~2:45 walkthrough: https://h0-archon.vercel.app/archon-h0-demo.mp4) and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
 
 
 ---

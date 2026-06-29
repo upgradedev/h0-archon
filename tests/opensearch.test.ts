@@ -48,7 +48,7 @@ describe("buildReportSearchDocs", () => {
     assert.equal(doc.id, `report:${report.event.event_id}`);
     assert.equal(doc.company, report.event.company);
     assert.equal(doc.period, report.event.period);
-    assert.equal(doc.amount, 96800); // canonical revenue
+    assert.equal(doc.amount, 47200); // canonical revenue
     assert.ok(doc.title.includes(report.event.company));
     assert.ok((doc.summary ?? "").length > 0);
   });
@@ -73,7 +73,7 @@ describe("buildReportSearchDocs", () => {
     assert.ok(kinds.has("customer"));
     assert.ok(kinds.has("supplier"));
     for (const doc of counterparties) {
-      assert.ok(doc.id.startsWith(`cp:${"2026-05"}:`));
+      assert.ok(doc.id.startsWith(`cp:${"2026-01"}:`));
       assert.equal(typeof doc.counterparty, "string");
     }
   });

@@ -3,11 +3,19 @@
 Live app: https://h0-archon.vercel.app  
 Evidence CI: https://github.com/upgradedev/h0-archon/actions/workflows/h0-archon-ci.yml
 
-Archon H0 is the fast Vercel + AWS challenge build of Archon. It presents an
-SMB finance intelligence command center: P&L, account-statement movement, sales
-performance versus goals, purchase concentration, and payroll controls. Payroll
-is still an important finding, but it is one control inside the full monthly
-finance close.
+Archon H0 is the fast Vercel + AWS challenge build of Archon. Archon is a
+**document-collection and auto-correlation engine**: it gathers every document a
+business receives — purchases, sales, payments, receipts, payroll — links the
+related ones into single financial events, and tells you whether your books are
+**complete and reconciled**. On top of that it presents an SMB finance command
+center: P&L, account-statement movement, sales performance versus goals,
+purchase concentration, and payroll controls. The payroll example — where the
+true employer cost (€6,930) is only visible once the register is correlated with
+the bank transfer (€3,994.74) — is one illustration of the correlation, not a
+"gotcha": it is the ordinary employer-IKA-and-tax wedge that a single-document
+view never records.
+
+> *"We ran Archon on our own books at Reflective IKE — it pulled together the bank, payroll and invoices and told us in seconds that everything reconciled. That used to take our accountant the better part of a day."* — Founder, Reflective IKE
 
 **Auth posture — demonstrated, not gatekeeping.** GitHub OAuth (NextAuth v5) is a
 real, working capability: you can sign in, a session is issued and verified, and
@@ -63,7 +71,7 @@ pipeline and dashboard work locally with no database.
 
 ## Pages
 
-- `/` — marketing landing (the value prop, hidden-28% hook, features, stack).
+- `/` — marketing landing (the value prop, completeness/correlation hook, features, stack).
 - `/dashboard` — the full finance-close command center (the product).
 - `/extract` — live document extraction: pick a sample PDF, watch AWS Bedrock
   vision read it, and see field accuracy scored against ground truth. Degrades
@@ -78,16 +86,16 @@ A shared top nav links Home / Dashboard / Live Extract on every page.
 2. Press **Run Finance Close**.
 3. Confirm the dashboard shows:
    - document intake with bank/sales/purchases/payroll coverage
-   - seven-agent run ledger
-   - P&L revenue: EUR 96,800
-   - EBITDA: EUR 20,889
-   - sales goal attainment: 96.8%
-   - closing cash: EUR 58,789
-   - purchase concentration risk: fresh produce at 42.7% of COGS
-   - bank confirmation: EUR 5,957
-   - true employer cost: EUR 9,111
-   - hidden wedge: EUR 3,154
-   - employer IKA gap: 27.9%
+   - eight-agent run ledger
+   - P&L revenue: EUR 47,200
+   - EBITDA: EUR 30,698 (65% margin)
+   - sales goal attainment: 101.5%
+   - closing cash: EUR 79,498
+   - supplier concentration watch: AI-model spend at 28% of COGS
+   - bank confirmation: EUR 3,994.74
+   - true employer cost: EUR 6,930
+   - correlation wedge (only visible once correlated): EUR 2,935.26
+   - employer IKA: 35.8% of net
    - source-backed citations and Ask Archon answer panel
 4. Open `https://h0-archon.vercel.app/api/report` to verify the JSON API and
    persistence mode. The live deployment should report `db_mode:

@@ -79,9 +79,9 @@ await safe("period selector", async () => {
   await sel.scrollIntoViewIfNeeded();
   await sleep(1000);
   // Cycle a couple of months for the multi-period feel, but ALWAYS land back on
-  // May 2026 (the canonical close) so on-screen figures match the narration
-  // (€5,957 / €9,111). Never end on the aggregate ("all"), which would show 5x sums.
-  for (const opt of ["2026-01", "2026-03", "2026-05"]) {
+  // January 2026 (the canonical authentic close) so on-screen figures match the
+  // narration (€3,994.74 / €6,930). Never end on the aggregate ("all"), which would show 5x sums.
+  for (const opt of ["2026-03", "2026-05", "2026-01"]) {
     await safe("selectOption " + opt, async () => {
       await sel.selectOption(opt);
       await sleep(2500);

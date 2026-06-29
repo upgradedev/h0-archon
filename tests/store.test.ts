@@ -30,7 +30,7 @@ function sampleReport(): AnalysisReport {
     validations: validate(event, docs),
     executive_summary: "Unit-test report.",
     analysis_engine: "deterministic-finance-engine",
-    generated_at: "2026-05-31T12:00:00.000Z",
+    generated_at: "2026-01-31T12:00:00.000Z",
     db_mode: "embedded-demo",
   };
 }
@@ -52,11 +52,11 @@ describe("DynamoStore report persistence", () => {
     const item = Item as Record<string, any>;
     assert.equal(TableName, "h0-test-table");
     assert.equal(item.pk, "REPORT");
-    assert.equal(item.sk, "2026-05-31T12:00:00.000Z#evt-eleftheria-foods-ae-2026-05");
-    assert.equal(item.event_id, "evt-eleftheria-foods-ae-2026-05");
-    assert.equal(item.created_at, "2026-05-31T12:00:00.000Z");
+    assert.equal(item.sk, "2026-01-31T12:00:00.000Z#evt-archon-demo-ike-2026-01");
+    assert.equal(item.event_id, "evt-archon-demo-ike-2026-01");
+    assert.equal(item.created_at, "2026-01-31T12:00:00.000Z");
     assert.equal(item.report.db_mode, "aws-dynamodb");
-    assert.equal(item.report.event.employer_cost_total, 9110.62);
+    assert.equal(item.report.event.employer_cost_total, 6930);
   });
 
   it("reads the latest REPORT with a descending, limit-1 query", async () => {
@@ -71,7 +71,7 @@ describe("DynamoStore report persistence", () => {
     assert.equal(cmd.input.ScanIndexForward, false);
     assert.equal(cmd.input.Limit, 1);
     assert.deepEqual(cmd.input.ExpressionAttributeValues, { ":pk": "REPORT" });
-    assert.equal(latest?.event.event_id, "evt-eleftheria-foods-ae-2026-05");
+    assert.equal(latest?.event.event_id, "evt-archon-demo-ike-2026-01");
     assert.equal(latest?.db_mode, "aws-dynamodb");
   });
 

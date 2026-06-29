@@ -157,7 +157,7 @@ export function DashboardShell({
                     Finance command center
                   </h1>
                   <span
-                    title="May 2026 is the live extracted payroll close; Jan–Apr are illustrative trends and the customer/supplier ledger is sample data."
+                    title="January 2026 is the live extracted payroll close; Feb–May are illustrative projected trends and the customer/supplier ledger is sample data."
                     className="hidden cursor-help items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline-flex"
                   >
                     <span className="size-1.5 rounded-full bg-primary" /> Demo data

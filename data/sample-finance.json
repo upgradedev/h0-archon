@@ -1,33 +1,32 @@
 {
-  "_note": "Extracted monthly finance figures for the demo close. These are the non-payroll inputs the CFO engine reads; payroll is fused separately from sample-payroll.json. Source filenames match the citations surfaced in /api/report.",
+  "_note": "Extracted monthly finance figures for ARCHON DEMO IKE — January 2026 close. ARCHON DEMO IKE is a small Greek AI/software consultancy (Athens). Purchases are the REAL vendor invoices for the month (AWS, Anthropic, Google Cloud, power utility, Attiki Odos tolls); revenue is the month's client engagements. Payroll is fused separately from sample-payroll.json. Source filenames match the citations surfaced in /api/report.",
   "sources": {
-    "sales": "sales_targets_by_owner_2026-05.xlsx",
-    "purchases": "supplier_purchases_2026-05.xlsx",
-    "bank": "alpha_bank_statement_2026-05.pdf"
+    "sales": "sales_ledger_202601.xlsx",
+    "purchases": "vendor_invoices_202601.pdf",
+    "bank": "bank_confirmation_202601.pdf"
   },
   "sales": [
-    { "owner": "Eleni", "segment": "Wholesale", "actual": 42500, "goal": 40000, "marginPct": 32.4 },
-    { "owner": "Nikos", "segment": "Retail", "actual": 28300, "goal": 32000, "marginPct": 38.1 },
-    { "owner": "Dimitra", "segment": "Catering", "actual": 18400, "goal": 22000, "marginPct": 29.6 },
-    { "owner": "Sofia", "segment": "Online", "actual": 7600, "goal": 6000, "marginPct": 44.3 }
+    { "owner": "Nikos Papadopoulos", "segment": "AI Engineering", "actual": 18500, "goal": 17000, "marginPct": 68.0 },
+    { "owner": "Eleni Georgiou", "segment": "Data & Analytics", "actual": 12300, "goal": 13000, "marginPct": 64.0 },
+    { "owner": "Dimitris Alexiou", "segment": "Advisory", "actual": 9800, "goal": 10500, "marginPct": 71.0 },
+    { "owner": "Sofia Marinou", "segment": "Managed Services", "actual": 6600, "goal": 6000, "marginPct": 58.0 }
   ],
   "purchases": [
-    { "category": "Fresh produce", "vendor": "Attica Growers Coop", "amount": 24200 },
-    { "category": "Dairy", "vendor": "Aegean Dairy SA", "amount": 13100 },
-    { "category": "Packaging", "vendor": "PackLine Hellas", "amount": 6200 },
-    { "category": "Logistics", "vendor": "Metro Freight", "amount": 5100 },
-    { "category": "Utilities", "vendor": "Energy and water", "amount": 3300 },
-    { "category": "Other purchases", "vendor": "Long tail vendors", "amount": 4800 }
+    { "category": "AI model API", "vendor": "Anthropic PBC", "amount": 300.07 },
+    { "category": "Cloud platform", "vendor": "Google Cloud EMEA", "amount": 256.30 },
+    { "category": "Cloud infrastructure", "vendor": "Amazon Web Services", "amount": 246.48 },
+    { "category": "Utilities (power)", "vendor": "Public Power Corporation", "amount": 184.20 },
+    { "category": "Tolls & travel", "vendor": "Attiki Odos AE", "amount": 85.40 }
   ],
   "cash": {
-    "openingBalance": 38400,
-    "collections": 94200,
-    "supplierPaymentReductionVsCogs": 2100,
-    "fixedOpex": 10100
+    "openingBalance": 52000,
+    "collections": 44000,
+    "supplierPaymentReductionVsCogs": 0,
+    "fixedOpex": 8500
   },
   "workingCapital": {
-    "receivables": 18600,
-    "payables": 14200,
-    "vatPayable": 5400
+    "receivables": 9000,
+    "payables": 256.30,
+    "vatPayable": 7800
   }
 }

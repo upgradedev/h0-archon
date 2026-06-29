@@ -5,22 +5,22 @@ const metrics = [
   {
     label: "Field-level extraction accuracy",
     node: <CountUp value={96.7} decimals={1} suffix="%" />,
-    sub: "across invoices, statements, payroll",
+    sub: "measured on a labelled eval corpus",
   },
   {
-    label: "Hidden employer cost surfaced",
-    node: <CountUp value={28} suffix="%" />,
-    sub: "beyond headline gross pay",
+    label: "Documents cross-linked",
+    node: <CountUp value={100} suffix="%" />,
+    sub: "every event reconciled to source",
   },
   {
-    label: "Understatement found",
-    node: <CountUp value={314} prefix="€" suffix="k" />,
-    sub: "across the test corpus",
+    label: "Cross-document checks",
+    node: <CountUp value={4} />,
+    sub: "passed before any close is released",
   },
   {
     label: "Monthly close time",
     node: <CountUp value={5} prefix="<" suffix=" min" />,
-    sub: "not days of spreadsheet wrangling",
+    sub: "complete & reconciled, not days of work",
   },
 ]
 
