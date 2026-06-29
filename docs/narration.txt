@@ -8,6 +8,6 @@ Archon fixes this. You upload your documents, and a pipeline of agents reads eac
 
 Archon runs on the zero stack: Next.js on Vercel, with AWS DynamoDB and AWS Bedrock. The principle is simple — the AI reads, a deterministic engine computes. AWS Bedrock vision, running Claude Sonnet four-point-six, reads each document; we measured ninety-six point seven percent field accuracy. Then deterministic rules do the math, so every number is reproducible and auditable.
 
-The dashboard is live on AWS DynamoDB: net revenue, true employer cost down to each employee, multi-period trends, and customer and supplier statements — and here is that exact data in the evidence API.
+The dashboard is live on AWS DynamoDB. We chose a single-table design on purpose: every read here is a key-based access pattern — the latest close, recent history, the activity feed — so DynamoDB scales to zero and needs no connection pool for stateless Vercel functions. On screen: net revenue, true employer cost down to each employee, multi-period trends, and customer and supplier statements — and here is that exact data in the evidence API, reporting database mode AWS DynamoDB.
 
 Three documents. One grounded financial truth. Measured, auditable, and shipped on the zero stack. Try it live.
