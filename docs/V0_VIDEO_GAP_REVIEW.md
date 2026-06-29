@@ -9,8 +9,15 @@ demo-flow lessons are relevant; Azure-specific implementation details are not.
 
 - Document intake: added `/api/intake` and a dashboard intake panel that
   classifies bank, sales, purchase, payroll, and tax files by role.
-- Seven-agent story: expanded the visible run ledger to intake, classify,
-  extract, link, validate, report, and analyze.
+- Eight-agent story: the visible run ledger is Extractor, Classifier, Event
+  Linker, Validator, PnL, CashFlow, Employee, and Narrator.
+- Live document upload: `/extract` plus `/api/upload` accept a PDF and run AWS
+  Bedrock vision extraction with field accuracy scored against ground truth.
+- Search: `/api/search` finds any uploaded document, vendor, or person through an
+  AWS OpenSearch CQRS read-model fed from DynamoDB Streams.
+- Verification-gating: four cross-document rules (R1–R4) must pass before the
+  fused payroll event is trusted, and each rule's status is shown on the
+  dashboard.
 - Source-backed claims: added deterministic citations to `/api/report`, the
   dashboard CFO brief, and `/api/evidence`.
 - Conversational answer path: added `/api/ask` and an Ask Archon dashboard

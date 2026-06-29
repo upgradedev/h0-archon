@@ -58,10 +58,10 @@ This lets the app fetch:
 db_mode=aws-dynamodb
 records=REPORT+ACTIVITY
 citations=4
-revenue=96800.00
-ebitda=20889.38
-sales_attainment=96.80
-payroll_gap=3153.95
+revenue=47200.00
+ebitda=30697.55
+sales_attainment=101.50
+payroll_gap=2935.26
 ```
 
 `/api/history` now returns both:

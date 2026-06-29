@@ -4,10 +4,11 @@
 
 H0 Archon proves a compact SMB finance intelligence loop on Vercel + AWS:
 fuse account-statement movement, sales goals, purchase categories, and payroll
-controls into one auditable monthly close. The payroll control remains the
-headline evidence-backed anomaly: the bank-visible salary transfer is EUR
-5,956.67, while the true employer cost is EUR 9,110.62, exposing a EUR 3,153.95
-monthly understatement.
+controls into one auditable monthly close. The demo entity is **ARCHON DEMO
+IKE** (period January 2026). The payroll control remains the headline
+evidence-backed anomaly: the bank-visible salary transfer is EUR 3,994.74, while
+the true employer cost is EUR 6,930.00, exposing a EUR 2,935.26 monthly
+understatement (EUR 1,430 of employer social-security, 35.8% on top of the net).
 
 ## Runtime Architecture
 
@@ -63,13 +64,13 @@ Expected finance-close invariants:
 - `analysis_engine`: `deterministic-finance-engine`
 - `/api/history`: returns persisted `reports` and `activity`
 - `/api/evidence`: includes `records=REPORT+ACTIVITY`
-- P&L revenue: `96800`
-- sales goal attainment: `96.8%`
+- P&L revenue: `47200`
+- sales goal attainment: `101.5%`
 - source citations: `4`
-- `event.bank_net_total`: `5956.67`
-- `event.employer_cost_total`: `9110.62`
-- `event.hidden_total`: `3153.95`
-- `event.cost_gap_pct`: `27.88`
+- `event.bank_net_total`: `3994.74`
+- `event.employer_cost_total`: `6930.00`
+- `event.hidden_total`: `2935.26`
+- `event.cost_gap_pct`: `35.8`
 - `validations`: R1 through R4 pass for the canonical sample
 
 ## CI/CD Layer
