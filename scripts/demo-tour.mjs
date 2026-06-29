@@ -101,17 +101,17 @@ async function centerOn(page, id, ms = 1400) {
   );
 }
 
-// Gently oscillate the scroll around the current position until `untilSec` so the
-// frame is never frozen during a dwell (capability-per-second, not cinematics).
-// Tight loop (~0.7s/iter) so we never overshoot `untilSec` by more than one short
-// move; the trailing waitUntil pins the beat boundary exactly (no accumulation).
-async function dwellPan(page, untilSec, amplitude = 70) {
-  let dir = 1;
-  while (elapsed() < untilSec - 0.7) {
-    const y = Math.max(0, (await page.evaluate(() => window.scrollY)) + dir * amplitude);
-    await smoothScrollTo(page, y, 600);
-    dir *= -1;
-    if (elapsed() < untilSec - 0.7) await sleep(120);
+// Calm hold until `untilSec`: a SINGLE slow, single-direction drift (NO up/down
+// oscillation — that jitter read as distracting), then pin the boundary exactly.
+// On-screen content (agents firing, tiles flashing) carries the motion; the camera
+// just settles and gently reveals. The 3rd arg is accepted for call-site
+// compatibility but the drift is computed from the dwell length and capped.
+async function dwellPan(page, untilSec, _amplitude = 0) {
+  const remain = untilSec - elapsed();
+  if (remain > 1.5) {
+    const startY = await page.evaluate(() => window.scrollY);
+    const drift = Math.min(220, Math.round(remain * 7)); // gentle, never scrolls a panel away
+    await smoothScrollTo(page, Math.max(0, startY + drift), Math.round((remain - 0.5) * 1000));
   }
   await waitUntil(untilSec);
 }
@@ -175,12 +175,13 @@ await safe("upload document", async () => {
   console.log(`uploaded ${UPLOAD_DOC} at t=${elapsed().toFixed(1)}s`);
 });
 
-// HOLD on the ledger while the eight agents fire (Extractor → … → Narrator). Keep
-// the camera pinned on #agents with a gentle pan so the agent animation is clearly
-// the subject (this is the centerpiece — do not drift away from it).
+// HOLD STEADY on the ledger while the eight agents fire (Extractor → … → Narrator).
+// No drift here — the dropzone shows the uploaded filename chip ("📄 …pdf — reading…
+// → read ✓") AND the 8 agents both need to stay in frame so the upload is clearly
+// the cause of the run. The animation itself carries the motion.
 await safe("watch agents animate", async () => {
   await centerOn(page, "agents", 900);
-  await dwellPan(page, 44, 40);
+  await waitUntil(44);
 });
 
 // Pan up to the KPI tiles (#overview) to catch the flash + the updated values, and
