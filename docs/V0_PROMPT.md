@@ -12,7 +12,7 @@ Paste these into **v0.app** (your $30 credits). Generate the **landing** first, 
 >
 > Sections:
 > 1. **Hero** — headline: *"Every financial document your business receives, fused into one boardroom-ready monthly close."* Sub: *"AI reads your sales, purchases, bank statements and payroll; a deterministic engine computes auditable books."* Two CTAs: "Open the dashboard", "Watch the AI read a document". Parallax background, a floating product-preview card.
-> 2. **Metric band** (count-up): €96,800 revenue · 30.4% gross margin · €58,789 closing cash · 96.7% AI extraction accuracy.
+> 2. **Metric band** (count-up) — *product proof points, NOT a demo company's financials*: **96.7% AI extraction accuracy** · **~28% hidden employer cost** most books miss · **€314k understatement** surfaced across the test corpus · **minutes, not days** to close. (Keep the demo company's revenue/cash/margin OFF the landing — those live on the dashboard.)
 > 3. **The six modules** (equal-weight feature grid, icons): **P&L** (revenue, COGS, gross profit, EBITDA) · **Cash flow** (movements, runway) · **Sales performance** (by salesperson, vs goal, margin) · **Purchases & suppliers** (spend concentration, risk) · **Receivables & payables** (customer/supplier statements, VAT, working capital) · **Payroll controls** (the hidden ~28% employer cost a bank statement misses).
 > 4. **"AI reads → deterministic rules compute"** value strip — AWS Bedrock vision extracts; rules compute; every number is cited and auditable.
 > 5. **Stack strip:** Next.js on Vercel · AWS DynamoDB (single-table) · AWS Bedrock (Claude Sonnet 4.6 vision).

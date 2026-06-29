@@ -102,6 +102,7 @@ A shared top nav links Home / Dashboard / Live Extract on every page.
 - Judge evidence API: https://h0-archon.vercel.app/api/evidence
 - Submission package: `SUBMISSION.md`
 - AWS DynamoDB proof: `docs/DYNAMODB_PROOF.md`
+- Data-tier design + scale path (DynamoDB → CQRS + OpenSearch): `docs/ARCHITECTURE_SCALE.md`
 - v0 provenance checklist: `docs/V0_USAGE.md`
 - Architecture figure: `docs/figures/h0-architecture.svg`
 - CI gate: `npm ci`, TypeScript, unit tests, production build, pipeline JSON
