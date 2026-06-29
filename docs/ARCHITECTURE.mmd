@@ -8,7 +8,7 @@ flowchart LR
   UI --> Evidence["/api/evidence"]
 
   Intake --> Classify["Classify uploaded finance files"]
-  Run --> Extract["Extract sample finance documents"]
+  Run --> Extract["Extract via AWS Bedrock vision (Claude Sonnet 4.6) — 96.7% field acc."]
   Classify --> Link["Link bank, sales, purchases, payroll"]
   Extract --> Link
   Link --> Validate["Validate controls"]

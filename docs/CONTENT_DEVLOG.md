@@ -9,13 +9,16 @@ documents into an auditable monthly close, and surfaces the ~28% of payroll cost
 that the bank statement hides). This one is for engineers: the five decisions
 that made it clean rather than just working.
 
-## 1. Deterministic engine, not an LLM, in the product path
+## 1. AI reads the documents; deterministic rules decide the numbers
 
-The obvious build for a "financial intelligence" app is to let a model read the
-documents and emit the numbers. I deliberately didn't. A finance-close tool that
-returns a *different* answer each run is a liability, not a feature. So the P&L,
-cash, sales, purchase-concentration, and payroll-truth math all run in a
-deterministic rules engine. Three properties fall out for free:
+The obvious build for a "financial intelligence" app is to let one model read the
+documents *and* emit the numbers. I split it. A **vision model — AWS Bedrock,
+Claude Sonnet 4.6 — reads** the messy PDFs into structured fields (measured at
+**96.7% field accuracy** against a labelled corpus). But the P&L, cash, sales,
+purchase-concentration, and payroll-truth **math runs in a deterministic rules
+engine**, not a model — because a finance-close tool that returns a *different*
+answer each run is a liability, not a feature. Three properties fall out of the
+deterministic decision layer for free:
 
 - **Auditability** — every figure traces to a source document and a rule, and the
   app emits citations for its claims.

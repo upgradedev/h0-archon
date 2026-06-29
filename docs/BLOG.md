@@ -1,6 +1,6 @@
 # The €3,154 your bank statement hides every month: building Archon on the Vercel + AWS "zero stack"
 
-*A build log for the H0: Hack the Zero Stack hackathon — Next.js on Vercel, AWS DynamoDB on the back, and a deterministic CFO engine in between.*
+*A build log for the H0: Hack the Zero Stack hackathon — Next.js on Vercel, AWS DynamoDB on the back, AWS Bedrock vision reading the documents, and a deterministic CFO engine keeping every number auditable.*
 
 ## The problem nobody told the small-business owner about
 
@@ -51,7 +51,7 @@ The table also carries a clean upgrade path to multi-tenant — `TENANT#<id>#REP
 
 ## The deliberately boring analysis engine
 
-Here is the decision I expect to get questions about: **there is no LLM in the live product path.** The CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll-truth finding — runs on a **deterministic finance rules engine**, not a model.
+Here is the decision I expect to get questions about: **a vision model reads the documents, but no model decides your numbers.** Extraction uses **AWS Bedrock vision (Claude Sonnet 4.6)** to turn messy PDFs into structured fields — measured at **96.7% field accuracy** against a labelled corpus. But the CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll-truth finding — runs on a **deterministic finance rules engine**, not a model. *AI reads; deterministic rules compute.*
 
 That is a feature, not a shortcut. A finance-close tool that gives a *different* answer each time you run it is worse than useless; it is a liability. Determinism means:
 

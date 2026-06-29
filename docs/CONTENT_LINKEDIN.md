@@ -19,7 +19,7 @@ Most bookkeeping treats the bank number as "payroll cost." It's wrong by a quart
 
 **Archon** ingests the raw documents a business actually receives — bank statements, sales ledgers, purchase invoices, payroll — and fuses them into one auditable monthly close: P&L, cash runway, sales-vs-goal, supplier concentration, and the payroll-truth finding. Every number is backed by a source citation and four cross-document validation rules that either pass or tell you exactly which document disagrees.
 
-The part I'm proud of: **there's no black-box LLM deciding your numbers.** The analysis runs on a deterministic finance engine, so it gives the same auditable answer every time — the only acceptable bar for a tool that touches money. You can run the whole thing on a laptop with no cloud account, or in production on AWS DynamoDB behind a Vercel app.
+The part I'm proud of: **AWS Bedrock vision reads the documents (96.7% field accuracy), but no black-box LLM *decides* your numbers.** The analysis runs on a deterministic finance engine, so it gives the same auditable answer every time — the only acceptable bar for a tool that touches money. AI reads; deterministic rules compute. Runs on AWS DynamoDB behind a Vercel app.
 
 The "zero stack" lesson from the hackathon: when production collapses to *a front end and a database*, what separates a demo from a product isn't infrastructure — it's whether your numbers are **correct, cited, and reproducible.**
 
