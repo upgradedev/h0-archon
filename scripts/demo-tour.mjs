@@ -103,14 +103,17 @@ async function centerOn(page, id, ms = 1400) {
 
 // Gently oscillate the scroll around the current position until `untilSec` so the
 // frame is never frozen during a dwell (capability-per-second, not cinematics).
-async function dwellPan(page, untilSec, amplitude = 90) {
+// Tight loop (~0.7s/iter) so we never overshoot `untilSec` by more than one short
+// move; the trailing waitUntil pins the beat boundary exactly (no accumulation).
+async function dwellPan(page, untilSec, amplitude = 70) {
   let dir = 1;
-  while (elapsed() < untilSec - 0.4) {
+  while (elapsed() < untilSec - 0.7) {
     const y = Math.max(0, (await page.evaluate(() => window.scrollY)) + dir * amplitude);
-    await smoothScrollTo(page, y, 1800);
+    await smoothScrollTo(page, y, 600);
     dir *= -1;
-    await sleep(500);
+    if (elapsed() < untilSec - 0.7) await sleep(120);
   }
+  await waitUntil(untilSec);
 }
 
 const browser = await chromium.launch();
@@ -148,17 +151,20 @@ await safe("goto dashboard", async () => {
 });
 await sleep(3500); // count-ups + charts animate, client components mount
 
-// Pin the canonical month so on-screen figures match the narration.
+// Pin the canonical month so on-screen figures match the narration. Use the
+// native <select aria-label="Reporting period"> directly (getByLabel is ambiguous
+// — a sr-only <span> shares the text). January is already the default, so this is
+// belt-and-braces.
 await safe("set period jan-2026", async () => {
-  const sel = page.getByLabel(/reporting period/i).first();
+  const sel = page.locator('select[aria-label="Reporting period"]').first();
   await sel.selectOption("2026-01");
-  await sleep(800);
+  await sleep(600);
 });
 
 // Center the run-ledger tile (#agents) — the centerpiece panel.
 await safe("center ledger", async () => {
   await centerOn(page, "agents", 1600);
-  await sleep(800);
+  await sleep(700);
 });
 
 // Drop the document onto the ledger's (hidden) file input → live Bedrock run.
@@ -169,18 +175,23 @@ await safe("upload document", async () => {
   console.log(`uploaded ${UPLOAD_DOC} at t=${elapsed().toFixed(1)}s`);
 });
 
-// Hold on the ledger while the eight agents fire (Extractor → … → Narrator).
+// HOLD on the ledger while the eight agents fire (Extractor → … → Narrator). Keep
+// the camera pinned on #agents with a gentle pan so the agent animation is clearly
+// the subject (this is the centerpiece — do not drift away from it).
 await safe("watch agents animate", async () => {
-  await dwellPan(page, 40, 60);
+  await centerOn(page, "agents", 900);
+  await dwellPan(page, 44, 40);
 });
 
-// Pan up to the KPI / P&L tiles to catch the flash + the updated values.
+// Pan up to the KPI tiles (#overview) to catch the flash + the updated values, and
+// hold there for the rest of the beat (the KPI row is where revenue/EBITDA/cash
+// flash; re-center once mid-beat so a layout reflow can't leave us off-target).
 await safe("show flashed tiles", async () => {
-  await centerOn(page, "overview", 1600);
+  await centerOn(page, "overview", 1400);
   await sleep(2500);
-  await centerOn(page, "pnl", 1600);
+  await centerOn(page, "overview", 700);
 });
-await dwellPan(page, BEATS.UPLOAD_END, 80);
+await dwellPan(page, BEATS.UPLOAD_END, 50);
 
 // ============================================================================
 // 62–99s — PAYROLL TRUTH: center the payroll panel; hold on the wedge figures.
