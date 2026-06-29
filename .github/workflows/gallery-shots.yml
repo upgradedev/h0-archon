@@ -1,0 +1,37 @@
+name: Gallery screenshots (manual)
+
+# Captures clean 3:2 screenshots of the live app for the Devpost image gallery.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Live app base URL
+        default: https://h0-archon.vercel.app
+        required: false
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright (chromium)
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install -D playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Capture gallery shots
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url }}
+        run: |
+          mkdir -p gallery
+          node scripts/gallery-shots.mjs
+          ls -la gallery
+      - name: Upload gallery
+        uses: actions/upload-artifact@v4
+        with:
+          name: archon-gallery
+          path: gallery/*.png
+          retention-days: 14
