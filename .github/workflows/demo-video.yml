@@ -80,6 +80,8 @@ jobs:
         run: node scripts/demo-tour.mjs
 
       - name: Compose demo video (title + captions + outro + VO)
+        env:
+          TOUR_LEN: ${{ steps.dur.outputs.target }}
         run: |
           set -euo pipefail
           FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
@@ -119,8 +121,12 @@ jobs:
           done < scripts/captions.txt
           echo "built $i caption clauses"
 
-          # ---- Burn captions onto the tour ----
-          ffmpeg -y -i "$VID" -vf "$FILTER" -c:v libx264 -preset veryfast -pix_fmt yuv420p -r 30 -an tour_cap.mp4
+          # ---- Burn captions onto the tour, capped at the audio-derived target ----
+          # Playwright's webm carries ~10s of trailing dead-time past the scripted
+          # tour wall-time; -t trims tour_cap to TOUR_LEN so the final video lands at
+          # title + TOUR_LEN + outro (comfortably under the 3:00 cap). VO (shorter
+          # than TOUR_LEN) is never clipped.
+          ffmpeg -y -i "$VID" -t "$TOUR_LEN" -vf "$FILTER" -c:v libx264 -preset veryfast -pix_fmt yuv420p -r 30 -an tour_cap.mp4
 
           # ---- Concat title -> captioned tour -> outro (concat FILTER = codec-agnostic) ----
           ffmpeg -y -i title.mp4 -i tour_cap.mp4 -i outro.mp4 -filter_complex \
