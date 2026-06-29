@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/store.test.ts tests/db.test.ts tests/insights.test.ts tests/extraction.test.ts tests/demo-periods.test.ts eval/tests/metrics.test.ts",
+    "test": "node --import tsx --test --test-concurrency=1 tests/pipeline.test.ts tests/store.test.ts tests/db.test.ts tests/insights.test.ts tests/extraction.test.ts tests/demo-periods.test.ts tests/demo-ledger.test.ts eval/tests/metrics.test.ts",
     "ci": "npm run typecheck && npm test && npm run build && npm run pipeline",
     "pipeline": "tsx scripts/run-pipeline.ts",
     "eval": "tsx eval/evaluate.ts",

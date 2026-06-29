@@ -1,8 +1,11 @@
 "use client"
 
-import { formatEUR } from "@/lib/format"
+import { useState } from "react"
+import { formatEUR, formatPct } from "@/lib/format"
 import { useDashboardData } from "./data-context"
+import type { Salesperson } from "@/lib/dashboard-vm"
 import { Panel, Pill } from "./primitives"
+import { DetailDrawer, type DetailRow } from "./detail-drawer"
 import { Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -12,11 +15,24 @@ const segmentTone: Record<string, "info" | "positive" | "neutral"> = {
   SMB: "neutral",
 }
 
+function salespersonRows(p: Salesperson): DetailRow[] {
+  const att = p.goal === 0 ? 0 : (p.actual / p.goal) * 100
+  return [
+    { label: "Segment", value: p.segment },
+    { label: "Actual", value: formatEUR(p.actual) },
+    { label: "Goal", value: formatEUR(p.goal) },
+    { label: "Variance to goal", value: formatEUR(p.actual - p.goal) },
+    { label: "Attainment", value: formatPct(att, 0) },
+    { label: "Gross margin", value: formatPct(p.margin, 1) },
+  ]
+}
+
 export function SalesPanel() {
   const { sales } = useDashboardData()
   const totalActual = sales.reduce((s, p) => s + p.actual, 0)
   const totalGoal = sales.reduce((s, p) => s + p.goal, 0)
   const attainment = (totalActual / totalGoal) * 100
+  const [selected, setSelected] = useState<Salesperson | null>(null)
 
   return (
     <Panel
@@ -34,7 +50,11 @@ export function SalesPanel() {
           const att = (p.actual / p.goal) * 100
           const over = att >= 100
           return (
-            <div key={p.name} className="flex items-center gap-3">
+            <button
+              key={p.name}
+              onClick={() => setSelected(p)}
+              className="flex w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted"
+            >
               <div className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-foreground">
                 {p.initials}
               </div>
@@ -73,10 +93,18 @@ export function SalesPanel() {
                   </span>
                 </div>
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
+
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? ""}
+        subtitle={selected ? `Salesperson · ${selected.segment}` : undefined}
+        rows={selected ? salespersonRows(selected) : undefined}
+      />
     </Panel>
   )
 }

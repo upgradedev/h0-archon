@@ -11,6 +11,7 @@ import { CashflowPanel } from "@/components/dashboard/cashflow-panel";
 import { SalesPanel } from "@/components/dashboard/sales-panel";
 import { SuppliersPanel } from "@/components/dashboard/suppliers-panel";
 import { WorkingCapitalPanel } from "@/components/dashboard/working-capital-panel";
+import { StatementsPanel } from "@/components/dashboard/statements-panel";
 import { PayrollPanel } from "@/components/dashboard/payroll-panel";
 import { DocumentIntake } from "@/components/dashboard/document-intake";
 import { AgentLedger } from "@/components/dashboard/agent-ledger";
@@ -59,6 +60,10 @@ export default async function DashboardPage() {
             <SuppliersPanel />
           </div>
         </div>
+
+        <section id="statements" className="scroll-mt-24">
+          <StatementsPanel />
+        </section>
 
         <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-3">
           <div id="capital" className="scroll-mt-24">

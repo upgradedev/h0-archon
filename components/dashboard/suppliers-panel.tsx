@@ -1,11 +1,14 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
 import { formatEUR } from "@/lib/format"
+import { buildLedger, type Account } from "@/lib/demo-ledger"
 import { useDashboardData } from "./data-context"
 import { Panel, Pill } from "./primitives"
+import { DetailDrawer } from "./detail-drawer"
 import { useMounted } from "./use-mounted"
-import { Boxes } from "lucide-react"
+import { Boxes, ChevronRight } from "lucide-react"
 
 const sliceColors = [
   "var(--chart-5)",
@@ -19,10 +22,18 @@ const sliceColors = [
 const riskTone = { low: "neutral", medium: "warning", high: "danger" } as const
 
 export function SuppliersPanel() {
-  const { suppliers } = useDashboardData()
+  const vm = useDashboardData()
+  const { suppliers } = vm
   const top3 = suppliers.slice(0, 3).reduce((s, v) => s + v.share, 0)
   const totalSpend = suppliers.reduce((s, v) => s + v.spend, 0)
   const mounted = useMounted()
+
+  const ledger = useMemo(() => buildLedger(vm), [vm])
+  const [selected, setSelected] = useState<Account | null>(null)
+  const openFor = (name: string) => {
+    const acc = ledger.suppliers.find((a) => a.name === name)
+    if (acc) setSelected(acc)
+  }
 
   return (
     <Panel
@@ -60,9 +71,13 @@ export function SuppliersPanel() {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1 space-y-0.5">
           {suppliers.map((s, i) => (
-            <div key={s.name} className="flex items-center gap-2 text-xs">
+            <button
+              key={s.name}
+              onClick={() => openFor(s.name)}
+              className="group flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-xs transition-colors hover:bg-muted"
+            >
               <span
                 className="size-2 shrink-0 rounded-full"
                 style={{ background: sliceColors[i % sliceColors.length] }}
@@ -72,10 +87,19 @@ export function SuppliersPanel() {
               <Pill tone={riskTone[s.risk]} className="w-16 shrink-0 justify-center capitalize">
                 {s.risk}
               </Pill>
-            </div>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground" />
+            </button>
           ))}
         </div>
       </div>
+
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? ""}
+        subtitle={selected ? `Supplier statement · ${selected.invoices.length} invoices` : undefined}
+        account={selected ?? undefined}
+      />
     </Panel>
   )
 }
