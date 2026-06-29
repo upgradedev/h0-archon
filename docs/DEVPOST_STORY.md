@@ -13,13 +13,15 @@ Archon ingests a month's raw business documents and produces a boardroom-ready P
 - **Documents-first search:** find any invoice by **number and date** (e.g. `AR-HA-003-001 · Sales invoice · 2026-01-22 · €3,304 · paid`), not just rolled-up totals.
 - **A self-guided tour** walks any visitor through the whole flow.
 
+**Who pays (B2B SaaS).** SMB owners and the accounting firms that close their books — a per-entity monthly subscription, with a multi-client tier for firms that close dozens of SMBs a month. The ROI is concrete: Archon turns a full day of manual document-correlation per monthly close into minutes — an accountant-day saved every month, per entity — and it surfaces costs (like the employer-cost wedge) that bank-only bookkeeping silently misses.
+
 Live: https://h0-archon.vercel.app · Code (MIT): https://github.com/upgradedev/h0-archon
 
 ## How we built it
 
 The "zero stack": **Next.js 16 / React 19 on Vercel** for the front and API (Vercel Functions), with the real work on **AWS**:
 
-- **Amazon DynamoDB** — single-table design (REPORT + ACTIVITY items) is the source of truth for every close and product event. Simple, known access patterns → single-digit-ms reads, no connection pool, effectively free at demo scale.
+- **Amazon DynamoDB** — single-table design (REPORT + ACTIVITY items) is the source of truth for every close and product event. **We chose DynamoDB over Aurora** because the access patterns are simple and known (latest close, closes over time, recent activity) — they map cleanly to partition + sort-key queries with single-digit-ms reads, no connection pool to manage, and per-request pricing that's near-free at this scale; a serverless front (Vercel Functions) pairs naturally with a serverless, connectionless datastore.
 - **Amazon Bedrock** (Claude Sonnet 4.6) — vision extraction via Converse `document` blocks (PDF-direct), ~96.7% measured field accuracy on a labelled corpus.
 - **Amazon OpenSearch** — a CQRS read-model fed from DynamoDB that powers documents-first search; it never computes a canonical number.
 - **The guiding principle: the AI reads, a deterministic engine computes.** No LLM ever touches a number — the same inputs always produce the same books, and every figure traces back to a source document. That's what makes the close auditable.
