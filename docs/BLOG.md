@@ -1,14 +1,18 @@
 # The €3,154 your bank statement hides every month: building Archon on the Vercel + AWS "zero stack"
 
-*A build log for the H0: Hack the Zero Stack hackathon — Next.js on Vercel, AWS DynamoDB on the back, AWS Bedrock vision reading the documents, and a deterministic CFO engine keeping every number auditable.*
+*A build log for the H0: Hack the Zero Stack hackathon — a v0-built Next.js front end on Vercel, AWS DynamoDB on the back, AWS Bedrock vision reading the documents, and a deterministic CFO engine keeping every number auditable.*
+
+<!-- Where to publish: Medium / personal blog. Lightly personalize the voice before posting. -->
+
+> **Live demo:** https://h0-archon.vercel.app · **2:56 walkthrough:** https://h0-archon.vercel.app/archon-h0-demo.mp4 · **Code (MIT):** https://github.com/upgradedev/h0-archon
 
 ## The problem nobody told the small-business owner about
 
 Ask a small-business owner in Greece what payroll costs them, and they will tell you the number on their bank statement: the net salary batch their bank transferred to employees. For our sample company, **Eleftheria Foods AE**, that number is **€5,956.67** for May 2026.
 
-That number is wrong. Not by a rounding error — by **27.88%**.
+That number is wrong. The single biggest piece it omits — the **employer's** IKA contribution, which in Greece runs at about **22.29% of gross** and never appears on any document the company touches — adds **27.88% on top of the bank figure** by itself. That is the wedge nobody can see.
 
-The bank confirmation only shows the *net cash that left the account*. It does not show employee tax withheld, employee social-security (IKA) contributions, or — the big one — the **employer's** IKA contribution, which in Greece runs at about **22.29% of gross** and never appears on the salary-transfer line at all. Stack those back on and the true monthly cost to the company is **€9,110.62**. The bank statement hides **€3,153.95 every single month** — roughly €38,000 a year of real cost that naive bookkeeping silently drops on the floor.
+And the employer wedge is only part of it. The bank confirmation shows the *net cash that left the account*: it also strips out the employee tax withheld and the employee's own social-security (IKA) contribution. Stack all three back on — employer IKA, employee IKA, withheld tax — and the true monthly cost to the company is **€9,110.62**. The full reconciliation gap is **€3,153.95 every single month** — about **53% over the bank line** (and ~35% of the true cost), roughly €38,000 a year of real cost that naive bookkeeping silently drops on the floor.
 
 This is not an exotic edge case. It is the default way a small business misreads its own payroll, because the truth is split across three documents that nobody ever reconciles:
 
@@ -22,7 +26,7 @@ Archon's job is to fuse those three views into one accurate financial event, the
 
 The H0 premise is that you can build a production-shaped full-stack app with almost no infrastructure: a Vercel front end and one managed AWS database, nothing to provision, nothing to babysit. We took that literally.
 
-- **Front end + API:** a single Next.js 16 App Router project deployed on Vercel. The UI is a React 19 client component; every API route (`/api/report`, `/api/intake`, `/api/ask`, `/api/evidence`, `/api/history`, `/api/run`) is a Vercel Function.
+- **Front end + API:** a single Next.js 16 App Router project deployed on Vercel. The dashboard itself was scaffolded in **Vercel v0** and then wired to live data — Tailwind v4, framer-motion, and Recharts, with a dark-mode toggle — so the surface looks like a real product, not a hackathon stub. Every API route (`/api/report`, `/api/intake`, `/api/ask`, `/api/evidence`, `/api/history`, `/api/run`) is a Vercel Function.
 - **Database:** **AWS DynamoDB**, accessed only from the server. The live deployment reports `db_mode: "aws-dynamodb"` straight out of `/api/report`, so the sponsor stack is verifiable in one `curl`.
 - **No server to manage:** Vercel Functions are stateless; all durable state — every finance-close report and every user interaction — lives in DynamoDB.
 
@@ -51,7 +55,7 @@ The table also carries a clean upgrade path to multi-tenant — `TENANT#<id>#REP
 
 ## The deliberately boring analysis engine
 
-Here is the decision I expect to get questions about: **a vision model reads the documents, but no model decides your numbers.** Extraction uses **AWS Bedrock vision (Claude Sonnet 4.6)** to turn messy PDFs into structured fields — measured at **96.7% field accuracy** against a labelled corpus. But the CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll-truth finding — runs on a **deterministic finance rules engine**, not a model. *AI reads; deterministic rules compute.*
+Here is the decision I expect to get questions about: **a vision model reads the documents, but no model decides your numbers.** Extraction uses **AWS Bedrock vision** (`eu.anthropic.claude-sonnet-4-6`, Claude Sonnet 4.6, in `eu-west-1`) to turn messy PDFs into structured fields — measured at **96.7% field-level accuracy (58/60)** and **100% document classification (15/15)** against a labelled corpus, at roughly **$0.17 per run**. But the CFO analysis — P&L, EBITDA, cash movement, sales-vs-goal, purchase concentration, and the payroll-truth finding — runs on a **deterministic finance rules engine**, not a model. Even the executive summary is generated deterministically from the computed figures, not written by an LLM. *AI reads; deterministic rules compute.*
 
 That is a feature, not a shortcut. A finance-close tool that gives a *different* answer each time you run it is worse than useless; it is a liability. Determinism means:
 
@@ -67,7 +71,11 @@ If those four checks pass, the fused event is trustworthy. If one fails, you kno
 
 ## What the judge (and the owner) actually sees
 
-The dashboard is intentionally dense — a work surface, not a landing page. The first viewport carries the whole monthly close: P&L revenue **€96,800**, EBITDA **€20,889**, sales-goal attainment **96.8%**, closing cash **€58,789**, a purchase-concentration risk flag (fresh produce at **42.7%** of COGS), and the payroll-truth finding front and center. There is a seven-step agent run ledger (intake → classify → extract → link → validate → report → analyze), an "Ask Archon" panel that answers questions like *"What is the true payroll cost versus the bank statement?"* with cited sources, and a persisted activity trail backed by DynamoDB.
+The dashboard is intentionally dense — a work surface, not a landing page. The first viewport carries the whole monthly close: P&L revenue **€96,800**, EBITDA **€20,889**, sales-goal attainment **96.8%**, closing cash **€58,789**, a purchase-concentration risk flag (fresh produce at **42.7%** of COGS), and the payroll-truth finding front and center. A **P&L Sankey** traces revenue down through COGS and operating cost to EBITDA, and the payroll panel drills into a **per-employee breakdown** so you can see who the cost belongs to.
+
+Above all of it sits a **reporting-period selector** — January through May 2026, plus an "All periods" aggregate — with **trend line charts** that show revenue, cost, and the payroll gap moving month to month. One honesty note I keep visible in the product: **May 2026 is the live extraction** (the documents Bedrock actually read this run); **January–April, and the customer/supplier account statements, are clearly-labelled demo data** — the dashboard carries a "Demo data" badge so nobody mistakes the illustrative history for a real close. The **customer and supplier statements** (AR/AP) let you click straight through to the underlying invoices, which is the drill-down an accountant actually wants.
+
+Driving it all is an **eight-stage agent run ledger** — Extractor → Classifier → Event Linker → Validator → PnL → CashFlow → Employee → Narrator — an "Ask Archon" panel that answers questions like *"What is the true payroll cost versus the bank statement?"* with citations back to the source documents, and a persisted activity trail backed by DynamoDB.
 
 ## What "production in minutes" really bought us
 
@@ -76,13 +84,13 @@ The honest scorecard of the zero stack:
 - **Time-to-live** was dominated by writing product logic, not wiring infrastructure. The database was a table definition and four IAM actions (`PutItem`, `Query`, scoped to one ARN).
 - **Cost at demo scale is effectively zero** — two partitions, tiny items, DynamoDB on-demand billing, Vercel's serverless tier.
 - **The resilience story is real:** DynamoDB → Aurora PostgreSQL fallback → embedded-demo, chosen at runtime by which environment variables are present. The same code runs on a judge's laptop with no AWS account and in production against a real table.
-- **CI is a full pyramid:** typecheck, unit tests for the pipeline / data layer / insights model, a production build, a deterministic pipeline run, and a live smoke test against the deployed Vercel + DynamoDB endpoints.
+- **CI is a full pyramid:** typecheck, unit tests for the pipeline / data layer / insights model (**86% line coverage**), a production build, a deterministic pipeline run, and a live smoke test against the deployed Vercel + DynamoDB endpoints.
 
 The lesson H0 is really teaching: when the stack collapses to "a front end and a database," the thing that differentiates a demo from a product isn't the infrastructure — it's whether your numbers are *correct, cited, and reproducible*. For a finance tool, that is the entire game.
 
 ---
 
-*Archon H0 is live at https://h0-archon.vercel.app and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
+*Archon H0 is live at https://h0-archon.vercel.app (2:56 walkthrough: https://h0-archon.vercel.app/archon-h0-demo.mp4) and open-source at https://github.com/upgradedev/h0-archon. The architecture diagram, AWS DynamoDB proof, and full submission package are in the repo's `docs/` directory.*
 
 
 ---
