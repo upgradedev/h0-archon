@@ -51,6 +51,18 @@ export const SAMPLE_CASE = {
       label: "Payslip — Vasiliki Dimou (EMP-002)",
       hint: "A single employee's gross / IKA / tax / net breakdown.",
     },
+    {
+      file: "sales_invoice_2026-07.pdf",
+      docType: "sales_invoice",
+      label: "Sales invoice — revenue",
+      hint: "An invoice issued to a customer — line items, net, VAT, gross.",
+    },
+    {
+      file: "purchase_invoice_2026-07.pdf",
+      docType: "purchase_invoice",
+      label: "Purchase invoice — supplier cost",
+      hint: "An invoice received from a supplier — line items, net, VAT, gross.",
+    },
   ] satisfies SampleDoc[],
 };
 
@@ -69,6 +81,15 @@ function baseDoc(file: string): ExtractedDocument {
     tax_withheld_total: null,
     register_employee_count: null,
     employee: null,
+    invoice_number: null,
+    invoice_date: null,
+    counterparty: null,
+    currency: null,
+    net_amount: null,
+    vat_amount: null,
+    vat_rate: null,
+    gross_amount: null,
+    line_items: null,
     payment_date: null,
   };
 }
@@ -122,6 +143,40 @@ export const GROUND_TRUTH: Record<string, ExtractedDocument> = {
     },
     payment_date: "2026-07-28",
   },
+  "sales_invoice_2026-07.pdf": {
+    ...baseDoc("sales_invoice_2026-07.pdf"),
+    doc_type: "sales_invoice",
+    invoice_number: "SI-202607-0001",
+    invoice_date: "2026-07-15",
+    counterparty: "Nautilus Stores IKE",
+    currency: "EUR",
+    net_amount: 9394.0,
+    vat_amount: 1221.22,
+    vat_rate: 13.0,
+    gross_amount: 10615.22,
+    line_items: [
+      { description: "Monthly distribution service", quantity: 22, unit_price: 273.0, amount: 6006.0 },
+      { description: "Wholesale order — dry goods", quantity: 14, unit_price: 132.0, amount: 1848.0 },
+      { description: "Monthly distribution service", quantity: 20, unit_price: 77.0, amount: 1540.0 },
+    ],
+  },
+  "purchase_invoice_2026-07.pdf": {
+    ...baseDoc("purchase_invoice_2026-07.pdf"),
+    doc_type: "purchase_invoice",
+    invoice_number: "PI-202607-0002",
+    invoice_date: "2026-07-15",
+    counterparty: "Attica Growers Coop",
+    currency: "EUR",
+    net_amount: 18814.5,
+    vat_amount: 2445.89,
+    vat_rate: 13.0,
+    gross_amount: 21260.39,
+    line_items: [
+      { description: "Spare components", quantity: 3, unit_price: 683.0, amount: 2049.0 },
+      { description: "Cleaning consumables", quantity: 27, unit_price: 566.5, amount: 15295.5 },
+      { description: "Dairy supplies", quantity: 4, unit_price: 367.5, amount: 1470.0 },
+    ],
+  },
 };
 
 // Measured real-Bedrock accuracy (eval/LIVE_EXTRACTION.md, 2026-06-28).
@@ -129,13 +184,19 @@ export const ACCURACY_TABLE = {
   model: "eu.anthropic.claude-sonnet-4-6",
   region: "eu-west-1",
   date: "2026-06-28",
-  overallFieldAccuracy: 0.967,
-  overallClassification: 1.0,
+  // Payroll-family figures are MEASURED (real Bedrock run, 2026-06-28). The
+  // trade-document types are newly added; their live accuracy is not yet
+  // measured, so they are shown as pending rather than fabricated.
+  overallFieldAccuracy: 0.967, // payroll family only
+  overallClassification: 1.0, // payroll family only
+  note: "Payroll-family rows are measured; sales/purchase invoices are newly added and pending a live eu-west-1 round-trip.",
   rows: [
     { docType: "bank_confirmation", classification: "5/5 (100%)", fields: "5/5 (100%)" },
     { docType: "payroll_register", classification: "5/5 (100%)", fields: "25/25 (100%)" },
     { docType: "payslip", classification: "5/5 (100%)", fields: "28/30 (93.3%)" },
-    { docType: "overall", classification: "15/15 (100%)", fields: "58/60 (96.7%)" },
+    { docType: "payroll overall", classification: "15/15 (100%)", fields: "58/60 (96.7%)" },
+    { docType: "sales_invoice", classification: "pending live verification", fields: "pending live verification" },
+    { docType: "purchase_invoice", classification: "pending live verification", fields: "pending live verification" },
   ],
 };
 
@@ -178,7 +239,15 @@ const DOC_NUMERIC_FIELDS: Record<string, (keyof ExtractedDocument)[]> = {
     "employer_cost_total",
   ],
   payslip: [],
+  sales_invoice: ["net_amount", "vat_amount", "gross_amount"],
+  purchase_invoice: ["net_amount", "vat_amount", "gross_amount"],
 };
+// String/date fields scored for the trade-document family.
+const INVOICE_STRING_FIELDS: (keyof ExtractedDocument)[] = [
+  "invoice_number",
+  "invoice_date",
+  "counterparty",
+];
 const EMPLOYEE_FIELDS = ["gross", "employee_ika", "tax", "net", "employer_ika", "employer_cost"] as const;
 
 export interface FieldComparison {
@@ -218,6 +287,13 @@ export function scoreDocument(actual: ExtractedDocument, file: string): DocScore
   if (truth.doc_type === "payslip" && truth.employee) {
     for (const f of EMPLOYEE_FIELDS) {
       push(`employee.${f}`, truth.employee[f], actual.employee?.[f] ?? null);
+    }
+  }
+  if (truth.doc_type === "sales_invoice" || truth.doc_type === "purchase_invoice") {
+    for (const f of INVOICE_STRING_FIELDS) {
+      const exp = truth[f];
+      if (exp == null) continue;
+      push(f, exp as string, (actual[f] as string) ?? null);
     }
   }
   if (truth.payment_date != null) {

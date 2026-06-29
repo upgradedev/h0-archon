@@ -10,7 +10,27 @@
 // tax withheld and remitted to the State. Archon fuses the three into one
 // accurate PayrollEvent and surfaces that gap.
 
-export type DocType = "bank_confirmation" | "payroll_register" | "payslip" | "unknown";
+// Archon reads ALL of an SMB's financial documents, not only payroll. The
+// payroll family (bank_confirmation / payroll_register / payslip) carries the
+// evidence-backed control finding; the trade-document family (sales_invoice /
+// purchase_invoice) carries revenue and cost-of-purchase breadth so the close
+// covers the full P&L, not just labour.
+export type DocType =
+  | "bank_confirmation"
+  | "payroll_register"
+  | "payslip"
+  | "sales_invoice"
+  | "purchase_invoice"
+  | "unknown";
+
+// A single line on a sales/purchase invoice. Amounts are null-safe (ADR-003):
+// a real extractor often recovers the line description but not every column.
+export interface InvoiceLineItem {
+  description: string;
+  quantity?: number | null;
+  unit_price?: number | null;
+  amount?: number | null; // line net (pre-VAT) amount
+}
 
 export interface ExtractedDocument {
   doc_id: string;
@@ -26,6 +46,18 @@ export interface ExtractedDocument {
   tax_withheld_total?: number | null; // payroll_register
   register_employee_count?: number | null; // payroll_register: headcount the register itself reports
   employee?: EmployeePayslip | null; // payslip
+  // --- trade-document family (sales_invoice / purchase_invoice) -------------
+  // All optional + null-safe so the payroll path and downstream fusion are
+  // completely unaffected (invoices never flow through linkEvent).
+  invoice_number?: string | null;
+  invoice_date?: string | null; // YYYY-MM-DD
+  counterparty?: string | null; // customer (sales) or supplier/vendor (purchase)
+  currency?: string | null; // ISO 4217, e.g. EUR
+  net_amount?: number | null; // total pre-VAT amount
+  vat_amount?: number | null; // total VAT
+  vat_rate?: number | null; // headline VAT rate %, when stated
+  gross_amount?: number | null; // total incl. VAT (net + VAT)
+  line_items?: InvoiceLineItem[] | null;
   payment_date?: string | null;
   source_filename: string;
 }

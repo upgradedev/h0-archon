@@ -74,6 +74,32 @@ ROLES = ["Senior Engineer", "Accountant", "Sales Lead", "Operations",
          "Junior Analyst", "Warehouse", "Driver", "Manager", "Technician",
          "Support", "Buyer", "QA"]
 
+# Greek standard VAT rates (FPA). 24% is the mainland standard rate.
+VAT_RATES = [24.0, 13.0]
+
+# Customers a sales_invoice is issued TO (revenue side).
+CUSTOMERS = [
+    "Hellenic Retail Group AE", "Aegean Hotels SA", "Delta Distribution OE",
+    "Meraki Cafe IKE", "Boreas Wholesale AE", "Lyra Hospitality OE",
+    "Nautilus Stores IKE", "Helios Markets AE",
+]
+# Suppliers a purchase_invoice is received FROM (cost side).
+SUPPLIERS = [
+    "Attica Growers Coop", "Aegean Dairy SA", "PackLine Hellas IKE",
+    "Metro Freight OE", "Hellenic Power & Water", "Olympia Supplies AE",
+    "Thermi Components IKE", "Pangaia Raw Materials AE",
+]
+SALES_ITEMS = [
+    "Wholesale order — dry goods", "Catering contract", "Retail pallet delivery",
+    "Monthly distribution service", "Private-label production run",
+    "Online fulfilment batch", "Seasonal promotion stock",
+]
+PURCHASE_ITEMS = [
+    "Fresh produce", "Dairy supplies", "Packaging materials", "Inbound logistics",
+    "Utilities — power & water", "Spare components", "Cleaning consumables",
+    "Raw materials",
+]
+
 
 def r2(x: float) -> float:
     """Round to cents the same way the TS pipeline does (round-half-up at 1e-2)."""
@@ -244,6 +270,97 @@ def render_payslip(path, company, period, emp, multi_page=False, omit_employer=F
 
 
 # ---------------------------------------------------------------------------
+# Trade-document (sales / purchase invoice) truth + rendering.
+#
+# Uses a DEDICATED rng (inv_rng) so adding invoices does NOT perturb the main
+# payroll rng stream — the committed payroll corpus and the metrics test that
+# asserts on it stay byte-identical.
+# ---------------------------------------------------------------------------
+def make_invoice(inv_rng: random.Random, kind: str, company: str, period: str,
+                 idx: int) -> dict:
+    """kind = 'sales' | 'purchase'. Returns the structured invoice label."""
+    is_sales = kind == "sales"
+    counterparty = inv_rng.choice(CUSTOMERS if is_sales else SUPPLIERS)
+    item_pool = SALES_ITEMS if is_sales else PURCHASE_ITEMS
+    vat_rate = inv_rng.choice(VAT_RATES)
+    n_lines = inv_rng.randint(2, 4)
+
+    line_items = []
+    for _ in range(n_lines):
+        qty = inv_rng.randint(1, 40)
+        unit_price = float(inv_rng.randrange(1500, 90000, 50)) / 100.0  # 15.00 .. 900.00
+        amount = r2(qty * unit_price)
+        line_items.append({
+            "description": inv_rng.choice(item_pool),
+            "quantity": qty,
+            "unit_price": unit_price,
+            "amount": amount,
+        })
+
+    net_amount = r2(sum(li["amount"] for li in line_items))
+    vat_amount = r2(net_amount * vat_rate / 100.0)
+    gross_amount = r2(net_amount + vat_amount)
+
+    y, m = period.split("-")
+    invoice_date = f"{y}-{m}-15"
+    prefix = "SI" if is_sales else "PI"
+    invoice_number = f"{prefix}-{y}{m}-{idx:04d}"
+
+    return {
+        "doc_type": "sales_invoice" if is_sales else "purchase_invoice",
+        "invoice_number": invoice_number,
+        "invoice_date": invoice_date,
+        "counterparty": counterparty,
+        "currency": "EUR",
+        "net_amount": net_amount,
+        "vat_amount": vat_amount,
+        "vat_rate": vat_rate,
+        "gross_amount": gross_amount,
+        "line_items": line_items,
+    }
+
+
+def render_invoice(path, kind: str, company: str, inv: dict):
+    is_sales = kind == "sales"
+    c = canvas.Canvas(str(path), pagesize=A4)
+    title = "SALES INVOICE" if is_sales else "PURCHASE INVOICE"
+    t(c, 2, 2, company, 14, bold=True)
+    t(c, 2, 2.9, f"{title} (TIMOLOGIO)", 12, bold=True)
+    ln(c, 2, 3.4, 19, 3.4)
+    t(c, 2, 4.1, f"Invoice number: {inv['invoice_number']}")
+    t(c, 2, 4.8, f"Invoice date: {inv['invoice_date']}")
+    # Direction line — the discriminating signal between sales and purchase.
+    if is_sales:
+        t(c, 2, 5.5, f"Customer (pelatis): {inv['counterparty']}")
+    else:
+        t(c, 2, 5.5, f"Supplier (promitheftis): {inv['counterparty']}")
+    ln(c, 2, 6.1, 19, 6.1)
+    t(c, 2, 6.7, "DESCRIPTION", bold=True)
+    t(c, 11, 6.7, "QTY", bold=True)
+    t(c, 13, 6.7, "UNIT (EUR)", bold=True)
+    t(c, 16.5, 6.7, "AMOUNT (EUR)", bold=True)
+    ln(c, 2, 7.0, 19, 7.0)
+    y = 7.6
+    for li in inv["line_items"]:
+        t(c, 2, y, li["description"])
+        t(c, 11, y, str(li["quantity"]))
+        t(c, 13, y, fmt_plain(li["unit_price"]))
+        t(c, 16.5, y, fmt_plain(li["amount"]))
+        y += 0.7
+    ln(c, 2, y, 19, y)
+    y += 0.6
+    t(c, 13, y, "Net amount:")
+    t(c, 16.5, y, fmt_plain(inv["net_amount"]))
+    y += 0.7
+    t(c, 13, y, f"VAT (FPA) {inv['vat_rate']:.0f}%:")
+    t(c, 16.5, y, fmt_plain(inv["vat_amount"]))
+    y += 0.7
+    t(c, 13, y, "TOTAL (incl. VAT):", bold=True)
+    t(c, 16.5, y, fmt_plain(inv["gross_amount"]), bold=True)
+    c.save()
+
+
+# ---------------------------------------------------------------------------
 # Case builder
 # ---------------------------------------------------------------------------
 def build_case(case_id, out_root, rng, edge):
@@ -351,6 +468,26 @@ def build_case(case_id, out_root, rng, edge):
         "documents": documents,
     }
 
+    # ---- TRADE documents (sales + purchase invoices) ----------------------
+    # Generated from a DEDICATED rng so the payroll stream above is untouched.
+    # Kept OUT of `extracted.documents` on purpose: invoices are extraction-
+    # breadth, not inputs to the payroll fusion (linkEvent), so the deterministic
+    # finance pipeline and its committed numbers are completely unaffected.
+    inv_rng = random.Random(f"{case_id}:invoice")
+    invoice_documents = []
+    inv_specs = [("sales", "sales_invoice"), ("purchase", "purchase_invoice")]
+    for j, (kind, doc_type) in enumerate(inv_specs):
+        inv = make_invoice(inv_rng, kind, company, period, j + 1)
+        fn = f"{doc_type}_{period}.pdf"
+        render_invoice(docs_dir / fn, kind, company, inv)
+        did = f"doc-{doc_type.replace('_', '-')}-001"
+        invoice_documents.append({
+            "doc_id": did, "doc_type": doc_type, "source_filename": fn,
+            "company": company, "period": period, **inv,
+        })
+        classification[did] = doc_type
+        artifacts[did] = f"docs/{fn}"
+
     expected_event = compute_expected_event(emitted_emps, bank_net_total)
 
     # ---- DOMAIN truth for the four cross-document rules -------------------
@@ -397,6 +534,10 @@ def build_case(case_id, out_root, rng, edge):
         "expected_validations": expected_validations,
         "register_totals": reg_totals if has_register else None,
         "naive": naive,
+        # Trade-document ground truth (sales + purchase invoices). Separate from
+        # `extracted.documents` so it never enters the payroll fusion, but still
+        # gives a real extractor labelled targets to be scored against.
+        "invoice_documents": invoice_documents,
         "classification": classification,
         "artifacts": artifacts,
     }

@@ -172,6 +172,115 @@ test("bank_confirmation response maps net total only", async () => {
   assert.equal(d.employee, null);
 });
 
+const SALES_INVOICE_JSON = JSON.stringify({
+  doc_type: "sales_invoice",
+  detected_language: "el",
+  company: "Kyklades Retail OE",
+  period: "2026-07",
+  invoice_number: "SI-202607-0001",
+  invoice_date: "2026-07-15",
+  counterparty: "Nautilus Stores IKE",
+  currency: "EUR",
+  net_amount: 9394.0,
+  vat_amount: 1221.22,
+  vat_rate: 13,
+  gross_amount: 10615.22,
+  line_items: [
+    { description: "Monthly distribution service", quantity: 22, unit_price: 273.0, amount: 6006.0 },
+    { description: "Wholesale order", quantity: 14, unit_price: 132.0, amount: 1848.0 },
+  ],
+  employee: null,
+  text_excerpt: "SALES INVOICE (TIMOLOGIO) — Customer (pelatis)",
+  confidence: 0.93,
+});
+
+const PURCHASE_INVOICE_JSON = JSON.stringify({
+  doc_type: "purchase_invoice",
+  company: "Kyklades Retail OE",
+  period: "2026-07",
+  invoice_number: "PI-202607-0002",
+  invoice_date: "2026-07-15",
+  counterparty: "Attica Growers Coop",
+  currency: "EUR",
+  net_amount: 18814.5,
+  vat_amount: 2445.89,
+  vat_rate: 13,
+  gross_amount: 21260.39,
+  line_items: [{ description: "Dairy supplies", quantity: 4, unit_price: 367.5, amount: 1470.0 }],
+  employee: null,
+  text_excerpt: "PURCHASE INVOICE (TIMOLOGIO) — Supplier (promitheftis)",
+  confidence: 0.9,
+});
+
+// --- invoice (trade-document) mapping --------------------------------------
+
+test("sales_invoice response maps invoice fields + line items", async () => {
+  const out = await extractDocument(imgInput("s.png"), { client: fakeClient(SALES_INVOICE_JSON) });
+  const d = out.document;
+  assert.equal(d.doc_type, "sales_invoice");
+  assert.equal(d.invoice_number, "SI-202607-0001");
+  assert.equal(d.invoice_date, "2026-07-15");
+  assert.equal(d.counterparty, "Nautilus Stores IKE");
+  assert.equal(d.currency, "EUR");
+  assert.equal(d.net_amount, 9394.0);
+  assert.equal(d.vat_amount, 1221.22);
+  assert.equal(d.vat_rate, 13);
+  assert.equal(d.gross_amount, 10615.22);
+  assert.equal(d.line_items?.length, 2);
+  assert.equal(d.line_items?.[0].amount, 6006.0);
+  // payroll fields stay null — invoices never carry them
+  assert.equal(d.bank_net_total, null);
+  assert.equal(d.employee, null);
+});
+
+test("purchase_invoice response maps invoice fields", async () => {
+  const out = await extractDocument(imgInput("p.png"), { client: fakeClient(PURCHASE_INVOICE_JSON) });
+  const d = out.document;
+  assert.equal(d.doc_type, "purchase_invoice");
+  assert.equal(d.counterparty, "Attica Growers Coop");
+  assert.equal(d.gross_amount, 21260.39);
+  assert.equal(d.gross_total, null); // payroll field, not the invoice gross
+});
+
+test("invoice subtype is resolved by direction keyword when the model leaves it unknown", async () => {
+  // Model recognises invoice fields but does not pick a subtype (doc_type unknown).
+  // Field-shape alone CANNOT decide sales vs purchase; the "Customer" header does.
+  const ambiguous = JSON.stringify({
+    doc_type: "unknown",
+    company: "X",
+    period: "2026-07",
+    invoice_number: "SI-1",
+    counterparty: "A Customer",
+    net_amount: 100,
+    vat_amount: 24,
+    gross_amount: 124,
+    line_items: [],
+    employee: null,
+    text_excerpt: "SALES INVOICE — Customer pelatis",
+    confidence: 0.8,
+  });
+  const out = await extractDocument(imgInput("x.png"), { client: fakeClient(ambiguous) });
+  assert.equal(out.document.doc_type, "sales_invoice");
+});
+
+test("a generic invoice header with no direction signal defaults to purchase + flags it", async () => {
+  const generic = JSON.stringify({
+    doc_type: "unknown",
+    company: "X",
+    period: "2026-07",
+    net_amount: 100,
+    vat_amount: 24,
+    gross_amount: 124,
+    line_items: [],
+    employee: null,
+    text_excerpt: "INVOICE / TIMOLOGIO",
+    confidence: 0.7,
+  });
+  const out = await extractDocument(imgInput("g2.png"), { client: fakeClient(generic) });
+  assert.equal(out.document.doc_type, "purchase_invoice");
+  assert.ok(out.flags.some((f) => f.includes("invoice direction ambiguous")));
+});
+
 // --- classifier override (content-only) ------------------------------------
 
 test("classifier reclassifies via field shape and flags the override", async () => {

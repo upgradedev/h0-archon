@@ -11,6 +11,12 @@ const FIELD_LABELS: Record<string, string> = {
   tax_withheld_total: "Tax withheld",
   employer_ika_total: "Employer IKA",
   employer_cost_total: "Employer cost total",
+  invoice_number: "Invoice number",
+  invoice_date: "Invoice date",
+  counterparty: "Counterparty",
+  net_amount: "Net amount",
+  vat_amount: "VAT amount",
+  gross_amount: "Gross (incl. VAT)",
   payment_date: "Payment date",
   "employee.gross": "Gross",
   "employee.employee_ika": "Employee IKA",
@@ -257,6 +263,13 @@ function DocFields({ doc }: { doc: ExtractedDocument }) {
     ["Employer IKA", doc.employer_ika_total],
     ["Employer cost total", doc.employer_cost_total],
     ["Register headcount", doc.register_employee_count],
+    ["Invoice number", doc.invoice_number],
+    ["Invoice date", doc.invoice_date],
+    ["Counterparty", doc.counterparty],
+    ["Net amount", doc.net_amount],
+    ["VAT amount", doc.vat_amount],
+    ["VAT rate %", doc.vat_rate],
+    ["Gross (incl. VAT)", doc.gross_amount],
   ];
   const present = rows.filter(([, v]) => v !== null && v !== undefined);
   return (
@@ -299,6 +312,28 @@ function DocFields({ doc }: { doc: ExtractedDocument }) {
             </div>
           </div>
         </div>
+      )}
+      {doc.line_items && doc.line_items.length > 0 && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Line item</th>
+              <th className="num">Qty</th>
+              <th className="num">Unit</th>
+              <th className="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doc.line_items.map((li, i) => (
+              <tr key={i}>
+                <td>{li.description || "—"}</td>
+                <td className="num">{fmt(li.quantity ?? null)}</td>
+                <td className="num">{fmt(li.unit_price ?? null)}</td>
+                <td className="num">{fmt(li.amount ?? null)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </>
   );

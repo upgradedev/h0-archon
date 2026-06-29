@@ -128,18 +128,88 @@
     "payslip_net_total": 7305.18
   },
   "naive": null,
+  "invoice_documents": [
+    {
+      "doc_id": "doc-sales-invoice-001",
+      "doc_type": "sales_invoice",
+      "source_filename": "sales_invoice_2026-06.pdf",
+      "company": "Epirus Textiles AE",
+      "period": "2026-06",
+      "invoice_number": "SI-202606-0001",
+      "invoice_date": "2026-06-15",
+      "counterparty": "Helios Markets AE",
+      "currency": "EUR",
+      "net_amount": 2906.0,
+      "vat_amount": 377.78,
+      "vat_rate": 13.0,
+      "gross_amount": 3283.78,
+      "line_items": [
+        {
+          "description": "Online fulfilment batch",
+          "quantity": 1,
+          "unit_price": 518.0,
+          "amount": 518.0
+        },
+        {
+          "description": "Catering contract",
+          "quantity": 24,
+          "unit_price": 99.5,
+          "amount": 2388.0
+        }
+      ]
+    },
+    {
+      "doc_id": "doc-purchase-invoice-001",
+      "doc_type": "purchase_invoice",
+      "source_filename": "purchase_invoice_2026-06.pdf",
+      "company": "Epirus Textiles AE",
+      "period": "2026-06",
+      "invoice_number": "PI-202606-0002",
+      "invoice_date": "2026-06-15",
+      "counterparty": "Thermi Components IKE",
+      "currency": "EUR",
+      "net_amount": 5621.0,
+      "vat_amount": 1349.04,
+      "vat_rate": 24.0,
+      "gross_amount": 6970.04,
+      "line_items": [
+        {
+          "description": "Utilities — power & water",
+          "quantity": 4,
+          "unit_price": 383.5,
+          "amount": 1534.0
+        },
+        {
+          "description": "Inbound logistics",
+          "quantity": 39,
+          "unit_price": 77.0,
+          "amount": 3003.0
+        },
+        {
+          "description": "Utilities — power & water",
+          "quantity": 4,
+          "unit_price": 271.0,
+          "amount": 1084.0
+        }
+      ]
+    }
+  ],
   "classification": {
     "doc-register-001": "payroll_register",
     "doc-payslip-001": "payslip",
     "doc-payslip-002": "payslip",
     "doc-payslip-003": "payslip",
-    "doc-payslip-004": "payslip"
+    "doc-payslip-004": "payslip",
+    "doc-sales-invoice-001": "sales_invoice",
+    "doc-purchase-invoice-001": "purchase_invoice"
   },
   "artifacts": {
     "doc-register-001": "docs/payroll_register_2026-06.pdf",
     "doc-payslip-001": "docs/payslip_EMP-001_2026-06.pdf",
     "doc-payslip-002": "docs/payslip_EMP-002_2026-06.pdf",
     "doc-payslip-003": "docs/payslip_EMP-003_2026-06.pdf",
-    "doc-payslip-004": "docs/payslip_EMP-004_2026-06.pdf"
+    "doc-payslip-004": "docs/payslip_EMP-004_2026-06.pdf",
+    "doc-sales-invoice-001": "docs/sales_invoice_2026-06.pdf",
+    "doc-purchase-invoice-001": "docs/purchase_invoice_2026-06.pdf"
   }
 }
