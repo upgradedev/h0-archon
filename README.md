@@ -64,6 +64,10 @@ is present and exercised — we keep it empty on the hosted demo on purpose.
 
 ## Architecture
 
+![Archon architecture — the Browser hits Next.js on Vercel; Vercel Functions run the deterministic finance engine and call AWS: DynamoDB (single-table source of truth), Bedrock (Claude Sonnet 4.6 vision extraction), and OpenSearch (CQRS documents-first search)](docs/h0-aws-architecture.png)
+
+<sub>Rendered with Lucid. Mermaid source below.</sub>
+
 ```mermaid
 flowchart TB
   U([SMB owner / judge]) --> FE
@@ -84,8 +88,8 @@ flowchart TB
   DDB -. "Streams → Lambda indexer (Terraform IaC)" .-> OS
 ```
 
-> The earlier static figure (`docs/figures/h0-architecture.svg`) is superseded by
-> the inline diagram above.
+> Rendered diagram: `docs/h0-aws-architecture.png` (Lucid). The earlier
+> `docs/figures/h0-architecture.svg` is superseded.
 
 ## CI/CD
 
