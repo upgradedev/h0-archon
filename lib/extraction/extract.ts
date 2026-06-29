@@ -374,8 +374,18 @@ export interface ExtractDeps {
 async function buildParts(input: ExtractInput, rasterize: ExtractDeps["rasterize"]): Promise<ContentPart[]> {
   const parts: ContentPart[] = [];
   if (input.mime === "application/pdf") {
-    const pages = await (rasterize ?? rasterizePdf)(input.bytes);
-    for (const png of pages) parts.push({ type: "image", format: "png", bytes: png });
+    // Send the PDF natively via Bedrock's `document` block: Claude reads the PDF's
+    // text layer AND renders the pages. This is far more robust than rasterizing —
+    // mupdf renders PDFs whose fonts aren't fully embedded as near-blank images,
+    // which silently produced empty extractions. The document `name` is generic so
+    // the filename is never used as a classification signal (content-only).
+    // A caller may still inject `rasterize` to force the legacy image path (tests).
+    if (rasterize) {
+      const pages = await rasterize(input.bytes);
+      for (const png of pages) parts.push({ type: "image", format: "png", bytes: png });
+    } else {
+      parts.push({ type: "document", format: "pdf", name: "document", bytes: input.bytes });
+    }
   } else {
     parts.push({ type: "image", format: input.mime === "image/jpeg" ? "jpeg" : "png", bytes: input.bytes });
   }
